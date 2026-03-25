@@ -1,0 +1,135 @@
+C:\Users\MATEMOX\Documents\mtemox\TIC\Proyecto\geck-os-frontend
+├── components.json
+├── eslint.config.js
+├── estructura-completa.txt
+├── estructura.txt
+├── index.html
+├── jsconfig.json
+├── netlify.toml
+├── package-lock.json
+├── package.json
+├── public
+|  └── midesk.jpg
+├── README.md
+├── src
+|  ├── App.css
+|  ├── App.jsx
+|  ├── assets
+|  |  ├── icons
+|  |  |  ├── blackboard.png
+|  |  |  ├── chat.png
+|  |  |  ├── code.png
+|  |  |  ├── desktop.png
+|  |  |  ├── doc.png
+|  |  |  ├── file.png
+|  |  |  ├── folder.png
+|  |  |  ├── link.png
+|  |  |  ├── news.png
+|  |  |  ├── note.png
+|  |  |  ├── shop.png
+|  |  |  ├── wallpaper.png
+|  |  |  ├── weather.png
+|  |  |  ├── word.png
+|  |  |  └── word_icon.svg
+|  |  ├── logos
+|  |  |  ├── esfot.png
+|  |  |  └── midesk.jpg
+|  |  └── wallpapers
+|  |     ├── deg.jpg
+|  |     ├── deg2.jpg
+|  |     ├── deg3.jpg
+|  |     ├── mi-fondo.jpg
+|  |     ├── mideskW1.jpg
+|  |     ├── mideskW2.jpg
+|  |     ├── mideskW3.jpg
+|  |     ├── mideskW4.jpg
+|  |     ├── trees.jpg
+|  |     ├── windows.jpg
+|  |     ├── windows_2.jpg
+|  |     ├── win_dark.jpg
+|  |     └── win_ni.jpg
+|  ├── core
+|  |  ├── api
+|  |  |  └── useFetch.js
+|  |  ├── context
+|  |  |  ├── SocketContext.jsx
+|  |  |  ├── storePayments.jsx
+|  |  |  └── ThemeContext.jsx
+|  |  ├── ui
+|  |  |  ├── components
+|  |  |  |  ├── AppWindow.jsx
+|  |  |  |  ├── Modal.jsx
+|  |  |  |  └── ThemeToggle.jsx
+|  |  |  ├── kokonutui
+|  |  |  |  └── card-flip.jsx
+|  |  |  └── shadcn
+|  |  |     ├── button.jsx
+|  |  |     └── calendar.jsx
+|  |  └── utils
+|  |     └── utils.js
+|  ├── features
+|  |  ├── apps
+|  |  |  ├── CodeEditor.jsx
+|  |  |  ├── DiffEditor.jsx
+|  |  |  ├── NotepadApp.jsx
+|  |  |  ├── ProfileApp.jsx
+|  |  |  ├── SettingsApp.jsx
+|  |  |  ├── WhiteboardApp.jsx
+|  |  |  └── WordEditor.jsx
+|  |  ├── auth
+|  |  |  ├── components
+|  |  |  |  ├── Auth.jsx
+|  |  |  |  └── ProtectedRoute.jsx
+|  |  |  └── pages
+|  |  |     ├── Confirm.jsx
+|  |  |     ├── Forgot.jsx
+|  |  |     ├── GoogleSuccess.jsx
+|  |  |     ├── Login.jsx
+|  |  |     ├── Register.jsx
+|  |  |     └── Reset.jsx
+|  |  ├── desktop
+|  |  |  ├── components
+|  |  |  |  ├── Desktop.jsx
+|  |  |  |  ├── Icon.jsx
+|  |  |  |  ├── StartMenu.jsx
+|  |  |  |  └── Taskbar.jsx
+|  |  |  └── pages
+|  |  |     ├── AppLayout.jsx
+|  |  |     └── Dashboard.jsx
+|  |  ├── file-system
+|  |  |  ├── ContextMenu.jsx
+|  |  |  ├── FileViewer.jsx
+|  |  |  ├── FolderContent.jsx
+|  |  |  ├── NewFolderForm.jsx
+|  |  |  ├── NewLinkForm.jsx
+|  |  |  └── ShareForm.jsx
+|  |  ├── landing
+|  |  |  ├── components
+|  |  |  |  ├── DesktopHeroSection.jsx
+|  |  |  |  ├── DesktopIcon.jsx
+|  |  |  |  ├── FeaturesSection.jsx
+|  |  |  |  ├── Footer.jsx
+|  |  |  |  ├── HeroSection.jsx
+|  |  |  |  ├── LandingWindow.jsx
+|  |  |  |  ├── Navbar.jsx
+|  |  |  |  └── RoadmapSection.jsx
+|  |  |  └── pages
+|  |  |     └── LandingPage.jsx
+|  |  ├── store
+|  |  |  ├── ModalPayment.jsx
+|  |  |  └── StoragePlans.jsx
+|  |  └── widgets
+|  |     ├── CalendarWidget.jsx
+|  |     ├── ChatWidget.jsx
+|  |     ├── NewsWidget.jsx
+|  |     ├── PostItWidget.jsx
+|  |     ├── RecommendationsWidget.jsx
+|  |     ├── WallpaperWidget.jsx
+|  |     └── WeatherWidget.jsx
+|  ├── index.css
+|  └── main.jsx
+├── tailwind.config.js
+└── vite.config.js
+
+directory: 28 file: 103
+
