@@ -1,4 +1,4 @@
-// src/components/NewFolderForm.jsx
+// src/features/file-system/NewFolderForm.jsx
 import React, { useState } from 'react';
 
 function NewFolderForm({ onSubmit }) {

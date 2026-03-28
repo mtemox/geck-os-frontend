@@ -1,4 +1,4 @@
-// src/components/FolderContent.jsx
+// src/features/file-system/FolderContent.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useFetch } from '../../core/api/useFetch';
 import { Plus, Loader, Info, RefreshCw, ChevronRight, FileText, Folder, Link2, Code2, File, UploadCloud, ArrowLeft } from 'lucide-react';
@@ -63,7 +63,7 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
         setLoading(true);
         try {
             const data = await fetchDataBackend(
-                `${backendUrl}/desktop?folderId=${currentFolder.id}`, 
+                `${backendUrl}/items/desktop?folderId=${currentFolder.id}`, 
                 null, "GET", { Authorization: `Bearer ${token}` }
             );
             if (data && data.items) {

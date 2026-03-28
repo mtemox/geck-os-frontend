@@ -1,9 +1,9 @@
-// src/components/widgets/ChatWidget.jsx
+// src/features/widgets/ChatApp.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader, Sparkles, Trash2 } from 'lucide-react';
 import { useFetch } from '../../core/api/useFetch';
 
-const ChatWidget = () => {
+const ChatApp = () => {
   // Estado para guardar los mensajes: { role: 'user' | 'ai', text: '...' }
   const [messages, setMessages] = useState([
     { role: 'ai', text: '¡Hola Ariel! Soy MiDesk IA. ¿En qué te puedo ayudar hoy con tus estudios?' }
@@ -32,7 +32,7 @@ const ChatWidget = () => {
     if (!input.trim()) return;
 
     // 1. Agregamos el mensaje del usuario a la lista visualmente
-    const userMessage = { role: 'user', text: input };
+    const userMessage = { id: Date.now(), role: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
     const currentInput = input;
     setInput(""); // Limpiamos input
@@ -58,11 +58,10 @@ const ChatWidget = () => {
 
       // 3. Procesamos la respuesta
       if (data && data.ok) {
-        // data.data.respuesta es lo que devuelve Python
         const aiResponse = { 
+            id: Date.now() + 1, // ID único
             role: 'ai', 
             text: data.data.respuesta,
-            // Opcional: mostrar métricas si quieres debuggear
             metrics: data.data.metricas 
         };
         setMessages(prev => [...prev, aiResponse]);
@@ -102,8 +101,8 @@ const ChatWidget = () => {
 
       {/* --- ÁREA DE MENSAJES --- */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-        {messages.map((msg, index) => (
-          <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+        {messages.map((msg) => (
+          <div key={msg.id || Math.random()} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             
             {/* Avatar */}
             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 
@@ -169,4 +168,4 @@ const ChatWidget = () => {
   );
 };
 
-export default ChatWidget;
+export default ChatApp;

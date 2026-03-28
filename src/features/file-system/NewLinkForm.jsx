@@ -1,4 +1,4 @@
-// src/components/NewLinkForm.jsx
+// src/features/file-system/NewLinkForm.jsx
 import React, { useState } from 'react';
 
 // Recibe la función 'onSubmit' desde Desktop.jsx

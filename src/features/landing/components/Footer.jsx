@@ -1,4 +1,4 @@
-// src/components/landing/Footer.jsx
+// src/features/landing/components/Footer.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 

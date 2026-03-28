@@ -1,4 +1,4 @@
-// src/components/ContextMenu.jsx
+// src/features/file-system/ContextMenu.jsx
 import React from 'react';
 import { Trash2, Link as LinkIcon, FolderPlus, FileText, FileCode, Share2, UploadCloud } from 'lucide-react';
 

@@ -1,3 +1,4 @@
+// src/features/store/ModalPayment.jsx
 import React, { useState } from "react";
 import storePayments from "../../core/context/storePayments";
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';

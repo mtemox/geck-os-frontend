@@ -1,3 +1,4 @@
+// src/features/auth/pages/Forgot.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AuthLayout from '../components/Auth'; 
@@ -18,7 +19,7 @@ function Forgot() {
       // Consumimos el endpoint que ya tienes en tu backend
       // router.post('/recuperarPassword', recuperarPassword)
       await fetchDataBackend(
-        `${backendUrl}/recuperarPassword`,
+        `${backendUrl}/auth/forgot-password`,
         data, // data contiene { email }
         "POST"
       );

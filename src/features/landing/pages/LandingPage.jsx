@@ -1,4 +1,4 @@
-// src/pages/LandingPage.jsx
+// src/features/landing/pages/LandingPage.jsx
 import React from 'react';
 
 import Navbar from '../components/Navbar';

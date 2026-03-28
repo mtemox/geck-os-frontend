@@ -1,11 +1,12 @@
-// src/components/Icon.jsx
+// src/features/desktop/components/Icon.jsx
 import React, { memo, useRef, useState, useEffect } from 'react';
 import Draggable from 'react-draggable';
 
 const Icon = ({ nombre, imgSrc, iconData, onOpen, onContextMenu, onMove, onRename }) => {
   const nodeRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [newName, setNewName] = useState(nombre);
+  // const [newName, setNewName] = useState(nombre);
+  const [draftName, setDraftName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -14,9 +15,9 @@ const Icon = ({ nombre, imgSrc, iconData, onOpen, onContextMenu, onMove, onRenam
 
   const isSystemApp = iconData._id.toString().startsWith('sys-');
 
-  useEffect(() => {
-    setNewName(nombre);
-  }, [nombre]);
+  // useEffect(() => {
+  //   setNewName(nombre);
+  // }, [nombre]);
 
   const handleStart = (e, data) => {
     setDragStartPos({ x: data.x, y: data.y });
@@ -64,10 +65,8 @@ const Icon = ({ nombre, imgSrc, iconData, onOpen, onContextMenu, onMove, onRenam
 
   const submitRename = () => {
     setIsEditing(false);
-    if (newName.trim() !== "" && newName !== nombre) {
-      onRename(iconData._id, newName.trim());
-    } else {
-      setNewName(nombre);
+    if (draftName.trim() !== "" && draftName !== nombre) {
+      onRename(iconData._id, draftName.trim());
     }
   };
 
@@ -91,8 +90,8 @@ const Icon = ({ nombre, imgSrc, iconData, onOpen, onContextMenu, onMove, onRenam
         style={{ 
           transition: isDragging ? 'none' : 'all 0.15s cubic-bezier(0.2, 0, 0, 1)',
           transform: isDragging ? 'scale(1.05)' : 'scale(1)',
-          willChange: isDragging ? 'transform' : 'auto',
-          backgroundColor: isEditing 
+          ...(isDragging ? { willChange: 'transform' } : {}),
+          backgroundColor: isEditing
             ? 'rgba(255, 255, 255, 0.12)' 
             : isHovered && !isDragging 
               ? 'rgba(255, 255, 255, 0.08)' 
@@ -156,12 +155,12 @@ const Icon = ({ nombre, imgSrc, iconData, onOpen, onContextMenu, onMove, onRenam
                 fontFamily: 'Inter, system-ui, sans-serif',
                 fontWeight: '500'
               }}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
               onBlur={submitRename}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') submitRename();
-                if (e.key === 'Escape') { setIsEditing(false); setNewName(nombre); }
+                if (e.key === 'Escape') setIsEditing(false);
               }}
             />
           ) : (
@@ -185,6 +184,7 @@ const Icon = ({ nombre, imgSrc, iconData, onOpen, onContextMenu, onMove, onRenam
               onClick={(e) => {
                 e.stopPropagation();
                 if (!isSystemApp && !isDragging) {
+                  setDraftName(nombre);
                   setIsEditing(true);
                 }
               }}

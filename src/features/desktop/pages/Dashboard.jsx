@@ -1,4 +1,4 @@
-// src/pages/Dashboard.jsx
+// src/features/desktop/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wifi, Accessibility, Power, User, ArrowRight, Monitor, Briefcase, Plus, UserPlus, Users, ChevronRight } from 'lucide-react';
@@ -22,7 +22,7 @@ function Dashboard() {
     const loadShared = async () => {
         try {
             const data = await fetchDataBackend(
-                `${backendUrl}/dashboard-data`, 
+                `${backendUrl}/dashboard/data`, 
                 null, 
                 "GET", 
                 { Authorization: `Bearer ${token}` }

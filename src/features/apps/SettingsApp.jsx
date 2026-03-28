@@ -1,9 +1,8 @@
-// src/components/apps/SettingsApp.jsx
+// src/features/apps/SettingsApp.jsx
 import React, { useState, useEffect } from 'react';
 import { useFetch } from '../../core/api/useFetch';
 import { Monitor, Upload, Check, Moon, Sun, Globe, RefreshCw, Loader, RotateCcw, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { sileo } from 'sileo';
-import ThemeToggle from '../../core/ui/components/ThemeToggle';
 import { useTheme } from '../../core/context/ThemeContext';
 
 // IMPORTANTE: Asegúrate de importar tu fondo por defecto aquí
@@ -34,7 +33,7 @@ const SettingsApp = () => {
   // 1. CARGAR PREFERENCIAS AL INICIO
   useEffect(() => {
     const loadPrefs = async () => {
-        const data = await fetchDataBackend(`${backendUrl}/estudiante/perfil`, null, "GET", { Authorization: `Bearer ${token}` });
+        const data = await fetchDataBackend(`${backendUrl}/users/profile`, null, "GET", { Authorization: `Bearer ${token}` });
         if (data && data.preferences) {
             if (data.preferences.theme) {
                 setSpecificTheme(data.preferences.theme);
@@ -66,7 +65,7 @@ const SettingsApp = () => {
   const savePreferences = async (updates) => {
     try {
         const response = await fetchDataBackend(
-            `${backendUrl}/user/preferences`,
+            `${backendUrl}/users/preferences`,
             updates,
             "PATCH",
             { Authorization: `Bearer ${token}` }
@@ -129,7 +128,7 @@ const SettingsApp = () => {
     // Creamos la promesa que Sileo va a observar
     const uploadPromise = new Promise(async (resolve, reject) => {
         try {
-            const response = await fetch(`${backendUrl}/upload/image`, {
+            const response = await fetch(`${backendUrl}/users/update-image`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
@@ -171,7 +170,7 @@ const SettingsApp = () => {
     setIsGenerating(true);
     try {
         const data = await fetchDataBackend(
-            `${backendUrl}/ia/generate-wallpaper`,
+            `${backendUrl}/ai/generate-wallpaper`,
             { prompt: aiPrompt },
             "POST",
             { Authorization: `Bearer ${token}` }

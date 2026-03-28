@@ -1,4 +1,4 @@
-// src/layouts/ProtectedRoute.jsx
+// src/features/auth/components/ProtectedRoute.jsx
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 

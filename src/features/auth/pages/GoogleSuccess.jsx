@@ -1,3 +1,4 @@
+// src/features/auth/pages/GoogleSuccess.jsx
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFetch } from '../../../core/api/useFetch';
@@ -28,7 +29,7 @@ const GoogleSuccess = () => {
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
         
         const userData = await fetchDataBackend(
-          `${backendUrl}/estudiante/perfil`,
+          `${backendUrl}/users/profile`,
           null,
           "GET",
           { Authorization: `Bearer ${token}` }

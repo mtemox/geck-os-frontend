@@ -1,4 +1,4 @@
-// src/components/AppWindow.jsx
+// src/core/ui/components/AppWindow.jsx
 import React, { useRef, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import { X, Minus, Maximize2, Minimize2 } from 'lucide-react';

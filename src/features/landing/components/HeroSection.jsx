@@ -1,4 +1,4 @@
-// src/components/landing/HeroSection.jsx
+// src/features/landing/components/HeroSection.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 

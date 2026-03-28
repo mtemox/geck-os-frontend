@@ -1,3 +1,4 @@
+// src/features/auth/pages/Confirm.jsx
 import React, { useEffect } from 'react';
 import logoMidesk from '../../../assets/logos/midesk.jpg'; // Asumo que esta imagen se mantiene
 import { Link, useParams } from 'react-router-dom';
@@ -14,7 +15,7 @@ export const Confirm = () => {
     useEffect(() => {
         
         const verifyToken = async () => {
-            const url = `${import.meta.env.VITE_BACKEND_URL}/confirmar/${token}`;
+            const url = `${import.meta.env.VITE_BACKEND_URL}/auth/confirm/${token}`;
             
             // El hook se encarga de mostrar los toasts
             // de carga, éxito o error.

@@ -1,8 +1,9 @@
+// src/features/widgets/NewsApp.jsx
 import React, { useState, useEffect } from 'react';
 
 const API_KEY = import.meta.env.VITE_NEWS_API_KEY;
 
-function NewsWidget() {
+function NewsApp() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -62,4 +63,4 @@ function NewsWidget() {
   );
 }
 
-export default NewsWidget;
+export default NewsApp;

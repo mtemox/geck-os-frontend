@@ -1,4 +1,4 @@
-// src/components/apps/WhiteboardApp.jsx
+// src/features/apps/WhiteboardApp.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import { Pen, Eraser, Trash2, Download, Palette, Minus } from 'lucide-react';
 import { sileo } from 'sileo';

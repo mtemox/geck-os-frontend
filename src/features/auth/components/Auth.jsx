@@ -1,3 +1,4 @@
+// src/features/auth/components/Auth.jsx
 import React from 'react';
 import dragonBg from '../../../assets/wallpapers/deg3.jpg'; // Asegúrate de tener la imagen aquí
 

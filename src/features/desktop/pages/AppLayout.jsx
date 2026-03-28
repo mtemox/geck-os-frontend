@@ -1,4 +1,4 @@
-// src/layouts/AppLayout.jsx
+// src/features/desktop/pages/AppLayout.jsx
 import React, { useState, useEffect } from 'react';
 import Desktop from '../components/Desktop';
 import Taskbar from '../components/Taskbar';

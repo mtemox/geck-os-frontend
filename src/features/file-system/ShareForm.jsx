@@ -1,4 +1,4 @@
-// src/components/ShareForm.jsx
+// src/features/file-system/ShareForm.jsx
 import React, { useState } from 'react';
 import { UserPlus, Check, Loader, Monitor } from 'lucide-react'; // Monitor icon
 

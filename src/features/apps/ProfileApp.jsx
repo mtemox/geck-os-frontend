@@ -1,4 +1,4 @@
-// src/components/apps/ProfileApp.jsx
+// src/features/apps/ProfileApp.jsx
 import React, { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { useFetch } from '../../core/api/useFetch';
@@ -21,7 +21,7 @@ const ProfileApp = () => {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       
       const data = await fetchDataBackend(
-        `${backendUrl}/estudiante/perfil`, 
+        `${backendUrl}/users/profile`, 
         null, 
         "GET", 
         { Authorization: `Bearer ${token}` }
@@ -46,7 +46,7 @@ const ProfileApp = () => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     
     await fetchDataBackend(
-      `${backendUrl}/estudiante/perfil/${userData._id}`,
+      `${backendUrl}/users/profile/${userData._id}`,
       formData,
       "PUT",
       { Authorization: `Bearer ${token}` }
@@ -67,7 +67,7 @@ const ProfileApp = () => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     const response = await fetchDataBackend(
-      `${backendUrl}/actualizarPassword/${userData._id}`,
+      `${backendUrl}/api/users/update-password`,
       {
         passwordactual: formData.passwordactual,
         passwordnuevo: formData.passwordnuevo

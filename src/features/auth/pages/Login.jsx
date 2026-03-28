@@ -1,4 +1,4 @@
-// src/pages/Login.jsx
+// src/features/auth/pages/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // import axios from 'axios'; // (Descomentar para la API real)
@@ -36,7 +36,7 @@ function Login() {
       
       // 'data' ya contiene { email, password }
       const response = await fetchDataBackend(
-        `${backendUrl}/estudiante/login`, // Apuntamos a la nueva ruta
+        `${backendUrl}/auth/login`, // Apuntamos a la nueva ruta
         data,
         "POST"
       );

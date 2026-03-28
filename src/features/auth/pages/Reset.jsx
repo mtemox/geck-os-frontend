@@ -1,3 +1,4 @@
+// src/features/auth/pages/Reset.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AuthLayout from '../components/Auth';
@@ -21,7 +22,7 @@ function Reset() {
       try {
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
         const response = await fetchDataBackend(
-          `${backendUrl}/recuperarPassword/${token}`, 
+          `${backendUrl}/auth/forgot-password/${token}`, 
           null, 
           "GET"
         );
@@ -49,7 +50,7 @@ function Reset() {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       
       const response = await fetchDataBackend(
-        `${backendUrl}/nuevoPassword/${token}`,
+        `${backendUrl}/auth/reset-password/${token}`,
         { 
           password: data.password, 
           confirmpassword: data.confirmPassword 

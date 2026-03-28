@@ -1,9 +1,9 @@
-// src/components/widgets/RecommendationsWidget.jsx
+// src/features/widgets/RecommendationsApp.jsx
 import React, { useState, useEffect } from 'react';
 import { useFetch } from '../../core/api/useFetch';
 import { Sparkles, Trash2, Zap, Info, RefreshCw } from 'lucide-react';
 
-const RecommendationsWidget = () => {
+const RecommendationsApp = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const fetchDataBackend = useFetch();
@@ -17,7 +17,7 @@ const RecommendationsWidget = () => {
     try {
       // Consumimos tu endpoint: GET /ia/recommendations
       const data = await fetchDataBackend(
-        `${backendUrl}/ia/recommendations`,
+        `${backendUrl}/ai/recommendations`,
         null,
         "GET",
         { Authorization: `Bearer ${token}` }
@@ -122,4 +122,4 @@ const RecommendationsWidget = () => {
   );
 };
 
-export default RecommendationsWidget;
+export default RecommendationsApp;

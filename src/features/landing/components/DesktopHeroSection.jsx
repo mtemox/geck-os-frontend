@@ -1,5 +1,4 @@
-// src/components/landing/DesktopHeroSection.jsx
-
+// src/features/landing/components/DesktopHeroSection.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DesktopIcon from './DesktopIcon';

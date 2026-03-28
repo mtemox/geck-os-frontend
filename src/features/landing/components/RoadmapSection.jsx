@@ -1,4 +1,4 @@
-// src/components/landing/RoadmapSection.jsx
+// src/features/landing/components/RoadmapSection.jsx
 import React from 'react';
 
 function RoadmapSection() {

@@ -1,10 +1,10 @@
-// src/components/widgets/WallpaperWidget.jsx
+// src/features/widgets/WallpaperApp.jsx
 import React, { useState, useEffect } from 'react';
 
 // Asegúrate de añadir esto a tu .env.local
 const API_KEY = import.meta.env.VITE_UNSPLASH_API_KEY;
 
-function WallpaperWidget() {
+function WallpaperApp() {
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -68,4 +68,4 @@ function WallpaperWidget() {
   );
 }
 
-export default WallpaperWidget;
+export default WallpaperApp;

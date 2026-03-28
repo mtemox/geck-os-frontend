@@ -1,4 +1,4 @@
-// src/components/landing/LandingWindow.jsx
+// src/features/landing/components/LandingWindow.jsx
 import React from 'react';
 
 function LandingWindow() {

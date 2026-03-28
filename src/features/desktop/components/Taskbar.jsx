@@ -1,4 +1,4 @@
-  // src/components/Taskbar.jsx
+// src/features/desktop/components/Taskbar.jsx
 import React, { useState, useEffect } from 'react';
 import StartMenu from '../../desktop/components/StartMenu';
 import { Menu, X, Settings, Circle } from 'lucide-react';

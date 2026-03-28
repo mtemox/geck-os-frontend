@@ -1,5 +1,4 @@
-// src/components/landing/DesktopIcon.jsx
-
+// src/features/landing/components/DesktopIcon.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 

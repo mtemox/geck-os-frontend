@@ -1,4 +1,4 @@
-// src/components/widgets/PostItWidget.jsx
+// src/features/widgets/PostItWidget.jsx
 import React, { useState, useRef } from 'react';
 import Draggable from 'react-draggable';
 import { GripHorizontal, CheckCircle2, Circle, Repeat2, Plus } from 'lucide-react';

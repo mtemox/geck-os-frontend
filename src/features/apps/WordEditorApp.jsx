@@ -1,4 +1,4 @@
-// src/components/WordEditor.jsx
+// src/features/apps/WordEditorApp.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { useSocket } from '../../core/context/SocketContext';
 import { 
@@ -10,7 +10,7 @@ import { useFetch } from '../../core/api/useFetch';
 import { useSearchParams } from 'react-router-dom';
 
 // AHORA RECIBE PROPS DEL SISTEMA
-function WordEditor({ fileId, fileName, initialContent = "" }) {
+function WordEditorApp({ fileId, fileName, initialContent = "" }) {
   const { socket } = useSocket();
   const [searchParams] = useSearchParams();
   const [fontSize, setFontSize] = useState('16');
@@ -92,7 +92,7 @@ function WordEditor({ fileId, fileName, initialContent = "" }) {
 
     try {
       await fetchDataBackend(
-        `${backendUrl}/files/${fileId}`,
+        `${backendUrl}/items/files/${fileId}`,
         { content }, 
         "PUT",
         { Authorization: `Bearer ${token}` }
@@ -369,4 +369,4 @@ function WordEditor({ fileId, fileName, initialContent = "" }) {
   );
 }
 
-export default WordEditor;
+export default WordEditorApp;

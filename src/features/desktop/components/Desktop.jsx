@@ -1,5 +1,4 @@
-// src/components/Desktop.jsx
-
+// src/features/desktop/components/Desktop.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { sileo } from 'sileo';
 import { useFetch } from '../../../core/api/useFetch';
@@ -16,23 +15,23 @@ import Modal from '../../../core/ui/components/Modal'; // Importar Modal
 import NewLinkForm from '../../file-system/NewLinkForm'; 
 import FolderContent from '../../file-system/FolderContent';
 import NewFolderForm from '../../file-system/NewFolderForm';
-import ChatWidget from '../../widgets/ChatWidget';
 import FileViewer from '../../file-system/FileViewer'; // <--- IMPORTAR
 
 // Widgets y Apps
-import CodeEditor from '../../apps/CodeEditor';
-import CodeComparator from '../../apps/DiffEditor';
+import ChatApp from '../../apps/ChatApp';
+import CodeEditorApp from '../../apps/CodeEditorApp';
 import WhiteboardApp from '../../apps/WhiteboardApp';
-import WordEditor from '../../apps//WordEditor';
+import WordEditorApp from '../../apps/WordEditorApp';
 import ProfileApp from '../../apps/ProfileApp';
-import WeatherWidget from '../../widgets/WeatherWidget';
-import NewsWidget from '../../widgets/NewsWidget';
-import WallpaperWidget from '../../widgets/WallpaperWidget';
-import RecommendationsWidget from '../../widgets/RecommendationsWidget';
+import WeatherApp from '../../apps/WeatherApp';
+import NewsApp from '../../apps/NewsApp';
+import WallpaperApp from '../../apps/WallpaperApp';
+import RecommendationsApp from '../../apps/RecommendationsApp';
+import CodeComparator from '../../apps/DiffEditorApp';
 import SettingsApp from '../../apps/SettingsApp';
+import StoragePlans from '../../store/StoragePlans'; // <--- IMPORTAR EL COMPONENTE NUEVO
 import CalendarWidget from '../../widgets/CalendarWidget';
 import PostItWidget from '../../widgets/PostItWidget';
-import StoragePlans from '../../store/StoragePlans'; // <--- IMPORTAR EL COMPONENTE NUEVO
 
 // Imágenes e Íconos
 import codeIcon from '../../../assets/icons/code.png'; 
@@ -104,6 +103,109 @@ const getIconImage = (type) => {
     }
 };
 
+// --- FUNCIÓN PARA RENDERIZAR EL CONTENIDO DE LA APP ---
+  // Esto decide qué mostrar DENTRO de la ventana
+  const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow }) => {
+    switch (appId) {
+
+      case 'folder': // <--- NUEVO CASO PARA CARPETAS
+        return (
+          <FolderContent 
+            folderId={data?._id} 
+            folderName={data?.nombre}
+            // 👇👇 AGREGAMOS ESTA LÍNEA CLAVE 👇👇
+            onOpenItem={onOpenWindow} 
+            // 👆👆 Esto permite que la carpeta abra nuevas ventanas
+          />
+        );
+
+      case 'notepad':
+      case 'note': 
+        return (
+          <WordEditorApp
+            key={`word-${windowId}`}
+            fileId={data?._id} 
+            fileName={data?.nombre}
+            initialContent={data?.content} // El backend lo envía si el endpoint está bien
+          />
+        );
+      
+      case 'code': 
+        return (
+          <CodeEditorApp
+            key={`code-${windowId}`}
+            fileId={data?._id} 
+            fileName={data?.nombre}
+            initialContent={data?.content} 
+          />
+        );
+        
+      case 'codeEditor':
+        return (
+          <CodeEditorApp
+            key={`code-sim-${windowId}`}
+            language="javascript"
+            initialContent="console.log('¡Hola desde el editor de código!');"
+          />
+        );
+        
+      case 'diffEditor':
+        const v1 = "function saludo() {\n  console.log('Hola');\n}";
+        const v2 = "function saludo() {\n  console.log('Hola Mundo!');\n}";
+        return (
+          <CodeComparator
+            language="javascript"
+            originalCode={v1}
+            modifiedCode={v2}
+          />
+        );
+
+        // ¡AÑADE ESTOS DOS CASOS! 👇
+      case 'weather':
+        return <WeatherApp />;
+        
+      case 'news':
+        return <NewsApp />;
+
+      case 'wallpaper':
+        return <WallpaperApp />;
+
+      // case 'wordprocessor':
+      //     return <RichTextEditor />;
+
+      case 'wordprocessor':
+      return (
+        <WordEditorApp
+          key={`wordprocessor-${windowId}`}
+        />
+      );
+      
+      case 'profile': 
+          return <ProfileApp />; // 👈 NUEVO
+      
+      case 'ai-recommendations': // <--- NUEVO CASE
+       return <RecommendationsApp />;
+
+      case 'settings':
+        return <SettingsApp />;
+
+      case 'ai-chat':
+        return <ChatApp />;
+
+      case 'store':
+        return <StoragePlans />;
+
+      case 'file': 
+        // ✅ AHORA USAMOS EL VISUALIZADOR INTELIGENTE
+        return <FileViewer file={data} />;
+
+      case 'whiteboard':
+        return <WhiteboardApp />;
+
+      default:
+        return <div className="text-white p-4">App no encontrada</div>;
+      }
+  });
 
 function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMinimizeWindow, onMaximizeWindow, onDragStop }) {
   // Archivos
@@ -204,7 +306,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
        if (workspaceParam) params.append('workspaceId', workspaceParam);
        
        const baseUrl = backendUrl.replace(/\/$/, ''); 
-       const finalUrl = `${baseUrl}/desktop?${params.toString()}`;
+       const finalUrl = `${baseUrl}/items/desktop?${params.toString()}`;
 
        const data = await fetchDataBackend(
           finalUrl, 
@@ -417,7 +519,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
    const fetchWallpaper = async () => {
       try {
-          const data = await fetchDataBackend(`${backendUrl}/estudiante/perfil`, null, "GET", { Authorization: `Bearer ${token}` });
+          const data = await fetchDataBackend(`${backendUrl}/users/profile`, null, "GET", { Authorization: `Bearer ${token}` });
           if (data && data.preferences && data.preferences.wallpaperUrl) {
               setCurrentWallpaper(data.preferences.wallpaperUrl);
           }
@@ -514,7 +616,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
   try {
     // Sincronización con Backend (Persiste el orden y posición)
     await fetchDataBackend(
-      `${backendUrl}/items/${id}/mover`,
+      `${backendUrl}/items/${id}/move`,
       { x: finalX, y: finalY },
       "PATCH",
       { Authorization: `Bearer ${token}` }
@@ -534,7 +636,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     try {
       // Según tu Backend: router.patch('/items/:id/renombrar', ...)
       const response = await fetchDataBackend(
-        `${backendUrl}/items/${id}/renombrar`,
+        `${backendUrl}/items/${id}/rename`,
         { name }, // Enviamos el nuevo nombre en el body
         "PATCH",
         { Authorization: `Bearer ${token}` }
@@ -752,105 +854,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     }
   };
 
-  // --- FUNCIÓN PARA RENDERIZAR EL CONTENIDO DE LA APP ---
-  // Esto decide qué mostrar DENTRO de la ventana
-  const renderAppContent = (appId, data) => {
-    switch (appId) {
-
-      case 'folder': // <--- NUEVO CASO PARA CARPETAS
-        return (
-          <FolderContent 
-            folderId={data?._id} 
-            folderName={data?.nombre}
-            // 👇👇 AGREGAMOS ESTA LÍNEA CLAVE 👇👇
-            onOpenItem={onOpenWindow} 
-            // 👆👆 Esto permite que la carpeta abra nuevas ventanas
-          />
-        );
-
-      case 'notepad':
-      case 'note': 
-        return (
-          <WordEditor
-            key={`word-${data?._id}`}
-            fileId={data?._id} 
-            fileName={data?.nombre}
-            initialContent={data?.content} // El backend lo envía si el endpoint está bien
-          />
-        );
-      
-      case 'code': 
-        return (
-          <CodeEditor
-            key={`code-${data?._id}`}
-            fileId={data?._id} 
-            fileName={data?.nombre}
-            initialContent={data?.content} 
-          />
-        );
-        
-      case 'codeEditor':
-        return (
-          <CodeEditor 
-            language="javascript"
-            initialValue="console.log('¡Hola desde el editor de código!');"
-          />
-        );
-        
-      case 'diffEditor':
-        const v1 = "function saludo() {\n  console.log('Hola');\n}";
-        const v2 = "function saludo() {\n  console.log('Hola Mundo!');\n}";
-        return (
-          <CodeComparator 
-            language="javascript"
-            originalCode={v1}
-            modifiedCode={v2}
-          />
-        );
-
-        // ¡AÑADE ESTOS DOS CASOS! 👇
-      case 'weather':
-        return <WeatherWidget />;
-        
-      case 'news':
-        return <NewsWidget />;
-
-      case 'wallpaper':
-        return <WallpaperWidget />;
-
-      // case 'wordprocessor':
-      //     return <RichTextEditor />;
-
-      case 'wordprocessor':
-          return <WordEditor />;
-      
-      case 'profile': 
-          return <ProfileApp />; // 👈 NUEVO
-      
-      case 'ai-recommendations': // <--- NUEVO CASE
-       return <RecommendationsWidget />;
-
-      case 'settings':
-        return <SettingsApp />;
-
-      case 'ai-chat':
-        return <ChatWidget />;
-
-      case 'store':
-        return <StoragePlans />;
-
-      case 'file': 
-        // ✅ AHORA USAMOS EL VISUALIZADOR INTELIGENTE
-        return <FileViewer file={data} />;
-
-      case 'whiteboard':
-        return <WhiteboardApp />;
-
-      default:
-        return <div className="text-white p-4">App no encontrada</div>;
-      }
-
-  };
+  
 
   const handleCreateQuickNote = async () => {
     handleCloseMenu(); // Cerramos el menú
@@ -976,7 +980,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
       try {
           const response = await fetchDataBackend(
-              `${backendUrl}/share-desktop`, // Endpoint del backend
+              `${backendUrl}/dashboard/share-desktop`, // Endpoint del backend
               { email: formData.email },     // Body
               "POST",
               { Authorization: `Bearer ${token}` }
@@ -999,7 +1003,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     try {
         const response = await fetchDataBackend(
-            `${backendUrl}/share/${itemId}`, // Endpoint memorizado
+            `${backendUrl}/items/share/${itemId}`, // Endpoint memorizado
             { email: formData.email, permission: formData.permission },
             "POST",
             { Authorization: `Bearer ${token}` }
@@ -1287,7 +1291,12 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
                 id={win.id}
                 onDragStop={onDragStop}
               >
-                {renderAppContent(win.appId, win.data)}
+                <AppRenderer 
+                  appId={win.appId} 
+                  data={win.data} 
+                  windowId={win.id} 
+                  onOpenWindow={onOpenWindow} 
+                />
               </AppWindow>
             </div>
         ))}

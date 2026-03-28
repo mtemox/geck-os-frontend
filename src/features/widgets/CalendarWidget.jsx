@@ -1,3 +1,4 @@
+// src/features/widgets/CalendarWidget.jsx
 import React, { useState, useRef } from 'react';
 import { Calendar } from '../../core/ui/shadcn/calendar'; 
 import Draggable from 'react-draggable';

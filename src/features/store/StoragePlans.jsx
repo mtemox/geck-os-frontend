@@ -1,3 +1,4 @@
+// src/features/store/StoragePlans.jsx
 import React, { useState } from 'react';
 import { HardDrive, Check, Zap } from 'lucide-react'; // Iconos
 import { loadStripe } from "@stripe/stripe-js";
@@ -48,8 +49,8 @@ const StoragePlans = () => {
                         </div>
                         
                         <div className="flex-1 space-y-3 mb-6">
-                            {plan.features.map((feature, idx) => (
-                                <div key={idx} className="flex items-center gap-2 text-sm text-gray-300">
+                            {plan.features.map((feature) => (
+                                <div key={feature} className="flex items-center gap-2 text-sm text-gray-300">
                                     <Check size={16} className="text-green-400" />
                                     {feature}
                                 </div>

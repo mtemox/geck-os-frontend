@@ -1,4 +1,4 @@
-// src/components/landing/FeaturesSection.jsx
+// src/features/landing/components/FeaturesSection.jsx
 import React from 'react';
 
 function FeaturesSection() {

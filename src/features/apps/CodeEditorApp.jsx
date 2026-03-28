@@ -1,13 +1,18 @@
-// src/components/CodeEditor.jsx
-import React, { useState, useEffect } from 'react';
-import Editor, { DiffEditor } from '@monaco-editor/react';
-import { Save, Columns, Code as CodeIcon, FileCode } from 'lucide-react';
+// src/features/apps/CodeEditorApp.jsx
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+// import Editor, { DiffEditor } from '@monaco-editor/react';
+import { Save, Columns, Code as CodeIcon, FileCode, Loader } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useFetch } from '../../core/api/useFetch';
 import { useSocket } from '../../core/context/SocketContext';
 import { useSearchParams } from 'react-router-dom';
 
-const CodeEditor = ({ fileId, fileName, initialContent = "" }) => {
+// Importaciones dinámicas (fuera del componente CodeEditor):
+const Editor = lazy(() => import('@monaco-editor/react'));
+// Como DiffEditor es una exportación nombrada y no la de por defecto, usamos este truco:
+const MonacoDiffEditor = lazy(() => import('@monaco-editor/react').then(module => ({ default: module.DiffEditor })));
+
+const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
   // Estado del código actual
   const [code, setCode] = useState(initialContent);
   // Estado del código original (lo último guardado en BD)
@@ -78,7 +83,7 @@ const CodeEditor = ({ fileId, fileName, initialContent = "" }) => {
 
     try {
       await fetchDataBackend(
-        `${backendUrl}/files/${fileId}`,
+        `${backendUrl}/items/files/${fileId}`,
         { content: code }, // Enviamos el código como string
         "PUT",
         { Authorization: `Bearer ${token}` }
@@ -169,36 +174,43 @@ const CodeEditor = ({ fileId, fileName, initialContent = "" }) => {
 
       {/* --- ÁREA DEL EDITOR --- */}
       <div className="flex-1 overflow-hidden relative">
-        {showDiff ? (
-          // VISTA DIVIDIDA (COMPARACIÓN)
-          <DiffEditor
-            height="100%"
-            language={language}
-            theme="vs-dark"
-            original={originalCode} // Código guardado
-            modified={code}         // Código actual (sin guardar)
-            options={{
-                renderSideBySide: true,
-                readOnly: true,
-                minimap: { enabled: false }
-            }}
-          />
-        ) : (
-          // EDITOR NORMAL
-          <Editor
-            height="100%"
-            language={language}
-            theme="vs-dark"
-            value={code}
-            onChange={handleEditorChange}
-            options={{
-              minimap: { enabled: true },
-              fontSize: 14,
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-            }}
-          />
-        )}
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
+                <Loader className="animate-spin mb-3" size={32} />
+                <p className="text-sm font-medium">Cargando el motor de código...</p>
+            </div>
+        }>
+            {showDiff ? (
+              // VISTA DIVIDIDA (COMPARACIÓN)
+              <MonacoDiffEditor
+                height="100%"
+                language={language}
+                theme="vs-dark"
+                original={originalCode} 
+                modified={code}         
+                options={{
+                    renderSideBySide: true,
+                    readOnly: true,
+                    minimap: { enabled: false }
+                }}
+              />
+            ) : (
+              // EDITOR NORMAL
+              <Editor
+                height="100%"
+                language={language}
+                theme="vs-dark"
+                value={code}
+                onChange={handleEditorChange}
+                options={{
+                  minimap: { enabled: true },
+                  fontSize: 14,
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                }}
+              />
+            )}
+        </Suspense>
       </div>
 
       {/* Barra de estado inferior - Estilo macOS */}
@@ -219,4 +231,4 @@ const CodeEditor = ({ fileId, fileName, initialContent = "" }) => {
   );
 };
 
-export default CodeEditor;
+export default CodeEditorApp;

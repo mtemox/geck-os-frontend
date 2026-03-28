@@ -1,4 +1,4 @@
-// src/pages/Register.jsx
+// src/features/auth/pages/Register.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // import axios from 'axios'; // (Descomentar para la API real)
@@ -27,7 +27,7 @@ function Register() {
       const { nombre, email, password } = data; // 'data' viene de react-hook-form
       
       const response = await fetchDataBackend(
-        `${backendUrl}/registro`,
+        `${backendUrl}/auth/register`,
         { nombre, email, password },
         "POST"
       );

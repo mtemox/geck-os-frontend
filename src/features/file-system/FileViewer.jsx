@@ -1,3 +1,4 @@
+// src/features/file-system/FileViewer.jsx
 import React from 'react';
 import { Download, FileText, Music, Video, Image as ImageIcon, File, Sparkles } from 'lucide-react';
 

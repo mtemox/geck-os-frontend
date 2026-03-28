@@ -1,4 +1,4 @@
-// src/components/CodeComparator.jsx
+// src/features/apps/DiffEditorApp.jsx
 import React, { useState, useEffect } from 'react';
 import { DiffEditor } from '@monaco-editor/react';
 import { Sun, Moon, Copy, Download, RefreshCw, Columns, Eye } from 'lucide-react';

@@ -1,4 +1,4 @@
-// src/components/Modal.jsx
+// src/core/ui/components/Modal.jsx
 import React from 'react';
 
 // Recibe 4 props:

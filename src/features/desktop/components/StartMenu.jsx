@@ -1,4 +1,4 @@
-// src/components/StartMenu.jsx
+// src/features/desktop/components/StartMenu.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, User, Settings, Search, MonitorPlay, Share2 } from 'lucide-react';
@@ -31,7 +31,7 @@ const StartMenu = ({ isVisible, onClose, onOpenApp }) => {
           if (!token) return;
           try {
               const data = await fetchDataBackend(
-                  `${backendUrl}/dashboard-data`, 
+                  `${backendUrl}/dashboard/data`, 
                   null, 
                   "GET", 
                   { Authorization: `Bearer ${token}` }

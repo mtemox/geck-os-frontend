@@ -1,9 +1,10 @@
+// src/features/widgets/WeatherApp.jsx
 import React, { useState, useEffect } from 'react';
 
 // Accedemos a la clave desde las variables de entorno
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
-function WeatherWidget() {
+function WeatherApp() {
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -66,4 +67,4 @@ function WeatherWidget() {
   );
 }
 
-export default WeatherWidget;
+export default WeatherApp;

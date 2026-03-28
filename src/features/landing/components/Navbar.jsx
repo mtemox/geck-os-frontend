@@ -1,5 +1,4 @@
-// src/components/landing/Navbar.jsx
-
+// src/features/landing/components/Navbar.jsx
 import React from 'react';
 // Importamos 'useNavigate' para los botones de Login/Register
 import { useNavigate } from 'react-router-dom'; 
