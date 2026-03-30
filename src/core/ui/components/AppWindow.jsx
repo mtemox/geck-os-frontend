@@ -92,11 +92,11 @@ function AppWindow({
         className={`
           flex flex-col h-full w-full overflow-hidden pointer-events-auto
           ${isMaximized ? 'rounded-none' : 'rounded-xl'}
-          bg-white dark:bg-[#1e1e2e] 
+          bg-[var(--window-bg)]
+          border border-[var(--window-border)]
           backdrop-blur-xl
           shadow-2xl shadow-black/40
-          border border-gray-200 dark:border-white/10
-          transition-all duration-300
+          transition-colors duration-300
         `}
       >
 
@@ -105,8 +105,8 @@ function AppWindow({
           className={`
             window-titlebar 
             relative h-10 flex items-center select-none cursor-default shrink-0
-            bg-gray-50 dark:bg-gray-900/50
-            border-b border-gray-200 dark:border-white/10
+            bg-[var(--window-shell)]
+            border-b border-[var(--window-border)]
             transition-colors duration-300
           `}
           onDoubleClick={onMaximize}
@@ -172,7 +172,7 @@ function AppWindow({
         </div>
 
         {/* CONTENIDO DE LA VENTANA */}
-        <div className="flex-1 min-h-0 w-full overflow-hidden relative bg-white dark:bg-[#1e1e2e]">
+        <div className="flex-1 min-h-0 w-full overflow-hidden relative bg-[var(--window-bg)] rounded-b-xl transition-colors duration-300">
           {children}
         </div>
 

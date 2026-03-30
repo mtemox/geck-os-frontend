@@ -1,3 +1,5 @@
+/* src/index.css */
+
 /* ==========================================================================
    TAILWIND V4 - CONFIGURACIÓN BASE
    ========================================================================== */
@@ -8,6 +10,24 @@
 
 /* Activar modo oscuro por clase (Tailwind v4) */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   VARIABLES DE TEMA (ACCENT COLORS)
+   ========================================================================== */
+/* Definimos el color según el atributo data-accent del HTML */
+:root[data-accent="blue"]   { --brand-400: #60a5fa; --brand-500: #3b82f6; --brand-600: #2563eb; --brand-700: #1d4ed8; }
+:root[data-accent="purple"] { --brand-400: #c084fc; --brand-500: #a855f7; --brand-600: #9333ea; --brand-700: #7e22ce; }
+:root[data-accent="pink"]   { --brand-400: #f472b6; --brand-500: #ec4899; --brand-600: #db2777; --brand-700: #be185d; }
+:root[data-accent="green"]  { --brand-400: #4ade80; --brand-500: #22c55e; --brand-600: #16a34a; --brand-700: #15803d; }
+:root[data-accent="orange"] { --brand-400: #fb923c; --brand-500: #f97316; --brand-600: #ea580c; --brand-700: #c2410c; }
+
+/* Le enseñamos a Tailwind v4 a usar estas variables */
+@theme inline {
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+}
 
 /* ==========================================================================
    ESTILOS BASE
@@ -486,3 +506,21 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
+
+/* ==========================================================================
+   TEMAS COMPLETOS DE VENTANA (MIDESK OS)
+   ========================================================================== */
+
+/* MODO CLARO (Tonos pastel muy hermosos y claros) */
+:root[data-accent="blue"]   { --window-shell: #e0f2fe; --window-bg: #f0f9ff; --window-border: #bae6fd; }
+:root[data-accent="purple"] { --window-shell: #f3e8ff; --window-bg: #faf5ff; --window-border: #e9d5ff; }
+:root[data-accent="pink"]   { --window-shell: #fce7f3; --window-bg: #fdf2f8; --window-border: #fbcfe8; }
+:root[data-accent="green"]  { --window-shell: #dcfce7; --window-bg: #f0fdf4; --window-border: #bbf7d0; }
+:root[data-accent="orange"] { --window-shell: #ffedd5; --window-bg: #fff7ed; --window-border: #fed7aa; }
+
+/* MODO OSCURO (Tonos profundos y elegantes) */
+.dark:root[data-accent="blue"]   { --window-shell: #0f172a; --window-bg: #020617; --window-border: #1e293b; }
+.dark:root[data-accent="purple"] { --window-shell: #2e1065; --window-bg: #170535; --window-border: #4c1d95; }
+.dark:root[data-accent="pink"]   { --window-shell: #831843; --window-bg: #500f29; --window-border: #9d174d; }
+.dark:root[data-accent="green"]  { --window-shell: #064e3b; --window-bg: #022c22; --window-border: #065f46; }
+.dark:root[data-accent="orange"] { --window-shell: #7c2d12; --window-bg: #431407; --window-border: #9a3412; }

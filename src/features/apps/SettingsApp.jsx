@@ -4,6 +4,7 @@ import { useFetch } from '../../core/api/useFetch';
 import { Monitor, Upload, Check, Moon, Sun, Globe, RefreshCw, Loader, RotateCcw, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useTheme } from '../../core/context/ThemeContext';
+import { useThemeStore } from '../../core/store/useThemeStore';
 
 // IMPORTANTE: Asegúrate de importar tu fondo por defecto aquí
 import defaultWallpaperImg from '../../assets/wallpapers/mi-fondo.jpg';
@@ -30,6 +31,18 @@ const SettingsApp = () => {
   const unsplashKey = import.meta.env.VITE_UNSPLASH_API_KEY;
   const token = localStorage.getItem('token');
 
+
+  const { mode, setMode, accent, setAccent } = useThemeStore();
+
+    // Array de colores disponibles
+    const colorOptions = [
+    { id: 'blue', hex: 'bg-blue-500' },
+    { id: 'purple', hex: 'bg-purple-500' },
+    { id: 'pink', hex: 'bg-pink-500' },
+    { id: 'green', hex: 'bg-green-500' },
+    { id: 'orange', hex: 'bg-orange-500' },
+    ];
+
   // 1. CARGAR PREFERENCIAS AL INICIO
   useEffect(() => {
     const loadPrefs = async () => {
@@ -49,6 +62,7 @@ const SettingsApp = () => {
         console.log("🎨 Cambiando tema a:", newTheme); // Debug
         
         // 1. Cambio visual inmediato (Contexto)
+        setMode(newTheme);
         setSpecificTheme(newTheme);
         
         // 2. Guardar en Backend Y esperar respuesta
@@ -211,7 +225,7 @@ const SettingsApp = () => {
           className={`
             w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 text-sm font-medium transition-all
             ${activeTab === 'appearance' 
-              ? 'bg-blue-500 dark:bg-purple-600 text-white shadow-md' 
+              ? 'bg-brand-500 dark:bg-brand-600 text-white shadow-md'
               : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}
           `}
         >
@@ -305,6 +319,29 @@ const SettingsApp = () => {
                                 <div className="w-full h-1 bg-blue-500 rounded-full mt-2"></div>
                             )}
                         </div>
+                        
+                        {/* Nuevo Selector de Color de Acento */}
+                        <div className="mt-8">
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Color de Acento</h2>
+                        <p className="text-sm text-slate-500 dark:text-gray-400 mb-4">Personaliza el color principal de MiDesk</p>
+                        
+                        <div className="flex gap-4">
+                            {colorOptions.map((color) => (
+                            <button
+                                key={color.id}
+                                onClick={() => setAccent(color.id)}
+                                className={`
+                                w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
+                                ${color.hex} shadow-lg hover:scale-110
+                                ${accent === color.id ? 'ring-4 ring-offset-4 ring-offset-slate-50 dark:ring-offset-[#1e1e2e] ring-current scale-110' : 'opacity-80 hover:opacity-100'}
+                                `}
+                            >
+                                {accent === color.id && <Check size={20} className="text-white drop-shadow-md" />}
+                            </button>
+                            ))}
+                        </div>
+                        </div>
+
                     </div>
                 </div>
 
