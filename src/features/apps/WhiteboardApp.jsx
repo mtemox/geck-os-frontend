@@ -95,7 +95,7 @@ const WhiteboardApp = () => {
     };
 
     return (
-        <div className="relative w-full h-full bg-white overflow-hidden flex flex-col">
+        <div className="relative w-full h-full bg-transparent overflow-hidden flex flex-col">
             
             {/* Lienzo */}
             <canvas

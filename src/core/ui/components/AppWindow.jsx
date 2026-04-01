@@ -163,7 +163,7 @@ function AppWindow({
           </div>
 
           {/* Título centrado */}
-          <span className="absolute inset-x-0 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 tracking-wide pointer-events-none">
+          <span className="absolute inset-x-0 text-center text-xs font-semibold tracking-wide pointer-events-none text-gray-700 dark:text-gray-300">
             {title}
           </span>
 

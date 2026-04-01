@@ -20,6 +20,9 @@
 :root[data-accent="pink"]   { --brand-400: #f472b6; --brand-500: #ec4899; --brand-600: #db2777; --brand-700: #be185d; }
 :root[data-accent="green"]  { --brand-400: #4ade80; --brand-500: #22c55e; --brand-600: #16a34a; --brand-700: #15803d; }
 :root[data-accent="orange"] { --brand-400: #fb923c; --brand-500: #f97316; --brand-600: #ea580c; --brand-700: #c2410c; }
+/* Usamos azul/celeste por defecto para los botones y selecciones, manteniendo buena legibilidad */
+:root[data-accent="white"]  { --brand-400: #60a5fa; --brand-500: #3b82f6; --brand-600: #2563eb; --brand-700: #1d4ed8; }
+:root[data-accent="black"]  { --brand-400: #60a5fa; --brand-500: #3b82f6; --brand-600: #2563eb; --brand-700: #1d4ed8; }
 
 /* Le enseñamos a Tailwind v4 a usar estas variables */
 @theme inline {
@@ -511,16 +514,20 @@
    TEMAS COMPLETOS DE VENTANA (MIDESK OS)
    ========================================================================== */
 
-/* MODO CLARO (Tonos pastel muy hermosos y claros) */
-:root[data-accent="blue"]   { --window-shell: #e0f2fe; --window-bg: #f0f9ff; --window-border: #bae6fd; }
-:root[data-accent="purple"] { --window-shell: #f3e8ff; --window-bg: #faf5ff; --window-border: #e9d5ff; }
-:root[data-accent="pink"]   { --window-shell: #fce7f3; --window-bg: #fdf2f8; --window-border: #fbcfe8; }
-:root[data-accent="green"]  { --window-shell: #dcfce7; --window-bg: #f0fdf4; --window-border: #bbf7d0; }
-:root[data-accent="orange"] { --window-shell: #ffedd5; --window-bg: #fff7ed; --window-border: #fed7aa; }
+/* ── MODO CLARO: titlebar Y contenido en pastel ──────────────────────────── */
+:root[data-accent="white"]  { --window-shell: #f3f4f6; --window-bg: #ffffff; --window-border: #e5e7eb; }
+:root[data-accent="black"]  { --window-shell: #374151; --window-bg: #1f2937; --window-border: #111827; }
+:root[data-accent="blue"]   { --window-shell: #bae6fd; --window-bg: #e0f2fe; --window-border: #7dd3fc; }
+:root[data-accent="purple"] { --window-shell: #e9d5ff; --window-bg: #f3e8ff; --window-border: #d8b4fe; }
+:root[data-accent="pink"]   { --window-shell: #fbcfe8; --window-bg: #fce7f3; --window-border: #f9a8d4; }
+:root[data-accent="green"]  { --window-shell: #bbf7d0; --window-bg: #dcfce7; --window-border: #86efac; }
+:root[data-accent="orange"] { --window-shell: #fed7aa; --window-bg: #ffedd5; --window-border: #fdba74; }
 
-/* MODO OSCURO (Tonos profundos y elegantes) */
-.dark:root[data-accent="blue"]   { --window-shell: #0f172a; --window-bg: #020617; --window-border: #1e293b; }
-.dark:root[data-accent="purple"] { --window-shell: #2e1065; --window-bg: #170535; --window-border: #4c1d95; }
-.dark:root[data-accent="pink"]   { --window-shell: #831843; --window-bg: #500f29; --window-border: #9d174d; }
-.dark:root[data-accent="green"]  { --window-shell: #064e3b; --window-bg: #022c22; --window-border: #065f46; }
-.dark:root[data-accent="orange"] { --window-shell: #7c2d12; --window-bg: #431407; --window-border: #9a3412; }
+/* ── MODO OSCURO: titlebar Y contenido en tono profundo ─────────────────── */
+html.dark[data-accent="white"]  { --window-shell: #d1d5db; --window-bg: #f3f4f6; --window-border: #9ca3af; }
+html.dark[data-accent="black"]  { --window-shell: #111827; --window-bg: #030712; --window-border: #1f2937; }
+html.dark[data-accent="blue"]   { --window-shell: #1e3a5f; --window-bg: #0f1e33; --window-border: #2a4a70; }
+html.dark[data-accent="purple"] { --window-shell: #3b1f6b; --window-bg: #1e0f38; --window-border: #4c2880; }
+html.dark[data-accent="pink"]   { --window-shell: #6b1f3b; --window-bg: #380f1e; --window-border: #7d2446; }
+html.dark[data-accent="green"]  { --window-shell: #1f4a2e; --window-bg: #0f2518; --window-border: #275c39; }
+html.dark[data-accent="orange"] { --window-shell: #6b3010; --window-bg: #381808; --window-border: #7d3a14; }

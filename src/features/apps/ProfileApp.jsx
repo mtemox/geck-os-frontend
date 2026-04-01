@@ -82,7 +82,7 @@ const ProfileApp = () => {
   if (!userData) return <div className="text-white p-4">Cargando perfil...</div>;
 
   return (
-    <div className="h-full flex flex-col bg-gray-900 text-white font-sans">
+    <div className="h-full flex flex-col bg-transparent text-slate-800 dark:text-white font-sans">
       
       {/* Sidebar de Navegación */}
       <div className="flex border-b border-gray-700">

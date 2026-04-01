@@ -7,7 +7,7 @@ import { useTheme } from '../../core/context/ThemeContext';
 import { useThemeStore } from '../../core/store/useThemeStore';
 
 // IMPORTANTE: Asegúrate de importar tu fondo por defecto aquí
-import defaultWallpaperImg from '../../assets/wallpapers/mi-fondo.jpg';
+import defaultWallpaperImg from '../../assets/wallpapers/wallpaperDefault1.png';
 
 const SettingsApp = () => {
   // --- ESTADOS GLOBALES ---
@@ -36,12 +36,14 @@ const SettingsApp = () => {
 
     // Array de colores disponibles
     const colorOptions = [
+    { id: 'white', hex: 'bg-white border-2 border-gray-200 dark:border-gray-600' },
+    { id: 'black', hex: 'bg-black border-2 border-gray-800' },
     { id: 'blue', hex: 'bg-blue-500' },
     { id: 'purple', hex: 'bg-purple-500' },
     { id: 'pink', hex: 'bg-pink-500' },
     { id: 'green', hex: 'bg-green-500' },
     { id: 'orange', hex: 'bg-orange-500' },
-    ];
+  ];
 
   // 1. CARGAR PREFERENCIAS AL INICIO
   useEffect(() => {
@@ -211,10 +213,10 @@ const SettingsApp = () => {
   };
 
   return (
-    <div className="flex h-full bg-slate-50 dark:bg-[#1e1e2e] text-slate-900 dark:text-white font-sans overflow-hidden transition-colors duration-300">
+    <div className="flex h-full bg-transparent text-slate-900 dark:text-white font-sans overflow-hidden transition-colors duration-300">
       
       {/* --- SIDEBAR --- */}
-      <div className="w-52 bg-white dark:bg-black/20 border-r border-slate-200 dark:border-white/10 p-3 space-y-1 flex flex-col shadow-lg">
+      <div className="w-52 bg-white/40 dark:bg-black/20 backdrop-blur-md border-r border-slate-200 dark:border-white/10 p-3 space-y-1 flex flex-col shadow-lg">
         
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-gray-500 px-3 py-2 mb-2">
           Configuración
@@ -326,19 +328,36 @@ const SettingsApp = () => {
                         <p className="text-sm text-slate-500 dark:text-gray-400 mb-4">Personaliza el color principal de MiDesk</p>
                         
                         <div className="flex gap-4">
-                            {colorOptions.map((color) => (
-                            <button
-                                key={color.id}
-                                onClick={() => setAccent(color.id)}
-                                className={`
-                                w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
-                                ${color.hex} shadow-lg hover:scale-110
-                                ${accent === color.id ? 'ring-4 ring-offset-4 ring-offset-slate-50 dark:ring-offset-[#1e1e2e] ring-current scale-110' : 'opacity-80 hover:opacity-100'}
-                                `}
-                            >
-                                {accent === color.id && <Check size={20} className="text-white drop-shadow-md" />}
-                            </button>
-                            ))}
+                            {colorOptions.map((color) => {
+                                // Desactivar Negro si el tema es Claro, desactivar Blanco si el tema es Oscuro
+                                const isConflict = (currentTheme === 'light' && color.id === 'black') || 
+                                                (currentTheme === 'dark' && color.id === 'white');
+
+                                return (
+                                    <button
+                                        key={color.id}
+                                        disabled={isConflict}
+                                        onClick={() => {
+                                            setAccent(color.id);
+                                            savePreferences({ accent: color.id });
+                                        }}
+                                        className={`
+                                            w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
+                                            ${color.hex} shadow-lg
+                                            ${isConflict ? 'opacity-20 cursor-not-allowed grayscale' : 'hover:scale-110'}
+                                            ${accent === color.id && !isConflict ? 'ring-4 ring-offset-4 ring-offset-slate-50 dark:ring-offset-[#1e1e2e] ring-current scale-110' : (!isConflict ? 'opacity-80 hover:opacity-100' : '')}
+                                        `}
+                                    >
+                                        {accent === color.id && (
+                                            <Check 
+                                                size={20} 
+                                                // Si el color elegido es blanco, el visto debe ser negro para que se note
+                                                className={`${color.id === 'white' ? 'text-black' : 'text-white'} drop-shadow-md`} 
+                                            />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                         </div>
 

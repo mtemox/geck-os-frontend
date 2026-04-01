@@ -3,18 +3,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSocket } from '../../core/context/SocketContext';
 import { 
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, 
-  List, ListOrdered, Undo, Redo, Download, Type, Palette, Sparkles, Save
+  List, ListOrdered, Undo, Redo, Download, Type, Palette, Sparkles, Save, Code
 } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useFetch } from '../../core/api/useFetch';
 import { useSearchParams } from 'react-router-dom';
 
-// AHORA RECIBE PROPS DEL SISTEMA
 function WordEditorApp({ fileId, fileName, initialContent = "" }) {
   const { socket } = useSocket();
   const [searchParams] = useSearchParams();
   const [fontSize, setFontSize] = useState('16');
-  const [textColor, setTextColor] = useState('#1e293b'); // Color por defecto más suave
+  const [textColor, setTextColor] = useState('#1e293b');
   const editorRef = useRef(null);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   
@@ -22,52 +21,45 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
 
   useEffect(() => {
     if (!socket || !fileId) return;
-
     socket.on('file-change', ({ fileId: changedId, content }) => {
       if (changedId === fileId && editorRef.current && editorRef.current.innerHTML !== content) {
-         const selection = window.getSelection();
-         editorRef.current.innerHTML = content;
+        editorRef.current.innerHTML = content;
       }
     });
-
-    return () => {
-      socket.off('file-change');
-    };
+    return () => { socket.off('file-change'); };
   }, [socket, fileId]);
 
-  // --- CARGAR CONTENIDO INICIAL ---
   useEffect(() => {
     if (editorRef.current && initialContent) {
       editorRef.current.innerHTML = initialContent;
     }
   }, []);
 
-  // Aplicar formato con execCommand
   const applyFormat = (command, value = null) => {
     document.execCommand(command, false, value);
     editorRef.current?.focus();
   };
 
-  // Cambiar tamaño de fuente
   const changeFontSize = (size) => {
     setFontSize(size);
-    applyFormat('fontSize', '7'); 
     const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const span = document.createElement('span');
-      span.style.fontSize = size + 'px';
-      range.surroundContents(span);
+    if (selection.rangeCount > 0 && !selection.isCollapsed) {
+      document.execCommand('fontSize', false, '7'); 
+      const fontTags = editorRef.current.querySelectorAll('font[size="7"]');
+      fontTags.forEach(font => {
+        font.removeAttribute('size');
+        font.style.fontSize = `${size}px`;
+      });
+      handleInput();
     }
+    editorRef.current?.focus();
   };
 
-  // Cambiar color de texto
   const changeColor = (color) => {
     setTextColor(color);
     applyFormat('foreColor', color);
   };
 
-  // Exportar a texto plano
   const exportToText = () => {
     const content = editorRef.current?.innerText || '';
     const blob = new Blob([content], { type: 'text/plain' });
@@ -79,17 +71,21 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
     URL.revokeObjectURL(url);
   };
 
-  // --- GUARDAR EN BACKEND ---
+  const insertCodeBlock = () => {
+    const codeHtml = `<pre style="background-color: #1e1e1e; color: #4ade80; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 14px; overflow-x: auto; margin: 10px 0;"><code>// Escribe tu código aquí...</code></pre><p><br></p>`;
+    document.execCommand('insertHTML', false, codeHtml);
+    handleInput();
+    editorRef.current?.focus();
+  };
+
   const handleSave = async () => {
     if (!fileId || fileId.toString().startsWith('sys-')) {
       sileo.info({title: "Este es un editor temporal. Crea un archivo real (Clic derecho → Nuevo) para guardar."});
       return;
     }
-
     const content = editorRef.current?.innerHTML || "";
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
     try {
       await fetchDataBackend(
         `${backendUrl}/items/files/${fileId}`,
@@ -97,27 +93,21 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
         "PUT",
         { Authorization: `Bearer ${token}` }
       );
-    
       window.dispatchEvent(new CustomEvent('local-file-update', { detail: { id: fileId, content } }));
-      
     } catch (error) {
       console.error("Error guardando:", error);
     }
   };
 
-  // --- FUNCIÓN IA ---
   const improveWithAI = async () => {
     const content = editorRef.current?.innerText || '';
-    
     if (!content.trim()) {
       sileo.warning({title: 'Escribe algo primero para que la IA pueda mejorarlo.'});
       return;
     }
-
     setIsAIProcessing(true);
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
     try {
       const response = await fetchDataBackend(
         `${backendUrl}/ia/improve-text`,
@@ -125,14 +115,12 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
         "POST",
         { Authorization: `Bearer ${token}` }
       );
-
       if (response && response.ok && response.improvedText) {
         if (editorRef.current) {
-            editorRef.current.innerText = response.improvedText;
-            sileo.success({title: "¡Texto mejorado por IA!"});
+          editorRef.current.innerText = response.improvedText;
+          sileo.success({title: "¡Texto mejorado por IA!"});
         }
       }
-
     } catch (error) {
       console.error('Error al mejorar con IA:', error);
     } finally {
@@ -140,178 +128,138 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
     }
   };
 
-  // EMITIR CAMBIOS AL ESCRIBIR
   const handleInput = () => {
     const content = editorRef.current.innerHTML;
-    
     if (socket && fileId) {
       const user = JSON.parse(localStorage.getItem('user'));
       const remoteUserId = searchParams.get('remote');
       const targetUserId = remoteUserId || user.id; 
-
-      socket.emit('file-change', { 
-        userId: targetUserId,
-        fileId, 
-        content 
-      });
+      socket.emit('file-change', { userId: targetUserId, fileId, content });
     }
   };
 
+  // Clases reutilizables para botones de la toolbar
+  const toolbarBtn = "p-2 hover:bg-muted rounded-lg transition-all duration-150 active:scale-95 group";
+  const toolbarIcon = "text-muted-foreground group-hover:text-foreground";
+  const toolbarSep  = "h-6 w-px bg-border mx-1";
+
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[#1e1e2e] transition-colors duration-300">
+    <div className="flex flex-col h-full bg-background transition-colors duration-300">
       
       {/* ========== BARRA DE HERRAMIENTAS ========== */}
-      <div className="flex flex-wrap items-center gap-1 px-3 py-2.5 bg-white dark:bg-black/20 border-b border-slate-200 dark:border-white/10 shadow-sm">
+      <div className="shrink-0 flex flex-wrap items-center gap-1 px-3 py-2.5 bg-card border-b border-border shadow-sm z-10">
         
-        {/* --- BOTÓN GUARDAR --- */}
+        {/* Guardar */}
         <button
-            onClick={handleSave}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 dark:bg-purple-600 hover:bg-blue-600 dark:hover:bg-purple-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 mr-2 font-medium text-sm"
-            title="Guardar en la Nube"
+          onClick={handleSave}
+          className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 mr-2 font-medium text-sm"
+          title="Guardar en la Nube"
         >
-            <Save size={16} strokeWidth={2.5} />
-            <span className="hidden sm:inline">Guardar</span>
+          <Save size={16} strokeWidth={2.5} />
+          <span className="hidden sm:inline">Guardar</span>
         </button>
 
-        {/* Deshacer/Rehacer */}
+        {/* Deshacer / Rehacer */}
         <div className="flex gap-0.5 mr-2">
-          <button 
-            onClick={() => applyFormat('undo')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Deshacer"
-          >
-            <Undo size={16} strokeWidth={2} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+          <button onClick={() => applyFormat('undo')} className={toolbarBtn} title="Deshacer">
+            <Undo size={16} strokeWidth={2} className={toolbarIcon} />
           </button>
-          <button 
-            onClick={() => applyFormat('redo')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Rehacer"
-          >
-            <Redo size={16} strokeWidth={2} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+          <button onClick={() => applyFormat('redo')} className={toolbarBtn} title="Rehacer">
+            <Redo size={16} strokeWidth={2} className={toolbarIcon} />
           </button>
         </div>
 
-        {/* Separador */}
-        <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
+        <div className={toolbarSep}></div>
 
-        {/* Formato Básico */}
+        {/* Formato básico */}
         <div className="flex gap-0.5 mr-2">
-          <button 
-            onClick={() => applyFormat('bold')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Negrita"
-          >
-            <Bold size={16} strokeWidth={2.5} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+          <button onClick={() => applyFormat('bold')} className={toolbarBtn} title="Negrita">
+            <Bold size={16} strokeWidth={2.5} className={toolbarIcon} />
           </button>
-          <button 
-            onClick={() => applyFormat('italic')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Cursiva"
-          >
-            <Italic size={16} strokeWidth={2.5} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+          <button onClick={() => applyFormat('italic')} className={toolbarBtn} title="Cursiva">
+            <Italic size={16} strokeWidth={2.5} className={toolbarIcon} />
           </button>
-          <button 
-            onClick={() => applyFormat('underline')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Subrayado"
-          >
-            <Underline size={16} strokeWidth={2.5} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+          <button onClick={() => applyFormat('underline')} className={toolbarBtn} title="Subrayado">
+            <Underline size={16} strokeWidth={2.5} className={toolbarIcon} />
           </button>
         </div>
 
-        {/* Separador */}
-        <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
+        <div className={toolbarSep}></div>
 
-        {/* Fuente y Color */}
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-lg mr-2 border border-slate-200 dark:border-white/10">
-          <Type size={15} className="text-slate-500 dark:text-gray-400" />
+        {/* Fuente y color */}
+        <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-lg mr-2 border border-border">
+          <Type size={15} className="text-muted-foreground" />
           <select 
             value={fontSize} 
             onChange={(e) => changeFontSize(e.target.value)} 
-            className="bg-transparent text-slate-800 dark:text-white text-sm font-medium focus:outline-none cursor-pointer hover:text-blue-500 dark:hover:text-purple-400 transition-colors"
+            className="bg-transparent text-foreground text-sm font-medium focus:outline-none cursor-pointer hover:text-brand-500 transition-colors"
             style={{ width: '45px' }}
           >
-            <option value="12" className="bg-white dark:bg-gray-800">12</option>
-            <option value="16" className="bg-white dark:bg-gray-800">16</option>
-            <option value="20" className="bg-white dark:bg-gray-800">20</option>
-            <option value="24" className="bg-white dark:bg-gray-800">24</option>
-            <option value="28" className="bg-white dark:bg-gray-800">28</option>
-            <option value="32" className="bg-white dark:bg-gray-800">32</option>
+            {['12','16','20','24','28','32'].map(s => (
+              <option key={s} value={s} className="bg-card text-foreground">{s}</option>
+            ))}
           </select>
           
-          <div className="h-4 w-px bg-slate-300 dark:bg-white/20 mx-1"></div>
+          <div className="h-4 w-px bg-border mx-1"></div>
           
-          <Palette size={15} className="text-slate-500 dark:text-gray-400" />
-          <div className="relative">
-            <input 
-              type="color" 
-              value={textColor} 
-              onChange={(e) => changeColor(e.target.value)} 
-              className="w-7 h-7 cursor-pointer rounded-md border-2 border-slate-300 dark:border-white/20 hover:border-blue-500 dark:hover:border-purple-500 transition-colors"
-              title="Color de texto"
-            />
-          </div>
+          <Palette size={15} className="text-muted-foreground" />
+          <input 
+            type="color" 
+            value={textColor} 
+            onChange={(e) => changeColor(e.target.value)} 
+            className="w-7 h-7 cursor-pointer rounded-md border-2 border-border hover:border-brand-500 transition-colors"
+            title="Color de texto"
+          />
         </div>
 
-        {/* Separador */}
-        <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
+        <div className={toolbarSep}></div>
 
         {/* Alineación */}
         <div className="flex gap-0.5 mr-2">
-          <button 
-            onClick={() => applyFormat('justifyLeft')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Alinear izquierda"
-          >
-            <AlignLeft size={16} strokeWidth={2} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+          <button onClick={() => applyFormat('justifyLeft')}   className={toolbarBtn} title="Izquierda">
+            <AlignLeft   size={16} strokeWidth={2} className={toolbarIcon} />
           </button>
-          <button 
-            onClick={() => applyFormat('justifyCenter')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Centrar"
-          >
-            <AlignCenter size={16} strokeWidth={2} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+          <button onClick={() => applyFormat('justifyCenter')} className={toolbarBtn} title="Centrar">
+            <AlignCenter size={16} strokeWidth={2} className={toolbarIcon} />
           </button>
-          <button 
-            onClick={() => applyFormat('justifyRight')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Alinear derecha"
-          >
-            <AlignRight size={16} strokeWidth={2} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+          <button onClick={() => applyFormat('justifyRight')}  className={toolbarBtn} title="Derecha">
+            <AlignRight  size={16} strokeWidth={2} className={toolbarIcon} />
           </button>
         </div>
 
-        {/* Separador */}
-        <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
+        <div className={toolbarSep}></div>
 
         {/* Listas */}
         <div className="flex gap-0.5 mr-2">
-          <button 
-            onClick={() => applyFormat('insertUnorderedList')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Lista con viñetas"
-          >
-            <List size={16} strokeWidth={2} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+          <button onClick={() => applyFormat('insertUnorderedList')} className={toolbarBtn} title="Lista con viñetas">
+            <List        size={16} strokeWidth={2} className={toolbarIcon} />
           </button>
+          <button onClick={() => applyFormat('insertOrderedList')}   className={toolbarBtn} title="Lista numerada">
+            <ListOrdered size={16} strokeWidth={2} className={toolbarIcon} />
+          </button>
+        </div>
+
+        {/* Bloque de código */}
+        <div className="flex gap-0.5 mr-2">
           <button 
-            onClick={() => applyFormat('insertOrderedList')} 
-            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all duration-150 active:scale-95 group"
-            title="Lista numerada"
+            onClick={insertCodeBlock} 
+            className={`${toolbarBtn} border border-transparent hover:border-border`}
+            title="Insertar bloque de código"
           >
-            <ListOrdered size={16} strokeWidth={2} className="text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-white" />
+            <Code size={16} strokeWidth={2.5} className={toolbarIcon} />
           </button>
         </div>
 
         <div className="flex-1"></div>
 
-        {/* Botón de IA */}
+        {/* Botón IA */}
         <button
           onClick={improveWithAI}
           disabled={isAIProcessing}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm shadow-md transition-all duration-200 mr-2
             ${isAIProcessing 
-              ? 'bg-gradient-to-r from-purple-400/50 to-pink-400/50 dark:from-purple-600/50 dark:to-pink-600/50 text-slate-400 dark:text-gray-500 cursor-wait' 
-              : 'bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600 hover:from-purple-600 hover:to-pink-600 dark:hover:from-purple-700 dark:hover:to-pink-700 text-white hover:scale-105 shadow-purple-500/30 dark:shadow-purple-500/20'
+              ? 'bg-brand-500/40 text-muted-foreground cursor-wait' 
+              : 'bg-gradient-to-r from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-700 text-white hover:scale-105 shadow-brand-500/30'
             }`}
           title="Mejorar con IA"
         >
@@ -322,46 +270,45 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
         {/* Exportar */}
         <button 
           onClick={exportToText} 
-          className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-all duration-150 active:scale-95 group border border-transparent hover:border-emerald-200 dark:hover:border-emerald-500/30" 
+          className="p-2 hover:bg-emerald-500/10 rounded-lg transition-all duration-150 active:scale-95 group border border-transparent hover:border-emerald-500/30" 
           title="Descargar como TXT"
         >
-          <Download size={16} strokeWidth={2.5} className="text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300" />
+          <Download size={16} strokeWidth={2.5} className="text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-500" />
         </button>
       </div>
 
       {/* ========== ÁREA DE EDICIÓN ========== */}
-      <div
-        ref={editorRef}
-        contentEditable
-        onInput={handleInput}
-        className="flex-1 p-8 overflow-auto focus:outline-none bg-white dark:bg-[#1a1a2e] text-slate-800 dark:text-gray-200 custom-scrollbar transition-colors duration-300"
-        style={{ 
-          minHeight: '100%', 
-          fontSize: `${fontSize}px`, 
-          lineHeight: '1.8',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-        }}
-        suppressContentEditableWarning
-      >
-        {/* El contenido inicial se carga vía useEffect */}
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-background transition-colors duration-300">
+        <div
+          ref={editorRef}
+          contentEditable
+          onInput={handleInput}
+          className="p-8 focus:outline-none text-foreground min-h-full"
+          style={{ 
+            fontSize: '16px', 
+            lineHeight: '1.8',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+          }}
+          suppressContentEditableWarning
+        />
       </div>
       
       {/* ========== BARRA DE ESTADO ========== */}
-      <div className="px-4 py-2 bg-slate-50 dark:bg-black/20 border-t border-slate-200 dark:border-white/10 text-xs text-slate-500 dark:text-gray-500 flex justify-between items-center">
+      <div className="px-4 py-2 bg-card border-t border-border text-xs text-muted-foreground flex justify-between items-center">
         <span className="flex items-center gap-2">
           {fileId && !fileId.toString().startsWith('sys-') ? (
             <>
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="font-medium text-slate-700 dark:text-gray-300">Editando: {fileName}</span>
+              <span className="font-medium text-foreground">Editando: {fileName}</span>
             </>
           ) : (
             <>
               <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-              <span className="text-amber-700 dark:text-amber-400">Modo borrador (Sin guardar)</span>
+              <span className="text-amber-600 dark:text-amber-400">Modo borrador (Sin guardar)</span>
             </>
           )}
         </span>
-        <span className="text-slate-400 dark:text-gray-600">
+        <span className="text-muted-foreground/60">
           {editorRef.current?.innerText?.length || 0} caracteres
         </span>
       </div>

@@ -40,7 +40,7 @@ import newsIcon from '../../../assets/icons/news.png';
 import noteIcon from '../../../assets/icons/note.png'; 
 import wallpaperIcon from '../../../assets/icons/wallpaper.png'; 
 import backgroundImageUrl from '../../../assets/wallpapers/mi-fondo.jpg';
-import defaultWallpaper from '../../../assets/wallpapers/mi-fondo.jpg';
+import defaultWallpaper from '../../../assets/wallpapers/wallpaperDefault1.png';
 import folderIcon from '../../../assets/icons/folder.png';
 import computerIcon from '../../../assets/icons/desktop.png';
 import linkIcon from '../../../assets/icons/link.png'; 
@@ -50,6 +50,8 @@ import shopIcon from '../../../assets/icons/shop.png';   // <--- O usa computerI
 import fileIcon from '../../../assets/icons/file.png';
 import whiteBoard from '../../../assets/icons/blackboard.png';
 
+// Store
+import { useThemeStore } from '../../../core/store/useThemeStore';
 
 // --- SIMULACIÓN DE DATOS DEL BACKEND ---
 // (En el futuro, esto vendrá de una API real)
@@ -208,6 +210,7 @@ const getIconImage = (type) => {
   });
 
 function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMinimizeWindow, onMaximizeWindow, onDragStop }) {
+
   // Archivos
   const fileInputRef = useRef(null);
   
@@ -217,7 +220,9 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
   // PASO 2: Crear el estado para los íconos
   const [icons, setIcons] = useState([])
 
-  const [currentWallpaper, setCurrentWallpaper] = useState(defaultWallpaper);
+  const { wallpaper, setWallpaper, setAccent } = useThemeStore();
+  // Si hay un fondo guardado lo usamos, si está vacío usamos el predeterminado
+  const currentWallpaper = wallpaper || defaultWallpaper;
   
   // Socket
   const { socket } = useSocket();
@@ -335,10 +340,14 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
             if (data.preferences.theme) {
                 setSpecificTheme(data.preferences.theme);
             }
+            if (data.preferences.accent) {
+                setAccent(data.preferences.accent); // Carga el color al iniciar
+            }
+            // CAMBIAR AQUÍ
             if (data.preferences.wallpaperUrl) {
-                setCurrentWallpaper(data.preferences.wallpaperUrl);
+                setWallpaper(data.preferences.wallpaperUrl);
             } else {
-                setCurrentWallpaper(defaultWallpaper);
+                setWallpaper('');
             }
         }
 
@@ -454,6 +463,9 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
           if (prefs.theme) {
               setSpecificTheme(prefs.theme);
           }
+          if (prefs.accent) {
+              setAccent(prefs.accent); // Actualiza en tiempo real si abres otra pestaña
+          }
 
           // 2. ACTUALIZAR WALLPAPER (CORREGIDO)
           // Si viene definido, verificamos si es cadena vacía.
@@ -463,7 +475,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
                               ? prefs.wallpaperUrl 
                               : defaultWallpaper; // 👈 Tu import del fondo .jpg
               
-              setCurrentWallpaper(bgToUse);
+              setWallpaper(prefs.wallpaperUrl);
           }
       });
 
@@ -521,14 +533,16 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
       try {
           const data = await fetchDataBackend(`${backendUrl}/users/profile`, null, "GET", { Authorization: `Bearer ${token}` });
           if (data && data.preferences && data.preferences.wallpaperUrl) {
-              setCurrentWallpaper(data.preferences.wallpaperUrl);
+              setWallpaper(data.preferences.wallpaperUrl);
           }
       } catch (e) { console.error(e); }
    };
    fetchWallpaper();
 
    const handleWallpaperChange = (e) => {
-       if (e.detail) setCurrentWallpaper(e.detail);
+       if (e.detail !== undefined) {
+           setWallpaper(e.detail === defaultWallpaper ? '' : e.detail);
+       }
    };
    
    // 👇 NUEVO: Listener para tema
