@@ -23,15 +23,16 @@ import CodeEditorApp from '../../apps/CodeEditorApp';
 import WhiteboardApp from '../../apps/WhiteboardApp';
 import WordEditorApp from '../../apps/WordEditorApp';
 import ProfileApp from '../../apps/ProfileApp';
-import WeatherApp from '../../apps/WeatherApp';
 import NewsApp from '../../apps/NewsApp';
 import WallpaperApp from '../../apps/WallpaperApp';
+import ComputerApp from '../../apps/ComputerApp'; 
 import RecommendationsApp from '../../apps/RecommendationsApp';
 import CodeComparator from '../../apps/DiffEditorApp';
 import SettingsApp from '../../apps/SettingsApp';
 import StoragePlans from '../../store/StoragePlans'; // <--- IMPORTAR EL COMPONENTE NUEVO
 import CalendarWidget from '../../widgets/CalendarWidget';
 import PostItWidget from '../../widgets/PostItWidget';
+import WeatherWidget from '../../widgets/WeatherWidget';
 
 // Imágenes e Íconos
 import codeIcon from '../../../assets/icons/code.png'; 
@@ -85,12 +86,11 @@ const systemAppsBase = [
   },
   { _id: 'sys-7', nombre: 'Bloc de Notas', imgSrc: noteIcon, type: 'app', appId: 'notepad' },
   
-  { _id: 'sys-6', nombre: 'Mi Equipo', imgSrc: computerIcon, type: 'computer' },
+  { _id: 'sys-6', nombre: 'Mi Equipo', imgSrc: computerIcon, type: 'computer', appId: 'computer', windowOptions: { defaultWidth: 850, defaultHeight: 550 } },
   { _id: 'sys-5', nombre: 'VS Code (Sim)', imgSrc: codeIcon, type: 'app', appId: 'codeEditor' },
   { _id: 'sys-4', nombre: 'Word Pro', imgSrc: wordIcon, type: 'app', appId: 'wordprocessor' },
   { _id: 'sys-3', nombre: 'Fondos', imgSrc: wallpaperIcon, type: 'app', appId: 'wallpaper' },
   { _id: 'sys-2', nombre: 'Noticias', imgSrc: newsIcon, type: 'app', appId: 'news' },
-  { _id: 'sys-1', nombre: 'Clima', imgSrc: weatherIcon, type: 'app', appId: 'weather' },
 ];
 
 // --- HELPER: Mapear Tipo de BD a Imagen ---
@@ -204,12 +204,15 @@ const getIconImage = (type) => {
       case 'whiteboard':
         return <WhiteboardApp />;
 
+      case 'computer':
+        return <ComputerApp onOpenItem={onOpenWindow} />;
+
       default:
         return <div className="text-white p-4">App no encontrada</div>;
       }
   });
 
-function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMinimizeWindow, onMaximizeWindow, onDragStop }) {
+function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMinimizeWindow, onMaximizeWindow, onDragStop, taskbarPosition }) {
 
   // Archivos
   const fileInputRef = useRef(null);
@@ -261,20 +264,18 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
   // --- FUNCIÓN PARA CALCULAR POSICIONES SEGÚN RESOLUCIÓN ---
   const calculateSystemPositions = () => {
     const MARGIN_X = 10; 
-    const MARGIN_Y = 10;
-    // ÚNIFICAMOS MEDIDAS CON EL EFECTO DE AUTO-ARRANGE
+    const TASKBAR_HEIGHT = 55; // 👈 1. Primero declaramos el alto
+    const MARGIN_Y = taskbarPosition === 'top' ? TASKBAR_HEIGHT + 10 : 10; // 👈 2. Luego lo usamos para el margen
+    
     const CELL_WIDTH = 90; 
     const CELL_HEIGHT = 100; 
-    const TASKBAR_HEIGHT = 55; // Ajustado a 60 para coincidir
     
     const availableHeight = window.innerHeight - TASKBAR_HEIGHT - MARGIN_Y;
     
-    // Calculamos filas disponibles (Mínimo 1)
     let maxRows = Math.floor(availableHeight / CELL_HEIGHT);
     if (maxRows < 1) maxRows = 1;
 
     return systemAppsBase.map((app, index) => {
-      // Lógica Vertical (Columna 1 llena, luego Columna 2...)
       const col = Math.floor(index / maxRows);
       const row = index % maxRows;
 
@@ -797,13 +798,21 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     // Determinamos el tipo según el modo del modal
     const itemType = modalMode === 'link' ? 'link' : 'folder';
 
+    // Centro de la pantalla
+    const centerX = Math.floor(window.innerWidth / 2) - 40; 
+    const centerY = Math.floor(window.innerHeight / 2) - 50;
+
+    // Se usa donde el usuario hizo clic derecho, o el centro si no existe 
+    const posX = menuState.x > 0 ? menuState.x - 40 : centerX;
+    const posY = menuState.y > 0 ? menuState.y - 50 : centerY;
+
     // Preparamos datos para el Backend (Endpoint: POST /items)
     const newItemData = {
         type: itemType,
         name: formData.name,
-        url: formData.url || null, // Solo si es link
-        x: 100, // Podrías usar Math.random() para variar la posición
-        y: 100
+        url: formData.url || null,
+        x: posX,
+        y: posY
     };
 
     try {
@@ -815,19 +824,6 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         );
 
         if (response && response.ok) {
-            // const createdItem = response.item;
-            
-            // Formateamos para el UI
-            // const newIconUI = {
-            //     _id: createdItem._id,
-            //     nombre: createdItem.name,
-            //     imgSrc: getIconImage(createdItem.type), // Usa tu helper existente
-            //     type: createdItem.type,
-            //     url: createdItem.url,
-            //     windowOptions: { defaultWidth: 500, defaultHeight: 400 } // Opcional
-            // };
-
-            // setIcons(prev => [...prev, newIconUI]);
             closeModal();
             sileo.success({title: itemType === 'folder' ? "Carpeta creada" : "Enlace creado"});
         }
@@ -878,8 +874,8 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     // Usamos las coordenadas del menú contextual (donde hiciste clic)
     // O un default si no están disponibles
-    const posX = menuState.x > 0 ? menuState.x - 50 : 100;
-    const posY = menuState.y > 0 ? menuState.y - 50 : 100;
+    const posX = menuState.x > 0 ? menuState.x - 40 : Math.floor(window.innerWidth / 2) - 40;
+    const posY = menuState.y > 0 ? menuState.y - 50 : Math.floor(window.innerHeight / 2) - 50;
 
     const newItemData = {
         type: 'note',        // Tipo Nota
@@ -927,8 +923,8 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     // Posición donde hiciste clic
-    const posX = menuState.x > 0 ? menuState.x - 50 : 120;
-    const posY = menuState.y > 0 ? menuState.y - 50 : 120;
+    const posX = menuState.x > 0 ? menuState.x - 40 : Math.floor(window.innerWidth / 2) - 40;
+    const posY = menuState.y > 0 ? menuState.y - 50 : Math.floor(window.innerHeight / 2) - 50;
 
     const newItemData = {
         type: 'code',           // <--- TIPO CODE
@@ -1034,8 +1030,6 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
   // Para no esconder íconos
 
-  useEffect(() => {
-  // Función auxiliar para guardar en backend sin bloquear la UI
   const saveLayoutToBackend = async (changedItems) => {
       if (changedItems.length === 0) return;
 
@@ -1069,27 +1063,24 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     const CELL_W = 90; 
     const CELL_H = 100; 
     const MARGIN_X = 10;
-    const MARGIN_Y = 10;
-    const TASKBAR_HEIGHT = 55; 
+    const TASKBAR_HEIGHT = 55; // 👈 1. Primero declaramos el alto
+    const MARGIN_Y = taskbarPosition === 'top' ? TASKBAR_HEIGHT + 10 : 10; // 👈 2. Luego lo usamos aquí
 
-    const availableHeight = window.innerHeight - TASKBAR_HEIGHT;
+    // 💡 También restamos MARGIN_Y aquí para que no haya problemas al hacer zoom
+    const availableHeight = window.innerHeight - TASKBAR_HEIGHT - MARGIN_Y;
     let maxRows = Math.floor(availableHeight / CELL_H);
     if (maxRows < 1) maxRows = 1;
 
     setIcons(prevIcons => {
-      // 1. Ordenamos por columnas visuales (Izquierda a Derecha, luego Arriba a Abajo)
-      // Esto asegura que al hacer Zoom Out, los íconos mantengan su orden relativo
       const sortedIcons = [...prevIcons].sort((a, b) => {
-        // Tolerancia de columna (la mitad de una celda)
         if (Math.abs(a.position.x - b.position.x) > (CELL_W / 2)) {
             return a.position.x - b.position.x;
         }
         return a.position.y - b.position.y;
       });
 
-      const changedIcons = []; // Aquí guardaremos los que se muevan
+      const changedIcons = []; 
 
-      // 2. Recalcular
       const arrangedIcons = sortedIcons.map((icon, index) => {
         const col = Math.floor(index / maxRows);
         const row = index % maxRows;
@@ -1097,13 +1088,9 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         const newX = MARGIN_X + (col * CELL_W);
         const newY = MARGIN_Y + (row * CELL_H);
 
-        // Verificamos si cambió la posición
-        // (Usamos un margen de error pequeño de 1px por si acaso)
         if (Math.abs(icon.position.x - newX) > 1 || Math.abs(icon.position.y - newY) > 1) {
             const updatedIcon = { ...icon, position: { x: newX, y: newY } };
             
-            // Solo guardamos si NO es un ícono de sistema (sys-...)
-            // Los de sistema no se guardan en BD, así que no enviamos update
             if (!icon._id.toString().startsWith('sys-')) {
                 changedIcons.push(updatedIcon);
             }
@@ -1112,7 +1099,6 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         return icon;
       });
 
-      // 3. Disparar guardado (Side Effect seguro)
       if (changedIcons.length > 0) {
           saveLayoutToBackend(changedIcons);
       }
@@ -1121,6 +1107,8 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     });
   };
 
+  useEffect(() => {
+  // Función auxiliar para guardar en backend sin bloquear la UI
   let resizeTimer;
   const onResize = () => {
     clearTimeout(resizeTimer);
@@ -1135,6 +1123,16 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
   return () => window.removeEventListener('resize', onResize);
 
 }, []);
+
+useEffect(() => {
+    autoArrangeIcons();
+  }, [taskbarPosition]);
+
+const handleSortDesktop = () => {
+    handleCloseMenu();
+    autoArrangeIcons();
+    sileo.success({title: "Escritorio organizado"});
+  };
 
   // 2. FUNCIÓN QUE ABRE EL SELECTOR DE ARCHIVOS
   const triggerFileUpload = () => {
@@ -1153,8 +1151,8 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    const posX = menuState.x > 0 ? menuState.x - 50 : 100;
-    const posY = menuState.y > 0 ? menuState.y - 50 : 100;
+    const posX = menuState.x > 0 ? menuState.x - 40 : Math.floor(window.innerWidth / 2) - 40;
+    const posY = menuState.y > 0 ? menuState.y - 50 : Math.floor(window.innerHeight / 2) - 50;
 
     const formData = new FormData();
     formData.append('archivo', file);
@@ -1207,6 +1205,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
       <CalendarWidget />
       <PostItWidget />
+      <WeatherWidget />
 
       {/* BARRA DE AVISO (Solo si es remoto) */}
       {/* BARRA DE AVISO (Solo si es remoto) */}
@@ -1252,6 +1251,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         onDelete={handleDeleteItem}
         onShare={handleOpenShareModal}
         onUploadFile={triggerFileUpload}
+        onSort={handleSortDesktop}
       />
 
       <Modal 
@@ -1287,6 +1287,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
       {/* Ventanas */}
       <div className="fixed inset-0 z-20 pointer-events-none">
+        <div id="desktop-bounds" className="absolute pointer-events-none" style={{ top: 0, left: '-5000px', right: '-5000px', bottom: '-5000px' }} />
         {openWindows.map(win => (
             <div key={win.id} style={{ display: win.isMinimized ? 'none' : 'block' }}>
               <AppWindow 

@@ -57,6 +57,8 @@ function AppWindow({
       disableDragging={isMaximized}
       enableResizing={!isMaximized}
 
+      bounds="#desktop-bounds"
+
       default={{
         x: defaultX,
         y: defaultY,

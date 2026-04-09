@@ -6,30 +6,23 @@ import { User, Lock, Save } from 'lucide-react';
 import { sileo } from 'sileo';
 
 const ProfileApp = () => {
-  const [activeTab, setActiveTab] = useState('info'); // 'info' o 'security'
+  const [activeTab, setActiveTab] = useState('info');
   const fetchDataBackend = useFetch();
   const [userData, setUserData] = useState(null);
 
-  // Forms
   const { register: registerInfo, handleSubmit: submitInfo, setValue } = useForm();
   const { register: registerPass, handleSubmit: submitPass, reset: resetPass } = useForm();
 
-  // Cargar datos al abrir
   useEffect(() => {
     const loadProfile = async () => {
       const token = localStorage.getItem('token');
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      
       const data = await fetchDataBackend(
-        `${backendUrl}/users/profile`, 
-        null, 
-        "GET", 
+        `${backendUrl}/users/profile`, null, "GET",
         { Authorization: `Bearer ${token}` }
       );
-      
       if (data) {
         setUserData(data);
-        // Pre-llenar el formulario
         setValue('nombre', data.nombre);
         setValue('apellido', data.apellido);
         setValue('email', data.email);
@@ -40,97 +33,103 @@ const ProfileApp = () => {
     loadProfile();
   }, []);
 
-  // Actualizar Información
   const onUpdateInfo = async (formData) => {
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    
     await fetchDataBackend(
-      `${backendUrl}/users/profile/${userData._id}`,
-      formData,
-      "PUT",
+      `${backendUrl}/users/profile/${userData._id}`, formData, "PUT",
       { Authorization: `Bearer ${token}` }
     );
-    // Actualizamos el nombre en localStorage para el Menú Inicio
     const storedUser = JSON.parse(localStorage.getItem('user'));
     localStorage.setItem('user', JSON.stringify({ ...storedUser, nombre: formData.nombre }));
   };
 
-  // Actualizar Contraseña
   const onUpdatePass = async (formData) => {
     if (formData.passwordnuevo !== formData.confirmPassword) {
-      sileo.error({title: "Las contraseñas nuevas no coinciden"});
+      sileo.error({ title: "Las contraseñas nuevas no coinciden" });
       return;
     }
-
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
     const response = await fetchDataBackend(
       `${backendUrl}/api/users/update-password`,
-      {
-        passwordactual: formData.passwordactual,
-        passwordnuevo: formData.passwordnuevo
-      },
+      { passwordactual: formData.passwordactual, passwordnuevo: formData.passwordnuevo },
       "PUT",
       { Authorization: `Bearer ${token}` }
     );
-
     if (response) resetPass();
   };
 
-  if (!userData) return <div className="text-white p-4">Cargando perfil...</div>;
+  if (!userData) return (
+    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+      Cargando perfil...
+    </div>
+  );
+
+  // Clases reutilizables para inputs
+  const inputClass = "w-full bg-background border border-border rounded p-2 text-foreground placeholder:text-muted-foreground focus:border-brand-500 outline-none transition-colors";
+  const inputDisabledClass = "w-full bg-muted border border-border rounded p-2 text-muted-foreground cursor-not-allowed";
+  const labelClass = "block text-xs text-muted-foreground mb-1";
 
   return (
-    <div className="h-full flex flex-col bg-transparent text-slate-800 dark:text-white font-sans">
-      
-      {/* Sidebar de Navegación */}
-      <div className="flex border-b border-gray-700">
-        <button 
+    <div className="h-full flex flex-col bg-card text-foreground font-sans">
+
+      {/* Tabs de Navegación */}
+      <div className="flex border-b border-border shrink-0">
+        <button
           onClick={() => setActiveTab('info')}
-          className={`flex-1 p-3 flex items-center justify-center gap-2 transition-colors ${activeTab === 'info' ? 'bg-purple-600' : 'hover:bg-gray-800'}`}
+          className={`flex-1 p-3 flex items-center justify-center gap-2 text-sm transition-colors
+            ${activeTab === 'info'
+              ? 'bg-brand-500 text-white'
+              : 'text-muted-foreground hover:bg-muted'}`}
         >
-          <User size={18} /> Mis Datos
+          <User size={16} /> Mis Datos
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('security')}
-          className={`flex-1 p-3 flex items-center justify-center gap-2 transition-colors ${activeTab === 'security' ? 'bg-purple-600' : 'hover:bg-gray-800'}`}
+          className={`flex-1 p-3 flex items-center justify-center gap-2 text-sm transition-colors
+            ${activeTab === 'security'
+              ? 'bg-brand-500 text-white'
+              : 'text-muted-foreground hover:bg-muted'}`}
         >
-          <Lock size={18} /> Seguridad
+          <Lock size={16} /> Seguridad
         </button>
       </div>
 
       {/* Contenido */}
-      <div className="flex-1 p-6 overflow-y-auto">
-        
+      <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+
         {/* --- FORMULARIO DE DATOS --- */}
         {activeTab === 'info' && (
           <form onSubmit={submitInfo(onUpdateInfo)} className="space-y-4 max-w-md mx-auto">
             <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-xs text-gray-400 mb-1">Nombre</label>
-                    <input {...registerInfo('nombre')} className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:border-purple-500 outline-none" />
-                </div>
-                <div>
-                    <label className="block text-xs text-gray-400 mb-1">Apellido</label>
-                    <input {...registerInfo('apellido')} className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:border-purple-500 outline-none" />
-                </div>
+              <div>
+                <label className={labelClass}>Nombre</label>
+                <input {...registerInfo('nombre')} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Apellido</label>
+                <input {...registerInfo('apellido')} className={inputClass} />
+              </div>
             </div>
             <div>
-                <label className="block text-xs text-gray-400 mb-1">Email (No editable)</label>
-                <input {...registerInfo('email')} disabled className="w-full bg-gray-800/50 border border-gray-700 rounded p-2 text-gray-500 cursor-not-allowed" />
+              <label className={labelClass}>Email (No editable)</label>
+              <input {...registerInfo('email')} disabled className={inputDisabledClass} />
             </div>
             <div>
-                <label className="block text-xs text-gray-400 mb-1">Celular</label>
-                <input {...registerInfo('celular')} className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:border-purple-500 outline-none" />
+              <label className={labelClass}>Celular</label>
+              <input {...registerInfo('celular')} className={inputClass} />
             </div>
             <div>
-                <label className="block text-xs text-gray-400 mb-1">Dirección</label>
-                <input {...registerInfo('direccion')} className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:border-purple-500 outline-none" />
+              <label className={labelClass}>Dirección</label>
+              <input {...registerInfo('direccion')} className={inputClass} />
             </div>
-            
-            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded flex items-center justify-center gap-2 mt-4">
-                <Save size={18} /> Guardar Cambios
+
+            <button
+              type="submit"
+              className="w-full bg-brand-500 hover:bg-brand-600 text-white py-2 rounded flex items-center justify-center gap-2 mt-4 transition-colors"
+            >
+              <Save size={16} /> Guardar Cambios
             </button>
           </form>
         )}
@@ -138,28 +137,31 @@ const ProfileApp = () => {
         {/* --- FORMULARIO DE CONTRASEÑA --- */}
         {activeTab === 'security' && (
           <form onSubmit={submitPass(onUpdatePass)} className="space-y-4 max-w-md mx-auto">
-             <div className="p-3 bg-yellow-900/30 border border-yellow-700/50 rounded text-sm text-yellow-200 mb-4">
-                Asegúrate de usar una contraseña segura.
-             </div>
+            <div className="p-3 bg-destructive/10 border border-destructive/30 rounded text-sm text-destructive mb-4">
+              Asegúrate de usar una contraseña segura.
+            </div>
 
-             <div>
-                <label className="block text-xs text-gray-400 mb-1">Contraseña Actual</label>
-                <input type="password" {...registerPass('passwordactual', {required: true})} className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:border-purple-500 outline-none" />
-             </div>
-             
-             <hr className="border-gray-700 my-4"/>
+            <div>
+              <label className={labelClass}>Contraseña Actual</label>
+              <input type="password" {...registerPass('passwordactual', { required: true })} className={inputClass} />
+            </div>
 
-             <div>
-                <label className="block text-xs text-gray-400 mb-1">Nueva Contraseña</label>
-                <input type="password" {...registerPass('passwordnuevo', {required: true, minLength: 6})} className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:border-purple-500 outline-none" />
-             </div>
-             <div>
-                <label className="block text-xs text-gray-400 mb-1">Confirmar Nueva Contraseña</label>
-                <input type="password" {...registerPass('confirmPassword', {required: true})} className="w-full bg-gray-800 border border-gray-700 rounded p-2 focus:border-purple-500 outline-none" />
-             </div>
+            <hr className="border-border my-4" />
 
-             <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded flex items-center justify-center gap-2 mt-4">
-                <Lock size={18} /> Actualizar Contraseña
+            <div>
+              <label className={labelClass}>Nueva Contraseña</label>
+              <input type="password" {...registerPass('passwordnuevo', { required: true, minLength: 6 })} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Confirmar Nueva Contraseña</label>
+              <input type="password" {...registerPass('confirmPassword', { required: true })} className={inputClass} />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-destructive hover:opacity-90 text-white py-2 rounded flex items-center justify-center gap-2 mt-4 transition-opacity"
+            >
+              <Lock size={16} /> Actualizar Contraseña
             </button>
           </form>
         )}

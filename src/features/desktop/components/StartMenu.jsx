@@ -6,7 +6,7 @@ import { useSocket } from '../../../core/context/SocketContext';
 import { useFetch } from '../../../core/api/useFetch';
 import { sileo } from 'sileo';
 
-const StartMenu = ({ isVisible, onClose, onOpenApp }) => {
+const StartMenu = ({ isVisible, onClose, onOpenApp, position = 'bottom' }) => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState({ nombre: 'Estudiante', email: '' });
   const { connectToSession } = useSocket();
@@ -62,13 +62,16 @@ const StartMenu = ({ isVisible, onClose, onOpenApp }) => {
   if (!isVisible) return null;
 
   return (
-    <div className="
-      fixed bottom-12 left-2 z-50 w-80 md:w-96
+    <div className={`
+      fixed left-2 z-50 w-80 md:w-96
       bg-card border border-border
       backdrop-blur-2xl rounded-xl shadow-2xl
-      text-foreground overflow-hidden animate-scale-in origin-bottom-left
-      transition-colors duration-300
-    ">
+      text-foreground overflow-hidden transition-colors duration-300
+      /* 👇 Ajuste mágico de posición y animación 👇 */
+      ${position === 'bottom' 
+          ? 'bottom-12 origin-bottom-left animate-scale-in' 
+          : 'top-12 origin-top-left animate-scale-in'}
+    `}>
 
       {/* ── CABECERA ─────────────────────────────────────────────────────── */}
       <div className="p-4 flex items-center gap-3 border-b border-border bg-muted transition-colors duration-300">

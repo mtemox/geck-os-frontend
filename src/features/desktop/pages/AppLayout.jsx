@@ -11,6 +11,7 @@ function AppLayout() {
   const { socket } = useSocket();
   const [searchParams] = useSearchParams();
   const remoteUserId = searchParams.get('remote'); // <--- ID DEL DUEÑO REMOTO
+  const [taskbarPosition, setTaskbarPosition] = useState('bottom');
 
   // --- ESCUCHAR EVENTOS (EFECTO ESPEJO) ---
   useEffect(() => {
@@ -166,6 +167,7 @@ function AppLayout() {
          onMaximizeWindow={handleMaximizeWindow}
          onFocusWindow={handleFocusWindow}
          onDragStop={handleDragStop}
+         taskbarPosition={taskbarPosition}
       />
       
       {/* (Nota: En el futuro, la Taskbar usará openWindows para restaurar las minimizadas) */}
@@ -174,7 +176,8 @@ function AppLayout() {
           onOpenApp={handleOpenWindow}
           onMinimize={handleMinimizeWindow} // Para restaurar/minimizar desde la barra
           onFocus={handleFocusWindow}       // Para traer al frente
-          
+          position={taskbarPosition}
+          onChangePosition={() => setTaskbarPosition(prev => prev === 'bottom' ? 'top' : 'bottom')}
       />
     </main>
   );

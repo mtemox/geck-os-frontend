@@ -1,8 +1,8 @@
 // src/features/file-system/ContextMenu.jsx
 import React from 'react';
-import { Trash2, Link as LinkIcon, FolderPlus, FileText, FileCode, Share2, UploadCloud } from 'lucide-react';
+import { Trash2, Link as LinkIcon, FolderPlus, FileText, FileCode, Share2, UploadCloud, LayoutGrid } from 'lucide-react';
 
-function ContextMenu({ isVisible, x, y, onNewLink, onNewFolder, onNewNote, onNewCode, onUploadFile, selectedItem, onDelete, onShare }) {
+function ContextMenu({ isVisible, x, y, onNewLink, onNewFolder, onNewNote, onNewCode, onUploadFile, selectedItem, onDelete, onShare, onSort }) {
   
   if (!isVisible) return null;
 
@@ -94,6 +94,22 @@ function ContextMenu({ isVisible, x, y, onNewLink, onNewFolder, onNewNote, onNew
         >
           <LinkIcon size={14} /> Nuevo Enlace
         </li>
+
+        {/* Ordenar Escritorio */}
+        {!selectedItem && (
+            <li 
+              className="
+                          flex items-center gap-2 px-4 py-2 text-sm cursor-pointer
+                          text-slate-700 dark:text-gray-200
+                          hover:bg-blue-500 hover:text-white
+                          dark:hover:bg-blue-600 dark:hover:text-white
+                          transition-colors duration-150
+                      "
+              onClick={onSort}
+            >
+              <LayoutGrid size={14} /> Ordenar Escritorio
+            </li>
+        )}
 
         {/* Separador */}
         <div className="border-t border-slate-200 dark:border-white/10 my-1"></div>
