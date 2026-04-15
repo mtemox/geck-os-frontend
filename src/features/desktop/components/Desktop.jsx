@@ -107,7 +107,7 @@ const getIconImage = (type) => {
 
 // --- FUNCIÓN PARA RENDERIZAR EL CONTENIDO DE LA APP ---
   // Esto decide qué mostrar DENTRO de la ventana
-  const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow }) => {
+  const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow, onContextMenu }) => {
     switch (appId) {
 
       case 'folder': // <--- NUEVO CASO PARA CARPETAS
@@ -118,6 +118,7 @@ const getIconImage = (type) => {
             // 👇👇 AGREGAMOS ESTA LÍNEA CLAVE 👇👇
             onOpenItem={onOpenWindow} 
             // 👆👆 Esto permite que la carpeta abra nuevas ventanas
+            onContextMenu={onContextMenu}
           />
         );
 
@@ -389,6 +390,12 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
       socket.on('item-created', (newItem) => {
         console.log("📡 Socket: item-created", newItem);
         
+        // Si el ítem tiene un "parentId", significa que 
+        // pertenece a una carpeta. Por lo tanto, el Escritorio debe ignorarlo.
+        if (newItem.parentId) {
+            return;
+        }
+
         // Formateamos el ítem que llega del socket para que coincida con nuestra UI
         const newIconUI = {
             _id: newItem._id,
@@ -824,6 +831,19 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         );
 
         if (response && response.ok) {
+            const createdItem = response.item; 
+            const newIconUI = {
+                _id: createdItem._id,
+                nombre: createdItem.name,
+                imgSrc: getIconImage(itemType),
+                type: itemType,
+                url: createdItem.url || null,
+                content: "",
+                position: { x: posX, y: posY }
+            };
+
+            setIcons(prev => [...prev, newIconUI]); // Refleja el cambio al instante
+
             closeModal();
             sileo.success({title: itemType === 'folder' ? "Carpeta creada" : "Enlace creado"});
         }
@@ -894,20 +914,19 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         );
 
         if (response && response.ok) {
-            // const createdItem = response.item;
+            const createdItem = response.item;
             
-            // Creamos el objeto para la UI
-            // const newIconUI = {
-            //     _id: createdItem._id,
-            //     nombre: createdItem.name,
-            //     imgSrc: getIconImage('note'), // Asegúrate que 'note' devuelva tu icono de nota
-            //     type: 'note',
-            //     url: null,
-            //     content: "", // Contenido vacío al inicio
-            //     position: { x: posX, y: posY }
-            // };
+            const newIconUI = {
+                 _id: createdItem._id,
+                 nombre: createdItem.name,
+                 imgSrc: getIconImage('note'), 
+                 type: 'note',
+                 url: null,
+                 content: "", 
+                 position: { x: posX, y: posY }
+            };
 
-            // setIcons(prev => [...prev, newIconUI]);
+            setIcons(prev => [...prev, newIconUI]);
             sileo.success({title: "Nota creada. Haz clic en el nombre para renombrar."});
         }
     } catch (error) {
@@ -943,19 +962,19 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         );
 
         if (response && response.ok) {
-            // const createdItem = response.item;
+            const createdItem = response.item;
             
-            // const newIconUI = {
-            //     _id: createdItem._id,
-            //     nombre: createdItem.name,
-            //     imgSrc: getIconImage('code'), // Usará el ícono de código
-            //     type: 'code',
-            //     url: null,
-            //     content: "", 
-            //     position: { x: posX, y: posY }
-            // };
+            const newIconUI = {
+                 _id: createdItem._id,
+                 nombre: createdItem.name,
+                 imgSrc: getIconImage('code'),
+                 type: 'code',
+                 url: null,
+                 content: "", 
+                 position: { x: posX, y: posY }
+            };
 
-            // setIcons(prev => [...prev, newIconUI]);
+            setIcons(prev => [...prev, newIconUI]);
             sileo.success({title: "Archivo de código creado."});
         }
     } catch (error) {
@@ -1186,7 +1205,32 @@ const handleSortDesktop = () => {
         error: (err) => ({ title: err.message })
     });
 
-    await uploadPromise.catch(() => {}); // Evita que caiga la app si rechaza, Sileo ya lo muestra
+    try {
+        // 👇 1. ESPERAMOS A QUE TERMINE LA PROMESA Y CAPTURAMOS LOS DATOS 👇
+        const data = await uploadPromise;
+        
+        // Dependiendo de tu backend, el item suele venir en data.item o directamente en data
+        const uploadedItem = data.item || data;
+
+        // 👇 2. CREAMOS EL OBJETO VISUAL PARA EL ESCRITORIO 👇
+        const newIconUI = {
+            _id: uploadedItem._id,
+            nombre: uploadedItem.name,
+            imgSrc: getIconImage(uploadedItem.type || 'file'), 
+            type: uploadedItem.type || 'file',
+            url: uploadedItem.url,
+            fileFormat: uploadedItem.fileFormat,
+            position: { x: posX, y: posY },
+            content: uploadedItem.content || ""
+        };
+
+        // 👇 3. ACTUALIZAMOS EL ESTADO LOCAL INMEDIATAMENTE 👇
+        setIcons(prev => [...prev, newIconUI]);
+
+    } catch (error) {
+        // Si falla la subida, cae aquí (Sileo ya muestra el error visualmente)
+        console.error("Fallo al procesar el archivo subido:", error);
+    }
   };
 
 
@@ -1310,7 +1354,8 @@ const handleSortDesktop = () => {
                   appId={win.appId} 
                   data={win.data} 
                   windowId={win.id} 
-                  onOpenWindow={onOpenWindow} 
+                  onOpenWindow={onOpenWindow}
+                  onContextMenu={handleContextMenuIcon}
                 />
               </AppWindow>
             </div>

@@ -36,7 +36,7 @@ const getTypeIcon = (type) => {
     }
 };
 
-const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderName, onOpenItem }) => {
+const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderName, onOpenItem, onContextMenu }) => {
     const [folderHistory, setFolderHistory] = useState([{ id: initialFolderId, name: initialFolderName }]);
     const currentFolder = folderHistory[folderHistory.length - 1];
     
@@ -203,7 +203,14 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
     };
 
     return (
-        <div className="flex h-full w-full bg-background overflow-hidden font-sans select-none transition-colors duration-300">
+        <div 
+        
+            className="flex h-full w-full bg-background overflow-hidden font-sans select-none transition-colors duration-300"
+            onContextMenu={(e) => {
+                e.stopPropagation();
+            }}
+        
+        >
 
             {/* ========== PANEL IZQUIERDO ========== */}
             <div className="flex-1 flex flex-col bg-card shadow-xl">
@@ -306,6 +313,11 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
                                         key={item._id}
                                         onClick={() => setSelectedItem(item)}
                                         onDoubleClick={() => handleDoubleClick(item)}
+                                        onContextMenu={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation(); // Evita que llegue al fondo de la carpeta
+                                                                if (onContextMenu) onContextMenu(e, item); // Llama al menú del escritorio
+                                                            }}
                                         className={`
                                             flex items-center gap-3 px-4 py-2.5 cursor-default transition-all group
                                             ${isSelected

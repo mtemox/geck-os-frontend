@@ -53,6 +53,8 @@ function Login() {
             };
             localStorage.setItem('user', JSON.stringify(userData));
 
+            connectSocket();
+
             // 3. Redirigimos al DASHBOARD en lugar del Desktop
             navigate('/dashboard'); // 👈 CAMBIO AQUÍ (Antes era '/desktop')
         }

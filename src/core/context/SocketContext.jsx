@@ -1,20 +1,17 @@
-// src/core/context/SocketContext.jsx
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
 const SocketContext = createContext();
 
-export const useSocket = () => {
-  return useContext(SocketContext);
-};
+export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }) => {
   const socketRef = useRef(null);
   const [socket, setSocket] = useState(null);
 
-  useEffect(() => {
+  // 👇 1. ENCAPSULAMOS LA LÓGICA DE CONEXIÓN 👇
+  const connectSocket = () => {
     const envUrl = import.meta.env.VITE_BACKEND_URL;
-    // Quitamos /api si existe, para conectar a la raíz
     const socketUrl = envUrl.replace('/api', '');
     const storedUser = localStorage.getItem('user');
 
@@ -29,7 +26,6 @@ export const SocketProvider = ({ children }) => {
         autoConnect: true,
       });
 
-      // --- FUNCIÓN PARA UNIRSE A LA SALA ---
       const joinRoom = () => {
         if (socketRef.current && socketRef.current.connected) {
           console.log("🤝 Uniéndose a sala de usuario:", user.id);
@@ -37,39 +33,50 @@ export const SocketProvider = ({ children }) => {
         }
       };
 
-      // 1. Intentar unirse cuando ocurre el evento 'connect'
       socketRef.current.on('connect', () => {
         console.log("🟢 [Socket] Conectado! ID:", socketRef.current.id);
         joinRoom();
       });
 
-      // 2. CASO ESPECIAL: Si ya estaba conectado (por recargas rápidas), forzar la unión
       if (socketRef.current.connected) {
         joinRoom();
       }
 
-      // Listeners de debug
       socketRef.current.on('disconnect', (reason) => console.warn("TB [Socket] Desconectado:", reason));
       socketRef.current.on('connect_error', (err) => console.error("🔴 [Socket] Error:", err.message));
 
       setSocket(socketRef.current);
     }
+  };
+
+  // 👇 2. FUNCIÓN PARA APAGAR EL SOCKET AL SALIR 👇
+  const disconnectSocket = () => {
+      if (socketRef.current) {
+          socketRef.current.disconnect();
+          socketRef.current = null;
+          setSocket(null);
+          console.log("🛑 Socket desconectado al cerrar sesión");
+      }
+  };
+
+  // Si recargan la página con F5 estando logueados, esto lo atrapa
+  useEffect(() => {
+    connectSocket(); 
   }, []); 
 
-  // NUEVA FUNCIÓN: Unirse a la sesión de otro usuario
   const connectToSession = (targetUserId) => {
     if (socketRef.current) {
       console.log("🚀 Uniendo a sesión remota:", targetUserId);
-      // Emitimos un evento al backend para unirnos a esa sala
       socketRef.current.emit('join-user-room', targetUserId);
-      // Nota: Ahora recibiremos los eventos 'window-open', 'code-change' de esa persona
     }
   };
 
-  // Exponemos la función y el socket
+  // 👇 3. EXPORTAMOS LAS NUEVAS FUNCIONES 👇
   const value = {
     socket,
-    connectToSession 
+    connectToSession,
+    connectSocket,
+    disconnectSocket
   };
 
   return (
