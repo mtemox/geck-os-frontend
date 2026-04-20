@@ -6,9 +6,8 @@ import { useFetch } from '../../core/api/useFetch';
 import { useSocket } from '../../core/context/SocketContext';
 import { useSearchParams } from 'react-router-dom';
 
-// Importaciones dinámicas (fuera del componente CodeEditor):
+// Importaciones dinámicas:
 const Editor = lazy(() => import('@monaco-editor/react'));
-// Como DiffEditor es una exportación nombrada y no la de por defecto, usamos este truco:
 const MonacoDiffEditor = lazy(() => import('@monaco-editor/react').then(module => ({ default: module.DiffEditor })));
 
 const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
@@ -30,23 +29,14 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
   
   const fetchDataBackend = useFetch();
 
-  // // Actualizar si cambian las props (ej. al abrir otro archivo)
-  // useEffect(() => {
-  //   setCode(initialContent);
-  //   setOriginalCode(initialContent);
-  // }, [initialContent]);
-
-  // --- 3. LOGICA DE SOCKET (NUEVO) ---
+  // --- LOGICA DE SOCKET ---
   useEffect(() => {
     if (!socket) return;
 
-    // Escuchar cambios de código de otros usuarios
     socket.on('code-change', (data) => {
-       // Si nos llega contenido nuevo, actualizamos el estado
        if (data.content !== code) {
            setCode(data.content);
        }
-       // Opcional: Sincronizar también el lenguaje si cambió
        if (data.language && data.language !== language) {
            setLanguage(data.language);
        }
@@ -57,18 +47,17 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
     };
   }, [socket, code, language]);
 
-  // --- 4. FUNCIÓN PARA EMITIR CAMBIOS ---
+  // --- FUNCIÓN PARA EMITIR CAMBIOS ---
   const handleEditorChange = (value) => {
-     setCode(value); // Actualizar localmente
+     setCode(value);
 
-     // Emitir al socket
      if (socket) {
         const user = JSON.parse(localStorage.getItem('user'));
         const remoteId = searchParams.get('remote');
         const targetUserId = remoteId || user.id;
 
         socket.emit('code-change', { 
-            userId: targetUserId, // <--- ENVIAMOS A LA SALA DEL DUEÑO
+            userId: targetUserId,
             content: value,
             language 
         });
@@ -88,15 +77,12 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
     try {
       await fetchDataBackend(
         `${backendUrl}/items/files/${fileId}`,
-        { content: code }, // Enviamos el código como string
+        { content: code }, 
         "PUT",
         { Authorization: `Bearer ${token}` }
       );
       
-      // Actualizamos el "original" para que el Diff sepa que ya guardamos
       setOriginalCode(code);
-      // toast.success manejado por useFetch
-      
       window.dispatchEvent(new CustomEvent('local-file-update', { detail: { id: fileId, content: code } }));
 
     } catch (error) {
@@ -108,64 +94,48 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setLanguage(newLang);
-    // Opcional: Emitir cambio de lenguaje también
     if(socket) {
         const user = JSON.parse(localStorage.getItem('user'));
         socket.emit('code-change', { userId: user.id, content: code, language: newLang });
     }
   };
 
-  // --- FUNCIÓN EJECUTAR CÓDIGO (100% Frontend - Cero APIs, Cero CORS) ---
+  // --- FUNCIÓN EJECUTAR CÓDIGO (Llamada real al Backend) ---
   const handleRunCode = async () => {
-    if (['html', 'css', 'json'].includes(language)) {
-      sileo.info({ title: "La terminal solo ejecuta lenguajes de programación." });
+    if (!code.trim()) {
+      sileo.info({ title: "El editor está vacío. Escribe algo de código primero." });
       return;
     }
 
     setIsRunning(true);
     setShowTerminal(true);
+    setOutput("Compilando y ejecutando en el servidor...\n");
 
-    // 1. SI ES JAVASCRIPT: Lo ejecutamos de forma nativa, instantánea y sin internet
-    if (language === 'javascript') {
-      setOutput("Ejecutando en el motor local V8...\n");
-      
-      setTimeout(() => {
-        // Interceptamos temporalmente el console.log del navegador para capturar los datos
-        let logs = [];
-        const originalLog = console.log;
-        
-        console.log = (...args) => {
-          logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
-        };
+    const token = localStorage.getItem('token');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-        try {
-          // Ejecutamos el código del usuario de forma aislada
-          new Function(code)();
-          const finalResult = logs.join('\n') || "Ejecución finalizada sin salida en consola.";
-          setOutput(finalResult);
-        } catch (err) {
-          setOutput(`❌ Error de ejecución:\n${err.message}`);
-        } finally {
-          // Restauramos el console.log normal para no romper el resto de tu app
-          console.log = originalLog;
-          setIsRunning(false);
-        }
-      }, 300); // Pequeño retraso visual para que se sienta fluido
-      
-      return;
-    }
-
-    // 2. SI SON OTROS LENGUAJES: Mostramos un mensaje profesional de arquitectura
-    // (Esto te hace ver muy bien en una defensa técnica)
-    setTimeout(() => {
-      setOutput(
-        `⚠️ Arquitectura Desconectada\n\n` +
-        `El código en ${language.toUpperCase()} requiere compilación nativa.\n` +
-        `Por seguridad (CORS), la conexión directa desde el navegador a compiladores externos está restringida.\n\n` +
-        `Solución: Enrutar esta petición a través del backend de Node.js de MiDesk (Módulo en desarrollo).`
+    try {
+      // Consumimos el endpoint real de ejecución
+      const response = await fetchDataBackend(
+        `${backendUrl}/execute/run`,
+        { code, language },
+        "POST",
+        { Authorization: `Bearer ${token}` }
       );
+
+      if (response) {
+        if (response.isError) {
+          setOutput(`❌ Error de ejecución:\n\n${response.output}`);
+        } else {
+          setOutput(response.output || "Ejecución finalizada con éxito sin salida en consola.");
+        }
+      }
+    } catch (error) {
+      console.error("Error al ejecutar el código:", error);
+      setOutput(`❌ Error de conexión:\nNo se pudo contactar con el motor de ejecución.\n${error.message}`);
+    } finally {
       setIsRunning(false);
-    }, 800);
+    }
   };
 
   return (
@@ -174,16 +144,13 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
       {/* --- BARRA DE HERRAMIENTAS PREMIUM --- */}
       <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gradient-to-b dark:from-[#252536] dark:to-[#1f1f2e] bg-gradient-to-b from-slate-100 to-white border-b border-slate-200 dark:border-white/10 backdrop-blur-xl transition-colors duration-300">
         
-        {/* Nombre del Archivo con Badge */}
         <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-gray-800/40 rounded-lg border border-slate-200 dark:border-white/5 transition-colors duration-300">
            <FileCode size={15} className="text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
            <span className="text-xs font-medium text-slate-700 dark:text-gray-200 tracking-wide">{fileName || "Sin título"}</span>
         </div>
 
-        {/* Separador */}
         <div className="h-6 w-px bg-slate-300 dark:bg-white/10 mx-1"></div>
 
-        {/* Botón Guardar - Destacado */}
         <button
           onClick={handleSave}
           className="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-200 hover:scale-105 font-medium text-sm text-white"
@@ -193,7 +160,6 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
           <span>Guardar</span>
         </button>
 
-        {/* Botón Ejecutar */}
         <button
           onClick={handleRunCode}
           disabled={isRunning || showDiff}
@@ -204,7 +170,6 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
           <span>{isRunning ? "Ejecutando..." : "Ejecutar"}</span>
         </button>
 
-        {/* Toggle Vista Dividida - Estilo Switch */}
         <button
           onClick={() => setShowDiff(!showDiff)}
           className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border
@@ -220,7 +185,7 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
 
         <div className="flex-1"></div>
 
-        {/* Selector de Lenguaje - Diseño Premium */}
+        {/* --- SELECTOR DE LENGUAJE (SOLO LOS SOPORTADOS) --- */}
         <div className="flex items-center gap-2 bg-slate-200 dark:bg-gray-700/30 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-white/10 hover:border-blue-500 dark:hover:border-blue-400/50 transition-colors duration-200">
             <CodeIcon size={14} className="text-slate-500 dark:text-gray-400" strokeWidth={2} />
             <select 
@@ -231,11 +196,8 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
             >
                 <option value="javascript" className="bg-white dark:bg-[#252536]">JavaScript</option>
                 <option value="python" className="bg-white dark:bg-[#252536]">Python</option>
-                <option value="html" className="bg-white dark:bg-[#252536]">HTML</option>
-                <option value="css" className="bg-white dark:bg-[#252536]">CSS</option>
-                <option value="json" className="bg-white dark:bg-[#252536]">JSON</option>
                 <option value="cpp" className="bg-white dark:bg-[#252536]">C++</option>
-                <option value="java" className="bg-white dark:bg-[#252536]">Java</option>
+                <option value="c" className="bg-white dark:bg-[#252536]">C</option>
             </select>
         </div>
       </div>
@@ -249,7 +211,6 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
             </div>
         }>
             {showDiff ? (
-              // VISTA DIVIDIDA (COMPARACIÓN)
               <MonacoDiffEditor
                 height="100%"
                 language={language}
@@ -263,7 +224,6 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
                 }}
               />
             ) : (
-              // EDITOR NORMAL
               <Editor
                 height="100%"
                 language={language}
@@ -304,9 +264,7 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
         )}
       </div>
 
-      
-
-      {/* Barra de estado inferior - Estilo macOS */}
+      {/* --- BARRA DE ESTADO INFERIOR --- */}
       <div className="px-4 py-1.5 bg-white dark:bg-gradient-to-b dark:from-[#252536] dark:to-[#1f1f2e] bg-gradient-to-b from-slate-100 to-white border-t border-slate-200 dark:border-white/10 flex justify-between items-center text-[10px] text-slate-500 dark:text-gray-400 font-mono backdrop-blur-sm transition-colors duration-300">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">

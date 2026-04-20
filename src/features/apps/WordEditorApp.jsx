@@ -110,7 +110,7 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     try {
       const response = await fetchDataBackend(
-        `${backendUrl}/ia/improve-text`,
+        `${backendUrl}/ai/improve-text`,
         { text: content }, 
         "POST",
         { Authorization: `Bearer ${token}` }

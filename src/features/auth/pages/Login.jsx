@@ -7,6 +7,7 @@ import { useFetch } from '../../../core/api/useFetch';
 import { useForm } from "react-hook-form";
 import dragonBg from '../../../assets/wallpapers/deg3.jpg';
 import logoMidesk from '../../../assets/logos/midesk.jpg';
+import { useSocket } from '../../../core/context/SocketContext';
 
 // Iconos para darle el toque de SO (Sistema Operativo)
 import { Power, RefreshCcw, Wifi } from 'lucide-react';
@@ -16,6 +17,7 @@ function Login() {
   const [step, setStep] = useState(1); // 1: Bloqueo, 2: Login
   const navigate = useNavigate();
   const fetchDataBackend = useFetch();
+  const { connectSocket } = useSocket();
   
   const { register, handleSubmit, formState: { errors } } = useForm();
 

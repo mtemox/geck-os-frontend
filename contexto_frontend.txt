@@ -178,23 +178,20 @@ export function useFetch() {
 📄 Archivo: \src\core\context\SocketContext.jsx
 ================================================
 
-// src/core/context/SocketContext.jsx
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
 const SocketContext = createContext();
 
-export const useSocket = () => {
-  return useContext(SocketContext);
-};
+export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }) => {
   const socketRef = useRef(null);
   const [socket, setSocket] = useState(null);
 
-  useEffect(() => {
+  // 👇 1. ENCAPSULAMOS LA LÓGICA DE CONEXIÓN 👇
+  const connectSocket = () => {
     const envUrl = import.meta.env.VITE_BACKEND_URL;
-    // Quitamos /api si existe, para conectar a la raíz
     const socketUrl = envUrl.replace('/api', '');
     const storedUser = localStorage.getItem('user');
 
@@ -209,7 +206,6 @@ export const SocketProvider = ({ children }) => {
         autoConnect: true,
       });
 
-      // --- FUNCIÓN PARA UNIRSE A LA SALA ---
       const joinRoom = () => {
         if (socketRef.current && socketRef.current.connected) {
           console.log("🤝 Uniéndose a sala de usuario:", user.id);
@@ -217,39 +213,50 @@ export const SocketProvider = ({ children }) => {
         }
       };
 
-      // 1. Intentar unirse cuando ocurre el evento 'connect'
       socketRef.current.on('connect', () => {
         console.log("🟢 [Socket] Conectado! ID:", socketRef.current.id);
         joinRoom();
       });
 
-      // 2. CASO ESPECIAL: Si ya estaba conectado (por recargas rápidas), forzar la unión
       if (socketRef.current.connected) {
         joinRoom();
       }
 
-      // Listeners de debug
       socketRef.current.on('disconnect', (reason) => console.warn("TB [Socket] Desconectado:", reason));
       socketRef.current.on('connect_error', (err) => console.error("🔴 [Socket] Error:", err.message));
 
       setSocket(socketRef.current);
     }
+  };
+
+  // 👇 2. FUNCIÓN PARA APAGAR EL SOCKET AL SALIR 👇
+  const disconnectSocket = () => {
+      if (socketRef.current) {
+          socketRef.current.disconnect();
+          socketRef.current = null;
+          setSocket(null);
+          console.log("🛑 Socket desconectado al cerrar sesión");
+      }
+  };
+
+  // Si recargan la página con F5 estando logueados, esto lo atrapa
+  useEffect(() => {
+    connectSocket(); 
   }, []); 
 
-  // NUEVA FUNCIÓN: Unirse a la sesión de otro usuario
   const connectToSession = (targetUserId) => {
     if (socketRef.current) {
       console.log("🚀 Uniendo a sesión remota:", targetUserId);
-      // Emitimos un evento al backend para unirnos a esa sala
       socketRef.current.emit('join-user-room', targetUserId);
-      // Nota: Ahora recibiremos los eventos 'window-open', 'code-change' de esa persona
     }
   };
 
-  // Exponemos la función y el socket
+  // 👇 3. EXPORTAMOS LAS NUEVAS FUNCIONES 👇
   const value = {
     socket,
-    connectToSession 
+    connectToSession,
+    connectSocket,
+    disconnectSocket
   };
 
   return (
@@ -4139,6 +4146,8 @@ function Login() {
             };
             localStorage.setItem('user', JSON.stringify(userData));
 
+            connectSocket();
+
             // 3. Redirigimos al DASHBOARD en lugar del Desktop
             navigate('/dashboard'); // 👈 CAMBIO AQUÍ (Antes era '/desktop')
         }
@@ -4725,7 +4734,7 @@ const getIconImage = (type) => {
 
 // --- FUNCIÓN PARA RENDERIZAR EL CONTENIDO DE LA APP ---
   // Esto decide qué mostrar DENTRO de la ventana
-  const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow }) => {
+  const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow, onContextMenu }) => {
     switch (appId) {
 
       case 'folder': // <--- NUEVO CASO PARA CARPETAS
@@ -4736,6 +4745,7 @@ const getIconImage = (type) => {
             // 👇👇 AGREGAMOS ESTA LÍNEA CLAVE 👇👇
             onOpenItem={onOpenWindow} 
             // 👆👆 Esto permite que la carpeta abra nuevas ventanas
+            onContextMenu={onContextMenu}
           />
         );
 
@@ -5007,6 +5017,12 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
       socket.on('item-created', (newItem) => {
         console.log("📡 Socket: item-created", newItem);
         
+        // Si el ítem tiene un "parentId", significa que 
+        // pertenece a una carpeta. Por lo tanto, el Escritorio debe ignorarlo.
+        if (newItem.parentId) {
+            return;
+        }
+
         // Formateamos el ítem que llega del socket para que coincida con nuestra UI
         const newIconUI = {
             _id: newItem._id,
@@ -5442,6 +5458,19 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         );
 
         if (response && response.ok) {
+            const createdItem = response.item; 
+            const newIconUI = {
+                _id: createdItem._id,
+                nombre: createdItem.name,
+                imgSrc: getIconImage(itemType),
+                type: itemType,
+                url: createdItem.url || null,
+                content: "",
+                position: { x: posX, y: posY }
+            };
+
+            setIcons(prev => [...prev, newIconUI]); // Refleja el cambio al instante
+
             closeModal();
             sileo.success({title: itemType === 'folder' ? "Carpeta creada" : "Enlace creado"});
         }
@@ -5512,20 +5541,19 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         );
 
         if (response && response.ok) {
-            // const createdItem = response.item;
+            const createdItem = response.item;
             
-            // Creamos el objeto para la UI
-            // const newIconUI = {
-            //     _id: createdItem._id,
-            //     nombre: createdItem.name,
-            //     imgSrc: getIconImage('note'), // Asegúrate que 'note' devuelva tu icono de nota
-            //     type: 'note',
-            //     url: null,
-            //     content: "", // Contenido vacío al inicio
-            //     position: { x: posX, y: posY }
-            // };
+            const newIconUI = {
+                 _id: createdItem._id,
+                 nombre: createdItem.name,
+                 imgSrc: getIconImage('note'), 
+                 type: 'note',
+                 url: null,
+                 content: "", 
+                 position: { x: posX, y: posY }
+            };
 
-            // setIcons(prev => [...prev, newIconUI]);
+            setIcons(prev => [...prev, newIconUI]);
             sileo.success({title: "Nota creada. Haz clic en el nombre para renombrar."});
         }
     } catch (error) {
@@ -5561,19 +5589,19 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         );
 
         if (response && response.ok) {
-            // const createdItem = response.item;
+            const createdItem = response.item;
             
-            // const newIconUI = {
-            //     _id: createdItem._id,
-            //     nombre: createdItem.name,
-            //     imgSrc: getIconImage('code'), // Usará el ícono de código
-            //     type: 'code',
-            //     url: null,
-            //     content: "", 
-            //     position: { x: posX, y: posY }
-            // };
+            const newIconUI = {
+                 _id: createdItem._id,
+                 nombre: createdItem.name,
+                 imgSrc: getIconImage('code'),
+                 type: 'code',
+                 url: null,
+                 content: "", 
+                 position: { x: posX, y: posY }
+            };
 
-            // setIcons(prev => [...prev, newIconUI]);
+            setIcons(prev => [...prev, newIconUI]);
             sileo.success({title: "Archivo de código creado."});
         }
     } catch (error) {
@@ -5804,7 +5832,32 @@ const handleSortDesktop = () => {
         error: (err) => ({ title: err.message })
     });
 
-    await uploadPromise.catch(() => {}); // Evita que caiga la app si rechaza, Sileo ya lo muestra
+    try {
+        // 👇 1. ESPERAMOS A QUE TERMINE LA PROMESA Y CAPTURAMOS LOS DATOS 👇
+        const data = await uploadPromise;
+        
+        // Dependiendo de tu backend, el item suele venir en data.item o directamente en data
+        const uploadedItem = data.item || data;
+
+        // 👇 2. CREAMOS EL OBJETO VISUAL PARA EL ESCRITORIO 👇
+        const newIconUI = {
+            _id: uploadedItem._id,
+            nombre: uploadedItem.name,
+            imgSrc: getIconImage(uploadedItem.type || 'file'), 
+            type: uploadedItem.type || 'file',
+            url: uploadedItem.url,
+            fileFormat: uploadedItem.fileFormat,
+            position: { x: posX, y: posY },
+            content: uploadedItem.content || ""
+        };
+
+        // 👇 3. ACTUALIZAMOS EL ESTADO LOCAL INMEDIATAMENTE 👇
+        setIcons(prev => [...prev, newIconUI]);
+
+    } catch (error) {
+        // Si falla la subida, cae aquí (Sileo ya muestra el error visualmente)
+        console.error("Fallo al procesar el archivo subido:", error);
+    }
   };
 
 
@@ -5928,7 +5981,8 @@ const handleSortDesktop = () => {
                   appId={win.appId} 
                   data={win.data} 
                   windowId={win.id} 
-                  onOpenWindow={onOpenWindow} 
+                  onOpenWindow={onOpenWindow}
+                  onContextMenu={handleContextMenuIcon}
                 />
               </AppWindow>
             </div>
@@ -6665,334 +6719,395 @@ import { Wifi, Accessibility, Power, User, ArrowRight, Monitor, Briefcase, Plus,
 import dragonBg from '../../../assets/wallpapers/deg3.jpg';
 import logoMidesk from '../../../assets/logos/midesk.jpg';
 import { useFetch } from '../../../core/api/useFetch';
+import { useSocket } from '../../../core/context/SocketContext';
+
+import Modal from '../../../core/ui/components/Modal';
+import NewFolderForm from '../../file-system/NewFolderForm';
+import ShareForm from '../../file-system/ShareForm';
 
 function Dashboard() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState({ nombre: 'Cargando...', email: '' });
-  const [sharedDesktops, setSharedDesktops] = useState([]);
-  const fetchDataBackend = useFetch();
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const token = localStorage.getItem('token');
-  const [workspaces, setWorkspaces] = useState([]);
+    const navigate = useNavigate();
+    const [user, setUser] = useState({ nombre: 'Cargando...', email: '' });
+    const [sharedDesktops, setSharedDesktops] = useState([]);
+    const fetchDataBackend = useFetch();
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = localStorage.getItem('token');
+    const [workspaces, setWorkspaces] = useState([]);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) setUser(JSON.parse(storedUser));
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [modalMode, setModalMode] = useState(null); // 'create-workspace' o 'invite-workspace'
+    const [selectedWorkspace, setSelectedWorkspace] = useState(null);
 
-    const loadShared = async () => {
+    const { disconnectSocket } = useSocket();
+
+    // --- MANEJADORES DE APERTURA ---
+
+    const handleCreateWorkspace = () => {
+        setModalMode('create-workspace');
+        setIsModalVisible(true);
+    };
+
+    const handleInviteToWorkspace = (e, ws) => {
+        e.stopPropagation();
+        setSelectedWorkspace(ws); // Guardamos cuál workspace vamos a invitar
+        setModalMode('invite-workspace');
+        setIsModalVisible(true);
+    };
+
+    const closeModal = () => {
+        setIsModalVisible(false);
+        setModalMode(null);
+        setSelectedWorkspace(null);
+    };
+
+    // --- FUNCIONES DE CONFIRMACIÓN (PETICIONES AL BACKEND) ---
+
+    const confirmCreateWorkspace = async (formData) => {
         try {
-            const data = await fetchDataBackend(
-                `${backendUrl}/dashboard/data`, 
-                null, 
-                "GET", 
-                { Authorization: `Bearer ${token}` }
-            );
-            
-            if (data && data.usuario && data.usuario.escritoriosGuardados) {
-                setSharedDesktops(data.usuario.escritoriosGuardados);
-                if (data.workspaces) setWorkspaces(data.workspaces);
+            const response = await fetch(`${backendUrl}/workspaces`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ nombre: formData.name })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                setWorkspaces(prev => [...prev, data.workspace]);
+                sileo.success({ title: "Espacio de trabajo creado" });
+                closeModal();
+            } else {
+                sileo.error({ title: data.msg || "Error al crear" });
             }
         } catch (error) {
-            console.error("Error cargando dashboard:", error);
+            console.error(error);
         }
     };
-    loadShared();
-  }, []);
 
-  const handleEnterDesktop = () => {
-    navigate('/desktop');
-  };
+    const confirmInviteMember = async (formData) => {
+        try {
+            const response = await fetch(`${backendUrl}/workspaces/invite`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    workspaceId: selectedWorkspace._id,
+                    email: formData.email
+                })
+            });
+            const data = await response.json();
 
-  const handleEnterRemoteDesktop = (remoteId, remoteName) => {
-    navigate(`/desktop?remote=${remoteId}&name=${encodeURIComponent(remoteName)}`);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
-  const handleEnterWorkspace = (wsId) => {
-    navigate(`/desktop?workspace=${wsId}`);
-  };
-
-  const handleCreateWorkspace = async () => {
-    const nombre = prompt("Nombre del nuevo Espacio de Trabajo:");
-    if (!nombre) return;
-
-    try {
-        const response = await fetch(`${backendUrl}/workspaces`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ nombre })
-        });
-        const data = await response.json();
-
-        if (response.ok) {
-            setWorkspaces(prev => [...prev, data.workspace]);
-        } else {
-            alert(data.msg || "Error creando workspace");
+            if (response.ok) {
+                sileo.success({ title: `Invitación enviada a ${formData.email}` });
+                closeModal();
+            } else {
+                sileo.error({ title: data.msg || "Error al invitar" });
+            }
+        } catch (error) {
+            console.error(error);
         }
-    } catch (error) {
-        console.error(error);
-    }
-  };
+    };
 
-  const handleInviteToWorkspace = async (e, wsId, wsName) => {
-    e.stopPropagation();
-    
-    const email = prompt(`Invitar usuario a "${wsName}".\nIngresa su correo:`);
-    if (!email) return;
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) setUser(JSON.parse(storedUser));
 
-    try {
-        const response = await fetch(`${backendUrl}/workspaces/invite`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ workspaceId: wsId, email })
-        });
-        const data = await response.json();
+        const loadShared = async () => {
+            try {
+                const data = await fetchDataBackend(
+                    `${backendUrl}/dashboard/data`,
+                    null,
+                    "GET",
+                    { Authorization: `Bearer ${token}` }
+                );
 
-        if (response.ok) {
-            alert(data.msg);
-        } else {
-            alert(data.msg || "Error al invitar");
-        }
-    } catch (error) {
-        console.error(error);
-    }
-  };
+                if (data && data.usuario && data.usuario.escritoriosGuardados) {
+                    setSharedDesktops(data.usuario.escritoriosGuardados);
+                    if (data.workspaces) setWorkspaces(data.workspaces);
+                }
+            } catch (error) {
+                console.error("Error cargando dashboard:", error);
+            }
+        };
+        loadShared();
+    }, []);
 
-  return (
-    <div className="h-screen w-full overflow-hidden relative font-sans text-white select-none">
-      
-      {/* Capas de fondo */}
-      <div 
-        className="absolute inset-0 z-0 bg-cover bg-center scale-105"
-        style={{ backgroundImage: `url(${dragonBg})` }}
-      />
-      <div className="absolute inset-0 z-0 bg-blue-900/80 mix-blend-multiply" />
-      <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/40 to-transparent" />
+    const handleEnterDesktop = () => {
+        navigate('/desktop');
+    };
 
-      {/* Contenido principal */}
-      <div className="relative z-10 h-full flex flex-col justify-between p-8 md:p-12">
+    const handleEnterRemoteDesktop = (remoteId, remoteName) => {
+        navigate(`/desktop?remote=${remoteId}&name=${encodeURIComponent(remoteName)}`);
+    };
 
-        {/* Espacio superior vacío */}
-        <div></div>
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        disconnectSocket();
+        navigate('/login');
+    };
 
-        {/* Usuario principal centrado */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center animate-fade-in-up">
-            
-            {/* Avatar Grande */}
-            <div className="relative mb-6">
-                <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl scale-110"></div>
-                <img 
-                    src={logoMidesk} 
-                    alt="Profile" 
-                    className="relative w-40 h-40 rounded-full shadow-2xl object-cover border-4 border-white/20"
-                />
-            </div>
+    const handleEnterWorkspace = (wsId) => {
+        navigate(`/desktop?workspace=${wsId}`);
+    };
 
-            {/* Nombre de Usuario */}
-            <h1 className="text-4xl font-light mb-8 drop-shadow-lg tracking-wide">
-                {user.nombre}
-            </h1>
+    return (
+        <div className="h-screen w-full overflow-hidden relative font-sans text-white select-none">
 
-            {/* Campo de entrada simulado */}
-            <div className="flex flex-col items-center gap-3 w-80">
-                <p className="text-sm text-white/70 cursor-pointer hover:text-white/90 transition-colors">
-                    Opciones de inicio de sesión
-                </p>
-                
-                <button 
-                    onClick={handleEnterDesktop}
-                    className="group flex items-center bg-white/10 backdrop-blur-xl border border-white/30 rounded-md overflow-hidden transition-all hover:bg-white/15 hover:border-white/40 focus:ring-2 focus:ring-white/60 w-full h-14 px-5 shadow-lg"
-                >
-                    <span className="flex-1 text-left text-white/90 text-base font-light">
-                        Iniciar mi escritorio
-                    </span>
-                    <div className="bg-white/10 h-full w-14 flex items-center justify-center group-hover:bg-white/20 transition-colors border-l border-white/20">
-                        <ArrowRight size={22} className="text-white/80" />
+            {/* Capas de fondo */}
+            <div
+                className="absolute inset-0 z-0 bg-cover bg-center scale-105"
+                style={{ backgroundImage: `url(${dragonBg})` }}
+            />
+            <div className="absolute inset-0 z-0 bg-blue-900/80 mix-blend-multiply" />
+            <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/40 to-transparent" />
+
+            {/* Contenido principal */}
+            <div className="relative z-10 h-full flex flex-col justify-between p-8 md:p-12">
+
+                {/* Espacio superior vacío */}
+                <div></div>
+
+                {/* Usuario principal centrado */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center animate-fade-in-up">
+
+                    {/* Avatar Grande */}
+                    <div className="relative mb-6">
+                        <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl scale-110"></div>
+                        <img
+                            src={logoMidesk}
+                            alt="Profile"
+                            className="relative w-40 h-40 rounded-full shadow-2xl object-cover border-4 border-white/20"
+                        />
                     </div>
-                </button>
-            </div>
-        </div>
 
-        {/* Sección inferior */}
-        <div className="flex justify-between items-end w-full gap-8">
+                    {/* Nombre de Usuario */}
+                    <h1 className="text-4xl font-light mb-8 drop-shadow-lg tracking-wide">
+                        {user.nombre}
+                    </h1>
 
-          {/* Lista de escritorios - IZQUIERDA */}
-          <div className="flex flex-col gap-3 max-w-xs animate-fade-in-left">
-            
-            {/* Usuario actual */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 flex items-center gap-3 shadow-xl cursor-default transition-all hover:bg-white/15">
-                <div className="relative">
-                    <img src={logoMidesk} alt="User" className="w-12 h-12 rounded-full object-cover border-2 border-white/30" />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{user.nombre}</p>
-                    <p className="text-xs text-white/60 truncate">Mi escritorio</p>
-                </div>
-            </div>
-
-            {/* Escritorios compartidos */}
-            {sharedDesktops.length > 0 && (
-                <>
-                    <div className="flex items-center gap-2 px-2 mt-2">
-                        <Users size={14} className="text-white/60" />
-                        <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                            Escritorios Compartidos
+                    {/* Campo de entrada simulado */}
+                    <div className="flex flex-col items-center gap-3 w-80">
+                        <p className="text-sm text-white/70 cursor-pointer hover:text-white/90 transition-colors">
+                            Opciones de inicio de sesión
                         </p>
-                    </div>
 
-                    {sharedDesktops.map(desk => (
-                        <div 
-                            key={desk._id}
-                            onClick={() => handleEnterRemoteDesktop(desk._id, desk.nombre)}
-                            className="group bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 flex items-center gap-3 shadow-lg cursor-pointer transition-all hover:bg-white/15 hover:scale-[1.02]"
+                        <button
+                            onClick={handleEnterDesktop}
+                            className="group flex items-center bg-white/10 backdrop-blur-xl border border-white/30 rounded-md overflow-hidden transition-all hover:bg-white/15 hover:border-white/40 focus:ring-2 focus:ring-white/60 w-full h-14 px-5 shadow-lg"
                         >
+                            <span className="flex-1 text-left text-white/90 text-base font-light">
+                                Iniciar mi escritorio
+                            </span>
+                            <div className="bg-white/10 h-full w-14 flex items-center justify-center group-hover:bg-white/20 transition-colors border-l border-white/20">
+                                <ArrowRight size={22} className="text-white/80" />
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Sección inferior */}
+                <div className="flex justify-between items-end w-full gap-8">
+
+                    {/* Lista de escritorios - IZQUIERDA */}
+                    <div className="flex flex-col gap-3 max-w-xs animate-fade-in-left">
+
+                        {/* Usuario actual */}
+                        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 flex items-center gap-3 shadow-xl cursor-default transition-all hover:bg-white/15">
                             <div className="relative">
-                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                                    <User size={20} className="text-white" />
-                                </div>
+                                <img src={logoMidesk} alt="User" className="w-12 h-12 rounded-full object-cover border-2 border-white/30" />
                                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{desk.nombre}</p>
-                                <p className="text-xs text-white/60 truncate">{desk.email}</p>
+                                <p className="font-medium text-sm truncate">{user.nombre}</p>
+                                <p className="text-xs text-white/60 truncate">Mi escritorio</p>
                             </div>
-                            <ChevronRight size={18} className="text-white/40 group-hover:text-white/70 transition-colors" />
                         </div>
-                    ))}
-                </>
-            )}
 
-            {/* Workspaces */}
-            {workspaces.length > 0 && (
-                <>
-                    <div className="flex items-center justify-between px-2 mt-2">
-                        <div className="flex items-center gap-2">
-                            <Briefcase size={14} className="text-white/60" />
-                            <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                                Espacios de Trabajo
+                        {/* Escritorios compartidos */}
+                        {sharedDesktops.length > 0 && (
+                            <>
+                                <div className="flex items-center gap-2 px-2 mt-2">
+                                    <Users size={14} className="text-white/60" />
+                                    <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">
+                                        Escritorios Compartidos
+                                    </p>
+                                </div>
+
+                                {sharedDesktops.map(desk => (
+                                    <div
+                                        key={desk._id}
+                                        onClick={() => handleEnterRemoteDesktop(desk._id, desk.nombre)}
+                                        className="group bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 flex items-center gap-3 shadow-lg cursor-pointer transition-all hover:bg-white/15 hover:scale-[1.02]"
+                                    >
+                                        <div className="relative">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                                                <User size={20} className="text-white" />
+                                            </div>
+                                            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm truncate">{desk.nombre}</p>
+                                            <p className="text-xs text-white/60 truncate">{desk.email}</p>
+                                        </div>
+                                        <ChevronRight size={18} className="text-white/40 group-hover:text-white/70 transition-colors" />
+                                    </div>
+                                ))}
+                            </>
+                        )}
+
+                        {/* Workspaces */}
+                        {workspaces.length > 0 && (
+                            <>
+                                <div className="flex items-center justify-between px-2 mt-2">
+                                    <div className="flex items-center gap-2">
+                                        <Briefcase size={14} className="text-white/60" />
+                                        <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">
+                                            Espacios de Trabajo
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={handleCreateWorkspace}
+                                        className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+                                        title="Crear Espacio"
+                                    >
+                                        <Plus size={14} className="text-white/70" />
+                                    </button>
+                                </div>
+
+                                {workspaces.map(ws => (
+                                    <div
+                                        key={ws._id}
+                                        onClick={() => handleEnterWorkspace(ws._id)}
+                                        className="group bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 flex items-center gap-3 shadow-lg cursor-pointer transition-all hover:bg-white/15 hover:scale-[1.02]"
+                                    >
+                                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                                            <Briefcase size={20} className="text-white" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm truncate">{ws.nombre}</p>
+                                            <p className="text-xs text-white/60 truncate">Sala colaborativa</p>
+                                        </div>
+                                        <button
+                                            onClick={(e) => handleInviteToWorkspace(e, ws._id, ws.nombre)}
+                                            className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                                            title="Invitar miembro"
+                                        >
+                                            <UserPlus size={16} className="text-white/70" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </>
+                        )}
+
+                        {/* Botón crear workspace si no hay ninguno */}
+                        {workspaces.length === 0 && (
+                            <>
+                                <div className="flex items-center gap-2 px-2 mt-2">
+                                    <Briefcase size={14} className="text-white/60" />
+                                    <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">
+                                        Espacios de Trabajo
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={handleCreateWorkspace}
+                                    className="group bg-white/10 backdrop-blur-xl border border-white/20 border-dashed rounded-lg p-4 flex flex-col items-center gap-2 shadow-lg cursor-pointer transition-all hover:bg-white/15 hover:border-white/30"
+                                >
+                                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+                                        <Plus size={20} className="text-white/70" />
+                                    </div>
+                                    <p className="text-xs text-white/70 font-medium">Crear espacio de trabajo</p>
+                                </button>
+                            </>
+                        )}
+
+                    </div>
+
+                    {/* Iconos de sistema - DERECHA */}
+                    <div className="flex flex-col gap-4 animate-fade-in-right">
+
+                        {/* Panel de estado del sistema */}
+                        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-xl">
+
+                            <button
+                                className="p-2.5 hover:bg-white/20 rounded-lg transition-colors"
+                                title="Red"
+                            >
+                                <Wifi size={20} className="text-white/80" />
+                            </button>
+
+                            <div className="w-px h-6 bg-white/20"></div>
+
+                            <button
+                                className="p-2.5 hover:bg-white/20 rounded-lg transition-colors"
+                                title="Accesibilidad"
+                            >
+                                <Accessibility size={20} className="text-white/80" />
+                            </button>
+
+                            <div className="w-px h-6 bg-white/20"></div>
+
+                            <button
+                                onClick={handleLogout}
+                                className="p-2.5 hover:bg-red-500/30 rounded-lg transition-colors group"
+                                title="Cerrar Sesión"
+                            >
+                                <Power size={20} className="text-white/80 group-hover:text-red-300" />
+                            </button>
+
+                        </div>
+
+                        {/* Reloj y fecha */}
+                        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-4 shadow-xl text-right">
+                            <p className="text-3xl font-light tracking-tight">
+                                {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            <p className="text-xs text-white/70 mt-1">
+                                {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                         </div>
-                        <button 
-                            onClick={handleCreateWorkspace} 
-                            className="p-1.5 hover:bg-white/20 rounded-full transition-colors" 
-                            title="Crear Espacio"
-                        >
-                            <Plus size={14} className="text-white/70"/>
-                        </button>
+
                     </div>
 
-                    {workspaces.map(ws => (
-                        <div 
-                            key={ws._id}
-                            onClick={() => handleEnterWorkspace(ws._id)}
-                            className="group bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 flex items-center gap-3 shadow-lg cursor-pointer transition-all hover:bg-white/15 hover:scale-[1.02]"
-                        >
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                                <Briefcase size={20} className="text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{ws.nombre}</p>
-                                <p className="text-xs text-white/60 truncate">Sala colaborativa</p>
-                            </div>
-                            <button 
-                                onClick={(e) => handleInviteToWorkspace(e, ws._id, ws.nombre)}
-                                className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                                title="Invitar miembro"
-                            >
-                                <UserPlus size={16} className="text-white/70" />
-                            </button>
-                        </div>
-                    ))}
-                </>
-            )}
+                </div>
 
-            {/* Botón crear workspace si no hay ninguno */}
-            {workspaces.length === 0 && (
-                <>
-                    <div className="flex items-center gap-2 px-2 mt-2">
-                        <Briefcase size={14} className="text-white/60" />
-                        <p className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                            Espacios de Trabajo
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleCreateWorkspace}
-                        className="group bg-white/10 backdrop-blur-xl border border-white/20 border-dashed rounded-lg p-4 flex flex-col items-center gap-2 shadow-lg cursor-pointer transition-all hover:bg-white/15 hover:border-white/30"
-                    >
-                        <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
-                            <Plus size={20} className="text-white/70" />
-                        </div>
-                        <p className="text-xs text-white/70 font-medium">Crear espacio de trabajo</p>
-                    </button>
-                </>
-            )}
+                {/* 👇 INTEGRACIÓN DEL MODAL 👇 */}
+                <Modal
+                    isVisible={isModalVisible}
+                    onClose={closeModal}
+                    title={
+                        modalMode === 'create-workspace'
+                            ? "Nuevo Espacio de Trabajo"
+                            : `Invitar a ${selectedWorkspace?.nombre}`
+                    }
+                >
+                    {modalMode === 'create-workspace' && (
+                        <NewFolderForm 
+                            onSubmit={confirmCreateWorkspace} 
+                            title="Nombre del Espacio de Trabajo"
+                            placeholder="Ej: Semestre 2"
+                            buttonText="Crear Espacio"
+                        />
+                    )}
 
-          </div>
+                    {modalMode === 'invite-workspace' && (
+                        <ShareForm 
+                            onSubmit={confirmInviteMember}
+                            itemToShare={selectedWorkspace}
+                            isDesktop={false}
+                            isWorkspace={true}
+                        />
+                    )}
+                </Modal>
 
-          {/* Iconos de sistema - DERECHA */}
-          <div className="flex flex-col gap-4 animate-fade-in-right">
-            
-            {/* Panel de estado del sistema */}
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 shadow-xl">
-                
-                <button 
-                    className="p-2.5 hover:bg-white/20 rounded-lg transition-colors" 
-                    title="Red"
-                >
-                    <Wifi size={20} className="text-white/80" />
-                </button>
-                
-                <div className="w-px h-6 bg-white/20"></div>
-                
-                <button 
-                    className="p-2.5 hover:bg-white/20 rounded-lg transition-colors" 
-                    title="Accesibilidad"
-                >
-                    <Accessibility size={20} className="text-white/80" />
-                </button>
-                
-                <div className="w-px h-6 bg-white/20"></div>
-                
-                <button 
-                    onClick={handleLogout}
-                    className="p-2.5 hover:bg-red-500/30 rounded-lg transition-colors group" 
-                    title="Cerrar Sesión"
-                >
-                    <Power size={20} className="text-white/80 group-hover:text-red-300" />
-                </button>
-                
             </div>
 
-            {/* Reloj y fecha */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-4 shadow-xl text-right">
-                <p className="text-3xl font-light tracking-tight">
-                    {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-                <p className="text-xs text-white/70 mt-1">
-                    {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Animaciones CSS */}
-      <style>{`
+            {/* Animaciones CSS */}
+            <style>{`
         @keyframes fade-in-up {
           from {
             opacity: 0;
@@ -7039,8 +7154,8 @@ function Dashboard() {
         }
       `}</style>
 
-    </div>
-  );
+        </div>
+    );
 }
 
 export default Dashboard;
@@ -7515,7 +7630,7 @@ const getTypeIcon = (type) => {
     }
 };
 
-const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderName, onOpenItem }) => {
+const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderName, onOpenItem, onContextMenu }) => {
     const [folderHistory, setFolderHistory] = useState([{ id: initialFolderId, name: initialFolderName }]);
     const currentFolder = folderHistory[folderHistory.length - 1];
     
@@ -7682,7 +7797,14 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
     };
 
     return (
-        <div className="flex h-full w-full bg-background overflow-hidden font-sans select-none transition-colors duration-300">
+        <div 
+        
+            className="flex h-full w-full bg-background overflow-hidden font-sans select-none transition-colors duration-300"
+            onContextMenu={(e) => {
+                e.stopPropagation();
+            }}
+        
+        >
 
             {/* ========== PANEL IZQUIERDO ========== */}
             <div className="flex-1 flex flex-col bg-card shadow-xl">
@@ -7785,6 +7907,11 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
                                         key={item._id}
                                         onClick={() => setSelectedItem(item)}
                                         onDoubleClick={() => handleDoubleClick(item)}
+                                        onContextMenu={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation(); // Evita que llegue al fondo de la carpeta
+                                                                if (onContextMenu) onContextMenu(e, item); // Llama al menú del escritorio
+                                                            }}
                                         className={`
                                             flex items-center gap-3 px-4 py-2.5 cursor-default transition-all group
                                             ${isSelected
@@ -7964,13 +8091,18 @@ export default FolderContent;
 // src/features/file-system/NewFolderForm.jsx
 import React, { useState } from 'react';
 
-function NewFolderForm({ onSubmit }) {
+function NewFolderForm({
+  onSubmit,
+  title = "Nombre de la Carpeta",
+  placeholder = "Ej: Proyectos 2025",
+  buttonText = "Crear Carpeta"
+}) {
   const [name, setName] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-    
+
     // Enviamos solo el nombre. El tipo "folder" lo gestionará Desktop.jsx
     onSubmit({ name });
   };
@@ -7979,7 +8111,7 @@ function NewFolderForm({ onSubmit }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="folderName" className="block text-sm font-medium text-purple-200">
-          Nombre de la Carpeta
+          {title}
         </label>
         <input
           id="folderName"
@@ -7988,7 +8120,7 @@ function NewFolderForm({ onSubmit }) {
           onChange={(e) => setName(e.target.value)}
           autoFocus
           className="w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-          placeholder="Ej: Proyectos 2025"
+          placeholder={placeholder}
         />
       </div>
 
@@ -7997,7 +8129,7 @@ function NewFolderForm({ onSubmit }) {
           type="submit"
           className="w-full py-2 px-4 font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
-          Crear Carpeta
+          {buttonText}
         </button>
       </div>
     </form>
@@ -8087,22 +8219,74 @@ export default NewLinkForm;
 ================================================
 
 // src/features/file-system/ShareForm.jsx
-import React, { useState } from 'react';
-import { UserPlus, Check, Loader, Monitor } from 'lucide-react'; // Monitor icon
+import React, { useState, useEffect, useRef } from 'react';
+import { UserPlus, Check, Loader, Monitor, Briefcase, Search } from 'lucide-react';
+import { useFetch } from '../../core/api/useFetch'; // 👈 Importamos tu hook
 
-function ShareForm({ onSubmit, itemToShare, isDesktop = false }) {
+function ShareForm({ onSubmit, itemToShare, isDesktop = false, isWorkspace = false }) {
   const [email, setEmail] = useState('');
   const [permission, setPermission] = useState('read'); 
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Nuevos estados para el buscador
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchTimeoutRef = useRef(null);
+  
+  const fetchDataBackend = useFetch();
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const token = localStorage.getItem('token');
+
+  // Efecto buscador "As you type" (Debounce)
+  useEffect(() => {
+    // Si el usuario borra o el correo es muy corto, limpiamos
+    if (email.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    // Cancelamos la búsqueda anterior si el usuario sigue escribiendo rápido
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    // Esperamos 400ms después de que deje de escribir para hacer la petición
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const response = await fetchDataBackend(
+          `${backendUrl}/users/search?q=${encodeURIComponent(email)}`,
+          null,
+          "GET",
+          { Authorization: `Bearer ${token}` }
+        );
+
+        if (response && response.ok) {
+          setSuggestions(response.users);
+          setShowSuggestions(true);
+        }
+      } catch (error) {
+        console.error("Error buscando usuarios:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(searchTimeoutRef.current);
+  }, [email]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
 
     setIsLoading(true);
-    // Si es desktop, solo mandamos email. Si es archivo, mandamos permiso también.
-    await onSubmit({ email, permission });
+    await onSubmit({ email, permission: (isDesktop || isWorkspace) ? undefined : permission });
     setIsLoading(false);
+  };
+
+  const handleSelectSuggestion = (selectedEmail) => {
+    setEmail(selectedEmail);
+    setShowSuggestions(false);
   };
 
   return (
@@ -8110,40 +8294,76 @@ function ShareForm({ onSubmit, itemToShare, isDesktop = false }) {
       
       {/* Cabecera informativa */}
       <div className={`p-3 border rounded-lg flex items-center gap-3 
-          ${isDesktop ? 'bg-purple-900/20 border-purple-500/30' : 'bg-blue-900/20 border-blue-500/30'}`}>
+          ${isDesktop ? 'bg-purple-900/20 border-purple-500/30' 
+            : isWorkspace ? 'bg-emerald-900/20 border-emerald-500/30' 
+            : 'bg-blue-900/20 border-blue-500/30'}`}>
         
-        <div className={`p-2 rounded-full ${isDesktop ? 'bg-purple-600/20' : 'bg-blue-600/20'}`}>
-            {isDesktop ? <Monitor size={20} className="text-purple-400"/> : <UserPlus size={20} className="text-blue-400" />}
+        <div className={`p-2 rounded-full 
+          ${isDesktop ? 'bg-purple-600/20' 
+            : isWorkspace ? 'bg-emerald-600/20' 
+            : 'bg-blue-600/20'}`}>
+            {isDesktop ? <Monitor size={20} className="text-purple-400"/> 
+              : isWorkspace ? <Briefcase size={20} className="text-emerald-400" />
+              : <UserPlus size={20} className="text-blue-400" />}
         </div>
         
         <div>
             <p className="text-sm text-gray-200">
-                {isDesktop ? "Estás dando acceso total a:" : "Estás compartiendo:"}
+                {isDesktop ? "Estás dando acceso total a:" 
+                  : isWorkspace ? "Invitando un nuevo miembro a:" 
+                  : "Estás compartiendo:"}
             </p>
             <p className="font-bold text-white truncate max-w-[200px]">
-                {isDesktop ? "Tu Escritorio Virtual" : itemToShare?.nombre}
+                {isDesktop ? "Tu Escritorio Virtual" 
+                  : isWorkspace ? itemToShare?.nombre 
+                  : itemToShare?.nombre}
             </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
+        <div className="relative">
           <label className="block text-sm font-medium text-gray-300 mb-1">
-            Correo del estudiante
+            Correo o nombre del estudiante
           </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
-            placeholder="amigo@epn.edu.ec"
-            required
-            autoFocus
-          />
+          <div className="relative">
+            <input
+              type="text" // Cambiado de email a text por si busca por nombre
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
+              // Retrasamos el cierre para que permita hacer click en la sugerencia
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} 
+              className="w-full pl-10 pr-3 py-2 bg-gray-900 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
+              placeholder="amigo@epn.edu.ec o Juan..."
+              required
+              autoFocus
+              autoComplete="off"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              {isSearching ? <Loader size={16} className="animate-spin" /> : <Search size={16} />}
+            </div>
+          </div>
+
+          {/* Menú desplegable de sugerencias */}
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
+              {suggestions.map((user) => (
+                <li 
+                  key={user._id}
+                  onClick={() => handleSelectSuggestion(user.email)}
+                  className="px-4 py-2 hover:bg-gray-700 cursor-pointer border-b border-gray-700/50 last:border-none transition-colors"
+                >
+                  <p className="text-sm font-medium text-white">{user.name}</p>
+                  <p className="text-xs text-gray-400">{user.email}</p>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
-        {/* Solo mostramos selector de permisos si es un archivo (no escritorio completo) */}
-        {!isDesktop && (
+        {/* Permisos */}
+        {(!isDesktop && !isWorkspace) && (
             <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
                 Permisos
@@ -8187,11 +8407,6 @@ function ShareForm({ onSubmit, itemToShare, isDesktop = false }) {
         </div>
       </form>
       
-      <p className="text-xs text-gray-500 text-center">
-        {isDesktop 
-            ? "El usuario verá tu escritorio en su menú de inicio." 
-            : "El usuario recibirá una notificación si está conectado."}
-      </p>
     </div>
   );
 }
