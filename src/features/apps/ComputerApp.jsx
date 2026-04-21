@@ -1,7 +1,7 @@
 // src/features/apps/ComputerApp.jsx
 import React, { useState, useEffect } from 'react';
 import { useFetch } from '../../core/api/useFetch';
-import { Loader, Info, Search, HardDrive, FileText, Folder, Link2, Code2, File, ChevronRight } from 'lucide-react';
+import { Loader, Info, Search, HardDrive, FileText, Folder, Link2, Code2, File, ChevronRight, Sparkles } from 'lucide-react';
 
 import codeIcon from '../../assets/icons/code.png';
 import noteIcon from '../../assets/icons/note.png';
@@ -13,21 +13,21 @@ import fileIcon from '../../assets/icons/file.png';
 const getIconSrc = (type) => {
     switch (type) {
         case 'folder': return folderIcon;
-        case 'link':   return linkIcon;
-        case 'note':   return noteIcon;
-        case 'code':   return codeIcon;
-        case 'file':   return fileIcon;
-        default:       return unknownIcon;
+        case 'link': return linkIcon;
+        case 'note': return noteIcon;
+        case 'code': return codeIcon;
+        case 'file': return fileIcon;
+        default: return unknownIcon;
     }
 };
 
 const getTypeIcon = (type) => {
     switch (type) {
         case 'folder': return Folder;
-        case 'link':   return Link2;
-        case 'note':   return FileText;
-        case 'code':   return Code2;
-        default:       return File;
+        case 'link': return Link2;
+        case 'note': return FileText;
+        case 'code': return Code2;
+        default: return File;
     }
 };
 
@@ -37,6 +37,10 @@ const ComputerApp = ({ onOpenItem }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedItem, setSelectedItem] = useState(null);
 
+    // 👇 NUEVOS ESTADOS PARA IA 👇
+    const [isSearchingAI, setIsSearchingAI] = useState(false);
+    const [aiResults, setAiResults] = useState(null);
+
     const fetchDataBackend = useFetch();
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const token = localStorage.getItem('token');
@@ -45,17 +49,15 @@ const ComputerApp = ({ onOpenItem }) => {
         const loadAllItems = async () => {
             setLoading(true);
             try {
-                // 💡 NOTA: Asumimos que un GET a '/items' te devuelve TODOS los archivos
-                // Si en tu backend es diferente (ej. '/items/all'), cámbialo aquí abajo:
                 const data = await fetchDataBackend(
                     `${backendUrl}/items/all`,
                     null, "GET", { Authorization: `Bearer ${token}` }
                 );
-                
+
                 if (data && data.items) {
                     setItems(data.items);
                 } else if (Array.isArray(data)) {
-                    setItems(data); // Por si el backend devuelve un array directo
+                    setItems(data);
                 }
             } catch (error) {
                 console.error("Error al cargar todos los archivos:", error);
@@ -65,6 +67,44 @@ const ComputerApp = ({ onOpenItem }) => {
         };
         loadAllItems();
     }, []);
+
+    // 👇 NUEVA LÓGICA DE BÚSQUEDA IA 👇
+    const handleAISearch = async () => {
+        if (!searchTerm.trim()) return;
+        setIsSearchingAI(true);
+        try {
+            const data = await fetchDataBackend(
+                `${backendUrl}/ai/semantic-search`,
+                { consulta: searchTerm },
+                "POST",
+                { Authorization: `Bearer ${token}` }
+            );
+            if (data && data.ok) {
+                const idsEncontrados = data.data.map(r => r.id || r._id);
+                const itemsCompletos = items.filter(item =>
+                    idsEncontrados.includes(item._id?.toString() || item.id?.toString())
+                );
+                setAiResults(itemsCompletos);
+            }
+        } catch (error) {
+            console.error("Error en búsqueda semántica:", error);
+        } finally {
+            setIsSearchingAI(false);
+        }
+    };
+
+    // Resetea los resultados de IA si el usuario borra el texto
+    useEffect(() => {
+        if (searchTerm === "") setAiResults(null);
+    }, [searchTerm]);
+
+    // Filtro híbrido: Si hay resultados IA, muéstralos. Si no, usa el filtro local.
+    const displayedItems = aiResults !== null
+        ? aiResults
+        : items.filter(item =>
+            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.type.toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
     const handleDoubleClick = (item) => {
         if (item.type === 'folder') {
@@ -82,20 +122,14 @@ const ComputerApp = ({ onOpenItem }) => {
         });
     };
 
-    // Filtro del buscador en tiempo real
-    const filteredItems = items.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.type.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
     const typeBadge = (type, selected) => {
         if (selected) return 'bg-white/20 text-white';
         switch (type) {
             case 'folder': return 'bg-amber-50  dark:bg-amber-500/10  text-amber-700  dark:text-amber-400';
-            case 'code':   return 'bg-green-50  dark:bg-green-500/10  text-green-700  dark:text-green-400';
-            case 'link':   return 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400';
-            case 'file':   return 'bg-pink-50   dark:bg-pink-500/10   text-pink-700   dark:text-pink-400';
-            default:       return 'bg-blue-50   dark:bg-blue-500/10   text-blue-700   dark:text-blue-400';
+            case 'code': return 'bg-green-50  dark:bg-green-500/10  text-green-700  dark:text-green-400';
+            case 'link': return 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400';
+            case 'file': return 'bg-pink-50   dark:bg-pink-500/10   text-pink-700   dark:text-pink-400';
+            default: return 'bg-blue-50   dark:bg-blue-500/10   text-blue-700   dark:text-blue-400';
         }
     };
 
@@ -112,22 +146,65 @@ const ComputerApp = ({ onOpenItem }) => {
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-foreground leading-tight">Directorio Maestro</h2>
-                            <p className="text-xs text-muted-foreground">Todos tus archivos y carpetas</p>
+                            <p className="text-xs text-muted-foreground">
+                                {aiResults !== null
+                                    ? `${displayedItems.length} resultado${displayedItems.length !== 1 ? 's' : ''} de IA`
+                                    : 'Todos tus archivos y carpetas'}
+                            </p>
                         </div>
                     </div>
 
-                    {/* Buscador */}
-                    <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="Buscar archivos..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 w-64 transition-all text-foreground placeholder:text-muted-foreground"
-                        />
+                    {/* Buscador con IA */}
+                    <div className="relative flex items-center gap-2">
+                        <div className="relative">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                type="text"
+                                placeholder="Búsqueda semántica IA..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleAISearch()}
+                                className="pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 w-64 transition-all text-foreground placeholder:text-muted-foreground"
+                            />
+                        </div>
+                        {/* Botón de la IA */}
+                        <button
+                            onClick={handleAISearch}
+                            disabled={isSearchingAI || !searchTerm.trim()}
+                            className="p-2 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 border border-brand-500/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                            title="Buscar con Inteligencia Artificial"
+                        >
+                            {isSearchingAI
+                                ? <Loader size={16} className="animate-spin" />
+                                : <Sparkles size={16} />}
+                        </button>
+                        {/* Badge "IA activa" cuando hay resultados de IA */}
+                        {aiResults !== null && (
+                            <span className="absolute -top-2 -right-2 flex h-4 w-4">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-4 w-4 bg-brand-500 items-center justify-center">
+                                    <Sparkles size={8} className="text-white" />
+                                </span>
+                            </span>
+                        )}
                     </div>
                 </div>
+
+                {/* Banner sutil cuando la IA está activa */}
+                {aiResults !== null && (
+                    <div className="px-6 py-2 bg-brand-500/5 border-b border-brand-500/20 flex items-center gap-2">
+                        <Sparkles size={12} className="text-brand-500" />
+                        <p className="text-xs text-brand-600 dark:text-brand-400">
+                            Mostrando resultados de búsqueda semántica con IA ·
+                            <button
+                                onClick={() => { setAiResults(null); setSearchTerm(""); }}
+                                className="ml-1 underline hover:no-underline"
+                            >
+                                Limpiar
+                            </button>
+                        </p>
+                    </div>
+                )}
 
                 {/* ENCABEZADO DE TABLA */}
                 <div className="flex px-6 py-2.5 bg-background border-b border-border text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
@@ -143,20 +220,25 @@ const ComputerApp = ({ onOpenItem }) => {
                             <Loader className="animate-spin mb-3" size={32} />
                             <p className="text-sm">Analizando disco...</p>
                         </div>
-                    ) : filteredItems.length === 0 ? (
+                    ) : displayedItems.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                             <HardDrive size={48} className="mb-3 opacity-30" />
-                            <p className="text-sm font-medium">{searchTerm ? 'No hay coincidencias' : 'No se encontraron archivos'}</p>
+                            <p className="text-sm font-medium">
+                                {searchTerm ? 'No hay coincidencias' : 'No se encontraron archivos'}
+                            </p>
+                            {aiResults !== null && (
+                                <p className="text-xs mt-1 text-muted-foreground">La IA no encontró archivos relevantes</p>
+                            )}
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-1">
-                            {filteredItems.map(item => {
+                            {displayedItems.map(item => {
                                 const isSelected = selectedItem?._id === item._id;
                                 const TypeIcon = getTypeIcon(item.type);
 
                                 return (
                                     <div
-                                        key={item._id}
+                                        key={item._id || item.id || item.name}
                                         onClick={() => setSelectedItem(item)}
                                         onDoubleClick={() => handleDoubleClick(item)}
                                         className={`
@@ -168,6 +250,12 @@ const ComputerApp = ({ onOpenItem }) => {
                                     >
                                         <div className="relative flex-shrink-0">
                                             <img src={getIconSrc(item.type)} alt="" className="w-7 h-7 object-contain drop-shadow-sm" />
+                                            {/* Indicador de que vino de IA */}
+                                            {aiResults !== null && (
+                                                <span className="absolute -top-1 -right-1 w-3 h-3 bg-brand-500 rounded-full flex items-center justify-center">
+                                                    <Sparkles size={6} className="text-white" />
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="flex-1 min-w-0">
@@ -179,7 +267,7 @@ const ComputerApp = ({ onOpenItem }) => {
                                         <div className="w-32 text-center hidden md:block">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${typeBadge(item.type, isSelected)}`}>
                                                 <TypeIcon size={12} />
-                                                {item.type === 'folder' ? 'Carpeta' : item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                                                {item.type === 'folder' ? 'Carpeta' : item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : 'Archivo'}
                                             </span>
                                         </div>
 
@@ -232,7 +320,7 @@ const ComputerApp = ({ onOpenItem }) => {
                                     </div>
                                     <div className="flex items-start justify-between text-xs">
                                         <span className="text-muted-foreground font-medium">ID de Archivo:</span>
-                                        <span className="font-mono text-[10px] bg-muted px-2 py-0.5 rounded text-foreground">{selectedItem._id.slice(-8)}</span>
+                                        <span className="font-mono text-[10px] bg-muted px-2 py-0.5 rounded text-foreground">{(selectedItem._id || selectedItem.id || 'N/A').toString().slice(-8)}</span>
                                     </div>
                                 </div>
                             </div>
