@@ -80,7 +80,10 @@ const ComputerApp = ({ onOpenItem }) => {
                 { Authorization: `Bearer ${token}` }
             );
             if (data && data.ok) {
-                const idsEncontrados = data.data.map(r => r.id || r._id);
+                // Tu backend devuelve la propiedad "data", que dentro trae "resultados" de Python
+                const resultadosIA = data.data;
+
+                const idsEncontrados = resultadosIA.map(r => r.id || r._id);
                 const itemsCompletos = items.filter(item =>
                     idsEncontrados.includes(item._id?.toString() || item.id?.toString())
                 );

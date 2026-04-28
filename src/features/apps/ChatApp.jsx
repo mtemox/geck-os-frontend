@@ -9,7 +9,7 @@ const ChatApp = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const messagesEndRef = useRef(null);
   const fetchDataBackend = useFetch();
 
@@ -39,19 +39,36 @@ const ChatApp = () => {
         `${backendUrl}/ai/chat`,
         { "mensaje": currentInput },
         "POST",
-        { 
+        {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         }
       );
 
       if (data && data.ok) {
-        const aiResponse = { 
+        // Guardamos la respuesta completa para inspeccionarla
+        const respuestaCompleta = data.data;
+
+        const aiResponse = {
           id: Date.now() + 1,
-          role: 'ai', 
-          text: data.data.respuesta,
-          metrics: data.data.metricas 
+          role: 'ai',
+          // 👇 SOLUCIÓN: Si es un objeto, extraemos solo la propiedad 'mensaje'
+          // Si por alguna razón ya fuera un string, lo dejamos como está.
+          text: typeof respuestaCompleta === 'object'
+            ? respuestaCompleta.mensaje
+            : respuestaCompleta,
+
+          // Si quieres guardar los otros datos (comando, apps) para usarlos luego:
+          metadata: typeof respuestaCompleta === 'object' ? {
+            comando: respuestaCompleta.comando,
+            apps: respuestaCompleta.apps,
+            contenido_nota: respuestaCompleta.contenido_nota
+          } : null,
+
+          // Ajuste de métricas según tu backend anterior
+          metrics: data.metrics || null
         };
+
         setMessages(prev => [...prev, aiResponse]);
       } else {
         throw new Error("Respuesta inválida");
@@ -71,14 +88,14 @@ const ChatApp = () => {
 
   return (
     <div className="flex flex-col h-full bg-transparent text-foreground font-sans">
-      
+
       {/* --- CABECERA --- */}
       <div className="p-3 border-b border-brand-500/30 flex justify-between items-center bg-card/50 backdrop-blur-sm">
         <div className="flex items-center gap-2 text-sm text-brand-400">
           <Sparkles size={16} />
           <span className="font-semibold">Potenciado por Gemini 2.5</span>
         </div>
-        <button 
+        <button
           onClick={handleClearChat}
           className="p-1.5 hover:bg-muted rounded-full text-muted-foreground hover:text-destructive transition-colors"
           title="Limpiar chat"
@@ -91,7 +108,7 @@ const ChatApp = () => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
         {messages.map((msg) => (
           <div key={msg.id || Math.random()} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            
+
             {/* Avatar */}
             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white
               ${msg.role === 'user' ? 'bg-brand-500' : 'bg-brand-700'}`}>
@@ -100,12 +117,12 @@ const ChatApp = () => {
 
             {/* Burbuja de Texto */}
             <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap
-              ${msg.role === 'user' 
-                ? 'bg-brand-500/20 border border-brand-500/40 text-foreground rounded-tr-none' 
+              ${msg.role === 'user'
+                ? 'bg-brand-500/20 border border-brand-500/40 text-foreground rounded-tr-none'
                 : 'bg-card border border-border text-card-foreground rounded-tl-none'
               }`}>
               {msg.text}
-              
+
               {msg.metrics && (
                 <div className="mt-2 pt-2 border-t border-border text-[10px] text-muted-foreground flex gap-2">
                   <span>⏱ {msg.metrics.tiempo_respuesta_ms}ms</span>
@@ -128,7 +145,7 @@ const ChatApp = () => {
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -142,8 +159,8 @@ const ChatApp = () => {
           className="flex-1 bg-background border border-input rounded-lg px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 transition-colors"
           disabled={isLoading}
         />
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={isLoading || !input.trim()}
           className="bg-brand-500 hover:bg-brand-600 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed text-white p-2 rounded-lg transition-all"
         >

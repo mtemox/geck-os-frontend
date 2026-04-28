@@ -115,9 +115,9 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
         "POST",
         { Authorization: `Bearer ${token}` }
       );
-      if (response && response.ok && response.improvedText) {
+      if (response && response.ok && response.data) {
         if (editorRef.current) {
-          editorRef.current.innerText = response.improvedText;
+          editorRef.current.innerText = response.data; 
           sileo.success({title: "¡Texto mejorado por IA!"});
         }
       }
