@@ -215,6 +215,8 @@ const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow, onContext
 
 function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMinimizeWindow, onMaximizeWindow, onDragStop, taskbarPosition }) {
 
+  const [cursors, setCursors] = useState({});
+
   // Archivos
   const fileInputRef = useRef(null);
 
@@ -487,6 +489,13 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         }
       });
 
+      socket.on('cursor-move', (data) => {
+        setCursors(prev => ({
+          ...prev,
+          [data.userId]: { x: data.x, y: data.y, name: data.userName }
+        }));
+      });
+
       socket.on('file-change', ({ fileId, content }) => {
         // Buscamos el ícono y le actualizamos su contenido interno
         setIcons(prev => prev.map(icon =>
@@ -527,6 +536,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         socket.off('item-shared');
         socket.off('preferences-updated');
         socket.off('file-change');
+        socket.off('cursor-move');
       }
     };
 
@@ -1245,15 +1255,31 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
 
   return (
-    <div className="w-full h-screen overflow-hidden" onContextMenu={handleContextMenu} onClick={handleCloseMenu}>
+    <div 
+      className="w-full h-screen overflow-hidden relative"
+      onContextMenu={handleContextMenu} 
+      onClick={handleCloseMenu}
+      onMouseMove={(e) => {
+        if (socket && (workspaceId || isRemote)) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            socket.emit("workspace-cursor-move", {
+                workspaceId: workspaceId || null,
+                userId: user.id,
+                userName: user.nombre,
+                x: e.clientX,
+                y: e.clientY
+            });
+        }
+      }}
+    >
 
       {/* Fondo */}
       <div className="fixed inset-0 -z-10"
         style={{
-          backgroundImage: `url(${currentWallpaper})`, // <--- USAR ESTADO
+          backgroundImage: `url(${currentWallpaper})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          transition: 'background-image 0.5s ease-in-out' // Efecto suave
+          transition: 'background-image 0.5s ease-in-out'
         }}
       />
 
@@ -1262,12 +1288,28 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
       <WeatherWidget />
 
       {/* BARRA DE AVISO (Solo si es remoto) */}
-      {/* BARRA DE AVISO (Solo si es remoto) */}
       {isRemote && (
         <div className="fixed top-0 left-0 right-0 h-8 bg-red-600 z-[100] flex items-center justify-center text-white text-xs font-bold shadow-lg">
           VISUALIZANDO ESCRITORIO DE: {remoteUserName?.toUpperCase()} (Modo Espectador)
         </div>
       )}
+
+      {/* 👇 RENDERIZADO DE CURSORES EN TIEMPO REAL 👇 */}
+      {Object.entries(cursors).map(([userId, cursor]) => (
+        <div 
+          key={userId}
+          className="absolute z-[9999] pointer-events-none transition-all duration-75"
+          style={{ transform: `translate(${cursor.x}px, ${cursor.y}px)` }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-md text-brand-500 fill-brand-500">
+            <polygon points="3 3 10 21 14 14 21 10 3 3"></polygon>
+          </svg>
+          <span className="ml-3 px-2 py-0.5 bg-brand-500 text-white text-[10px] rounded shadow-sm whitespace-nowrap">
+            {cursor.name}
+          </span>
+        </div>
+      ))}
+      {/* 👆 FIN DE CURSORES 👆 */}
 
       {/* Grid de Íconos */}
       <div className="p-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 content-start h-[calc(100vh-3rem)] overflow-y-auto">

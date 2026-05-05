@@ -6,6 +6,7 @@ import dragonBg from '../../../assets/wallpapers/deg3.jpg';
 import logoMidesk from '../../../assets/logos/midesk.jpg';
 import { useFetch } from '../../../core/api/useFetch';
 import { useSocket } from '../../../core/context/SocketContext';
+import { sileo } from 'sileo';
 
 import Modal from '../../../core/ui/components/Modal';
 import NewFolderForm from '../../file-system/NewFolderForm';
@@ -33,9 +34,10 @@ function Dashboard() {
         setIsModalVisible(true);
     };
 
-    const handleInviteToWorkspace = (e, ws) => {
+    const handleInviteToWorkspace = (e, wsId, wsName) => {
         e.stopPropagation();
-        setSelectedWorkspace(ws); // Guardamos cuál workspace vamos a invitar
+        // Reconstruimos el objeto para que confirmInviteMember pueda leer el _id
+        setSelectedWorkspace({ _id: wsId, nombre: wsName }); 
         setModalMode('invite-workspace');
         setIsModalVisible(true);
     };

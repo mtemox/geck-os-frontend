@@ -11,10 +11,10 @@ function Reset() {
   const navigate = useNavigate();
   const fetchDataBackend = useFetch();
   const [tokenValido, setTokenValido] = useState(false);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
-  const password = watch('password'); 
+  const password = watch('password');
 
   // 1. VALIDAR EL TOKEN
   useEffect(() => {
@@ -22,17 +22,17 @@ function Reset() {
       try {
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
         const response = await fetchDataBackend(
-          `${backendUrl}/auth/forgot-password/${token}`, 
-          null, 
+          `${backendUrl}/auth/forgot-password/${token}`,
+          null,
           "GET"
         );
 
         if (response?.msg === "Token confirmado, ya puedes crear tu nuevo password") {
           setTokenValido(true);
         } else {
-            setTokenValido(false);
-            sileo.error({title: "El token no es válido o ha expirado."});
-            setTimeout(() => navigate('/login'), 3000);
+          setTokenValido(false);
+          sileo.error({ title: "El token no es válido o ha expirado." });
+          setTimeout(() => navigate('/login'), 3000);
         }
       } catch (error) {
         setTokenValido(false);
@@ -42,22 +42,22 @@ function Reset() {
     };
 
     verificarToken();
-  }, [token]); 
+  }, [token]);
 
   // 2. ENVIAR LA NUEVA CONTRASEÑA
   const onSubmit = async (data) => {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      
+
       const response = await fetchDataBackend(
         `${backendUrl}/auth/reset-password/${token}`,
-        { 
-          password: data.password, 
-          confirmpassword: data.confirmPassword 
+        {
+          password: data.password,
+          confirmpassword: data.confirmPassword
         },
         "POST"
       );
-      
+
       if (response) {
         setTimeout(() => {
           navigate('/login');
@@ -84,7 +84,7 @@ function Reset() {
     <AuthLayout title="Error de Seguridad">
       <div className="text-center">
         <p className="text-red-500 font-bold mb-4">El enlace no es válido o ha expirado.</p>
-        <button 
+        <button
           onClick={() => navigate('/login')}
           className="text-gray-300 hover:text-white underline decoration-red-600"
         >
@@ -101,22 +101,31 @@ function Reset() {
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        
+
         {/* NUEVO PASSWORD */}
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-300">
             Nueva Contraseña
           </label>
-          <input
-            id="password"
-            type="password"
-            {...register('password', { 
-              required: 'La contraseña es requerida',
-              minLength: { value: 6, message: 'Mínimo 6 caracteres' }
-            })}
-            className={inputClass}
-            placeholder="Nueva contraseña"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              {...register('password', {
+                required: 'La contraseña es requerida',
+                minLength: { value: 6, message: 'Mínimo 6 caracteres' }
+              })}
+              className={inputClass}
+              placeholder="Nueva contraseña"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white mt-0.5"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           {errors.password && <p className="mt-1 text-xs text-red-500 font-bold">{errors.password.message}</p>}
         </div>
 
@@ -125,16 +134,25 @@ function Reset() {
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
             Confirmar Contraseña
           </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            {...register('confirmPassword', { 
-              required: 'Confirma tu contraseña',
-              validate: value => value === password || 'Las contraseñas no coinciden'
-            })}
-            className={inputClass}
-            placeholder="Repite la contraseña"
-          />
+          <div className="relative">
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              {...register('confirmPassword', {
+                required: 'Confirma tu contraseña',
+                validate: value => value === password || 'Las contraseñas no coinciden'
+              })}
+              className={inputClass}
+              placeholder="Repite la contraseña"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white mt-0.5"
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           {errors.confirmPassword && <p className="mt-1 text-xs text-red-500 font-bold">{errors.confirmPassword.message}</p>}
         </div>
 

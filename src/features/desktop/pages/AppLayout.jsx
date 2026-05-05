@@ -1,183 +1,284 @@
 // src/features/desktop/pages/AppLayout.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Desktop from '../components/Desktop';
 import Taskbar from '../components/Taskbar';
 import { useSocket } from '../../../core/context/SocketContext';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { LogOut, Users } from 'lucide-react';
+import { useFetch } from '../../../core/api/useFetch';
+import { sileo } from 'sileo';
 
 function AppLayout() {
   const [openWindows, setOpenWindows] = useState([]);
   const [nextZ, setNextZ] = useState(10);
   const { socket } = useSocket();
   const [searchParams] = useSearchParams();
-  const remoteUserId = searchParams.get('remote'); // <--- ID DEL DUEÑO REMOTO
+  const navigate = useNavigate();
+  const fetchDataBackend = useFetch();
+
+  const remoteUserId = searchParams.get('remote');
+  const workspaceId = searchParams.get('workspace');
+  const remoteName = searchParams.get('name');
+
   const [taskbarPosition, setTaskbarPosition] = useState('bottom');
 
-  // --- ESCUCHAR EVENTOS (EFECTO ESPEJO) ---
+  const isRemote = !!remoteUserId;
+  const isWorkspace = !!workspaceId;
+
+  // ── CONECTAR AL ROOM CORRECTO AL MONTAR ──────────────────────────────────
   useEffect(() => {
     if (!socket) return;
 
-    // A. Alguien abrió una ventana en otra pestaña
-    socket.on('window-open', (newWindow) => {
-      setOpenWindows(prev => {
-        // Evitar duplicados si ya existe
-        if (prev.find(w => w.id === newWindow.id)) return prev;
-        return [...prev, newWindow];
-      });
-    });
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    // B. Alguien cerró una ventana
-    socket.on('window-close', ({ windowId }) => {
-      setOpenWindows(prev => prev.filter(win => win.id !== windowId));
-    });
-
-    // C. Alguien movió una ventana
-    socket.on('window-move', ({ windowId, position }) => {
-      setOpenWindows(prev => prev.map(win => 
-        // 👇 CAMBIO AQUÍ: Usamos String() para asegurar que comparamos texto con texto
-        String(win.id) === String(windowId) 
-            ? { ...win, defaultX: position.x, defaultY: position.y } 
-            : win
-      ));
-    });
-
-    return () => {
-      socket.off('window-open');
-      socket.off('window-close');
-      socket.off('window-move');
-    };
-  }, [socket]);
-
-  const handleOpenWindow = (appId, title, windowOptions = {}, data = null) => {
-    if (appId === 'profile' && !windowOptions.defaultWidth) {
-        windowOptions = { defaultWidth: 500, defaultHeight: 600 };
+    if (workspaceId) {
+      console.log(`🏢 Uniéndose a workspace room: ${workspaceId}`);
+      socket.emit('join-workspace-room', workspaceId);
+      socket.emit('setup', user.id); // También el room personal
+    } else if (remoteUserId) {
+      console.log(`🔭 Modo remoto: ${remoteUserId}`);
+      socket.emit('join-user-room', remoteUserId);
+    } else {
+      socket.emit('setup', user.id);
     }
 
-    // Cascada: Calculamos posición inicial
-    const offset = (openWindows.length * 30) % 300; 
-    const defaultX = 50 + offset; 
+    // ── ESCUCHAR EVENTOS DE VENTANAS ─────────────────────────────────────
+    const handleWindowOpen = (newWindow) => {
+      setOpenWindows(prev => {
+        if (prev.find(w => String(w.id) === String(newWindow.id))) return prev;
+        return [...prev, newWindow];
+      });
+    };
+
+    const handleWindowClose = ({ windowId }) => {
+      setOpenWindows(prev => prev.filter(win => String(win.id) !== String(windowId)));
+    };
+
+    const handleWindowMove = ({ windowId, position }) => {
+      setOpenWindows(prev => prev.map(win =>
+        String(win.id) === String(windowId)
+          ? { ...win, defaultX: position.x, defaultY: position.y }
+          : win
+      ));
+    };
+
+    // Cuando alguien acepta la invitación y entra al workspace
+    const handleMemberJoined = ({ user: newUser }) => {
+      sileo.success({ title: `${newUser.name} se unió al workspace 🎉` });
+    };
+
+    const handleMemberLeft = ({ userName }) => {
+      sileo.info({ title: `${userName} salió del workspace` });
+    };
+
+    socket.on('window-open', handleWindowOpen);
+    socket.on('window-close', handleWindowClose);
+    socket.on('window-move', handleWindowMove);
+    socket.on('workspace-member-joined', handleMemberJoined);
+    socket.on('workspace-member-left', handleMemberLeft);
+
+    return () => {
+      socket.off('window-open', handleWindowOpen);
+      socket.off('window-close', handleWindowClose);
+      socket.off('window-move', handleWindowMove);
+      socket.off('workspace-member-joined', handleMemberJoined);
+      socket.off('workspace-member-left', handleMemberLeft);
+    };
+  }, [socket, workspaceId, remoteUserId]);
+
+  // ── ABRIR VENTANA ────────────────────────────────────────────────────────
+  const handleOpenWindow = useCallback((appId, title, windowOptions = {}, data = null) => {
+    if (appId === 'profile' && !windowOptions.defaultWidth) {
+      windowOptions = { defaultWidth: 500, defaultHeight: 600 };
+    }
+
+    const offset = (openWindows.length * 30) % 300;
+    const defaultX = 50 + offset;
     const defaultY = 20 + offset;
 
     const newWindowId = data?._id || Date.now();
     const newZ = nextZ + 1;
-    
-    const newWindowObj = { 
-      id: newWindowId, 
-      appId, 
-      title, 
-      zIndex: newZ, 
-      defaultX, 
+
+    const newWindowObj = {
+      id: newWindowId,
+      appId,
+      title,
+      zIndex: newZ,
+      defaultX,
       defaultY,
-      isMinimized: false, 
-      isMaximized: false, 
+      isMinimized: false,
+      isMaximized: false,
       data,
-      ...windowOptions 
+      ...windowOptions
     };
 
     setOpenWindows(prev => [...prev, newWindowObj]);
     setNextZ(newZ);
 
-    // 2. EMITIR al Socket
-    if (socket) {
+    if (!socket) return;
 
-        const params = new URLSearchParams(window.location.search);
-        const remoteId = params.get('remote');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-        const user = JSON.parse(localStorage.getItem('user'));
-        // Si estoy viendo a otro, le mando el evento a ÉL.
-        const targetId = remoteUserId || user.id; 
+    if (workspaceId) {
+      socket.emit('workspace-window-open', {
+        workspaceId,
+        windowData: newWindowObj
+      });
+    } else {
+      const targetId = remoteUserId || user.id;
+      socket.emit('window-open', { userId: targetId, windowData: newWindowObj, windowId: newWindowId });
+    }
+  }, [openWindows, nextZ, socket, workspaceId, remoteUserId]);
 
-        socket.emit('window-open', { 
-            userId: targetId, 
-            windowData: newWindowObj,
-            windowId: newWindowId // 👈 ¡AQUÍ ESTABA EL ERROR! Antes decía 'windowId'
-        });
-     }
-  };
-
-  const handleCloseWindow = (windowId) => {
-    // 1. Cerrar localmente
+  // ── CERRAR VENTANA ───────────────────────────────────────────────────────
+  const handleCloseWindow = useCallback((windowId) => {
     setOpenWindows(prev => prev.filter(win => win.id !== windowId));
 
-    // 2. EMITIR al Socket
-    if (socket) {
-      const user = JSON.parse(localStorage.getItem('user'));
+    if (!socket) return;
+
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (workspaceId) {
+      socket.emit('workspace-window-close', { workspaceId, windowId });
+    } else {
       const targetId = remoteUserId || user.id;
       socket.emit('window-close', { userId: targetId, windowId });
     }
-  };
+  }, [socket, workspaceId, remoteUserId]);
 
-  // Necesitamos pasar esta función al Desktop para que Rnd la use al terminar de arrastrar
-  const handleDragStop = (windowId, x, y) => {
-    // 1. Actualizamos localmente
-    setOpenWindows(prev => prev.map(win => 
+  // ── DRAG STOP ────────────────────────────────────────────────────────────
+  const handleDragStop = useCallback((windowId, x, y) => {
+    setOpenWindows(prev => prev.map(win =>
       win.id === windowId ? { ...win, defaultX: x, defaultY: y } : win
     ));
 
-    // 2. EMITIR movimiento (CORRECCIÓN SALA REMOTA)
-    if (socket) {
-      const user = JSON.parse(localStorage.getItem('user'));
-      
-      // Obtenemos el ID remoto de la URL
-      const params = new URLSearchParams(window.location.search);
-      const remoteId = params.get('remote');
-      
-      // Enviamos a la sala correcta
-      const targetId = remoteId || user.id;
+    if (!socket) return;
 
-      socket.emit('window-move', { 
-          userId: targetId, 
-          windowId, 
-          position: { x, y } 
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (workspaceId) {
+      socket.emit('workspace-window-move', {
+        workspaceId,
+        windowId,
+        position: { x, y }
       });
+    } else {
+      const targetId = remoteUserId || user.id;
+      socket.emit('window-move', { userId: targetId, windowId, position: { x, y } });
     }
-  }
+  }, [socket, workspaceId, remoteUserId]);
 
-  // 👈 NUEVO: Minimizar (Ocultar)
   const handleMinimizeWindow = (windowId) => {
-    setOpenWindows(prev => prev.map(win => 
+    setOpenWindows(prev => prev.map(win =>
       win.id === windowId ? { ...win, isMinimized: !win.isMinimized } : win
     ));
   };
 
-  // 👈 NUEVO: Maximizar (Estado)
   const handleMaximizeWindow = (windowId) => {
-    setOpenWindows(prev => prev.map(win => 
-        win.id === windowId ? { ...win, isMaximized: !win.isMaximized } : win
+    setOpenWindows(prev => prev.map(win =>
+      win.id === windowId ? { ...win, isMaximized: !win.isMaximized } : win
     ));
   };
 
   const handleFocusWindow = (windowId) => {
     setNextZ(prevZ => {
       const newZ = prevZ + 1;
-      setOpenWindows(prev => prev.map(win => 
+      setOpenWindows(prev => prev.map(win =>
         win.id === windowId ? { ...win, zIndex: newZ } : win
       ));
       return newZ;
     });
   };
 
+  // ── SALIR DEL WORKSPACE ──────────────────────────────────────────────────
+  const handleLeaveWorkspace = async () => {
+    if (!workspaceId) return;
+
+    const token = localStorage.getItem('token');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+    try {
+      const res = await fetchDataBackend(
+        `${backendUrl}/workspaces/${workspaceId}/leave`,
+        null,
+        "DELETE",
+        { Authorization: `Bearer ${token}` }
+      );
+      if (res?.ok) {
+        sileo.success({ title: res.msg });
+        navigate('/dashboard');
+      }
+    } catch (e) {
+      sileo.error({ title: "Error al salir del workspace" });
+    }
+  };
+
+  // ── SALIR DEL ESCRITORIO REMOTO ──────────────────────────────────────────
+  const handleLeaveRemote = () => {
+    // Volver a nuestro propio room
+    if (socket) {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      socket.emit('setup', user.id);
+    }
+    navigate('/dashboard');
+  };
+
   return (
     <main className="font-sans h-screen overflow-hidden relative">
-      <Desktop 
-         openWindows={openWindows}
-         onOpenWindow={handleOpenWindow}
-         onCloseWindow={handleCloseWindow}
-         onMinimizeWindow={handleMinimizeWindow}
-         onMaximizeWindow={handleMaximizeWindow}
-         onFocusWindow={handleFocusWindow}
-         onDragStop={handleDragStop}
-         taskbarPosition={taskbarPosition}
+
+      {/* Barra de aviso — WORKSPACE */}
+      {isWorkspace && (
+        <div className="fixed top-0 left-0 right-0 h-9 bg-indigo-600 z-[100] flex items-center justify-between px-4 text-white text-xs font-bold shadow-lg">
+          <div className="flex items-center gap-2">
+            <Users size={14} />
+            <span>ESPACIO DE TRABAJO COLABORATIVO</span>
+          </div>
+          <button
+            onClick={handleLeaveWorkspace}
+            className="flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-white font-bold"
+          >
+            <LogOut size={14} />
+            Salir del Workspace
+          </button>
+        </div>
+      )}
+
+      {/* Barra de aviso — REMOTO */}
+      {isRemote && !isWorkspace && (
+        <div className="fixed top-0 left-0 right-0 h-9 bg-red-600 z-[100] flex items-center justify-between px-4 text-white text-xs font-bold shadow-lg">
+          <span>👁 VISUALIZANDO: {remoteName?.toUpperCase()} (Modo Espectador)</span>
+          <button
+            onClick={handleLeaveRemote}
+            className="flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+          >
+            <LogOut size={14} />
+            Volver a mi escritorio
+          </button>
+        </div>
+      )}
+
+      <Desktop
+        openWindows={openWindows}
+        onOpenWindow={handleOpenWindow}
+        onCloseWindow={handleCloseWindow}
+        onMinimizeWindow={handleMinimizeWindow}
+        onMaximizeWindow={handleMaximizeWindow}
+        onFocusWindow={handleFocusWindow}
+        onDragStop={handleDragStop}
+        taskbarPosition={taskbarPosition}
+        // Le avisamos al Desktop si está en modo workspace/remoto para que ajuste su UI
+        topOffset={isWorkspace || isRemote ? 36 : 0}
       />
-      
-      {/* (Nota: En el futuro, la Taskbar usará openWindows para restaurar las minimizadas) */}
-      <Taskbar 
-          openWindows={openWindows} 
-          onOpenApp={handleOpenWindow}
-          onMinimize={handleMinimizeWindow} // Para restaurar/minimizar desde la barra
-          onFocus={handleFocusWindow}       // Para traer al frente
-          position={taskbarPosition}
-          onChangePosition={() => setTaskbarPosition(prev => prev === 'bottom' ? 'top' : 'bottom')}
+
+      <Taskbar
+        openWindows={openWindows}
+        onOpenApp={handleOpenWindow}
+        onMinimize={handleMinimizeWindow}
+        onFocus={handleFocusWindow}
+        position={taskbarPosition}
+        onChangePosition={() => setTaskbarPosition(prev => prev === 'bottom' ? 'top' : 'bottom')}
+        // Bajar la taskbar si hay barra de aviso arriba
+        topOffset={isWorkspace || isRemote ? 36 : 0}
       />
     </main>
   );

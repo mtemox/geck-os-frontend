@@ -10,15 +10,16 @@ import logoMidesk from '../../../assets/logos/midesk.jpg';
 import { useSocket } from '../../../core/context/SocketContext';
 
 // Iconos para darle el toque de SO (Sistema Operativo)
-import { Power, RefreshCcw, Wifi } from 'lucide-react';
+import { Power, RefreshCcw, Wifi, Eye, EyeOff } from 'lucide-react';
 
 function Login() {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1); // 1: Bloqueo, 2: Login
   const navigate = useNavigate();
   const fetchDataBackend = useFetch();
   const { connectSocket } = useSocket();
-  
+
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -28,39 +29,39 @@ function Login() {
     // Redirige al navegador completo hacia tu backend
     window.location.href = `${backendUrl}/auth/google`;
   };
-  
+
   // Función de login
   const onSubmit = async (data) => {
     setLoading(true);
 
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      
+
       // 'data' ya contiene { email, password }
       const response = await fetchDataBackend(
         `${backendUrl}/auth/login`, // Apuntamos a la nueva ruta
         data,
         "POST"
       );
-       
+
       // 2. Verificamos si llegó el token
-        if (response?.token) {
-            // Guardamos el token
-            localStorage.setItem('token', response.token);
-            
-            const userData = {
-                nombre: response.nombre,
-                rol: response.rol,
-                id: response._id
-            };
-            localStorage.setItem('user', JSON.stringify(userData));
+      if (response?.token) {
+        // Guardamos el token
+        localStorage.setItem('token', response.token);
 
-            connectSocket();
+        const userData = {
+          nombre: response.nombre,
+          rol: response.rol,
+          id: response._id
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
 
-            // 3. Redirigimos al DASHBOARD en lugar del Desktop
-            navigate('/dashboard'); // 👈 CAMBIO AQUÍ (Antes era '/desktop')
-        }
-        
+        connectSocket();
+
+        // 3. Redirigimos al DASHBOARD en lugar del Desktop
+        navigate('/dashboard'); // 👈 CAMBIO AQUÍ (Antes era '/desktop')
+      }
+
       // Si hay un error (ej: 401, 404), el hook useFetch
       // capturará el 'msg' del backend y lo mostrará como un toast de error.
 
@@ -77,12 +78,12 @@ function Login() {
   if (step === 1) {
     const time = new Date();
     return (
-      <div 
+      <div
         onClick={() => setStep(2)} // Clic en cualquier lado para entrar
         className="h-screen w-full flex flex-col items-center justify-start pt-32 cursor-pointer select-none text-white relative overflow-hidden"
       >
         {/* Fondo */}
-        <div 
+        <div
           className="absolute inset-0 -z-10 bg-cover bg-center transition-transform duration-700 hover:scale-105"
           style={{ backgroundImage: `url(${dragonBg})` }}
         />
@@ -95,7 +96,7 @@ function Login() {
         <p className="text-2xl mt-4 font-medium drop-shadow-md">
           {time.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
-        
+
         <p className="absolute bottom-10 animate-bounce text-sm text-gray-300">
           Haz clic o presiona una tecla para desbloquear
         </p>
@@ -103,14 +104,14 @@ function Login() {
     );
   }
 
-  
+
 
   // --- PANTALLA DE LOGIN (Formulario estilo Windows) ---
   return (
     <div className="h-screen w-full flex items-center justify-center relative overflow-hidden">
-        
+
       {/* Fondo borroso (Efecto Windows al entrar) */}
-      <div 
+      <div
         className="absolute inset-0 -z-10 bg-cover bg-center blur-sm scale-110"
         style={{ backgroundImage: `url(${dragonBg})` }}
       />
@@ -118,10 +119,10 @@ function Login() {
 
       {/* Contenedor Central */}
       <div className="flex flex-col items-center w-full max-w-sm p-6 animate-fade-in-up">
-        
+
         {/* Avatar Circular */}
         <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl mb-6">
-            <img src={logoMidesk} alt="User Avatar" className="w-full h-full object-cover" />
+          <img src={logoMidesk} alt="User Avatar" className="w-full h-full object-cover" />
         </div>
 
         {/* Nombre de "Usuario" (Visual) */}
@@ -131,35 +132,45 @@ function Login() {
 
         {/* Formulario */}
         <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
-          
+
           {/* Input Email (Simula seleccionar usuario) */}
           <div className="relative">
-             <input
-                type="email"
-                {...register('email', { required: true })}
-                placeholder="Correo Institucional"
-                // Estilo "Input transparente" de Windows
-                className="w-full bg-black/50 text-white placeholder-gray-400 border border-transparent focus:border-white/50 focus:bg-black/70 rounded-sm px-3 py-2 outline-none transition-all text-center"
-             />
-             {errors.email && <span className="text-red-400 text-xs block text-center mt-1">Ingresa tu correo</span>}
+            <input
+              type="email"
+              {...register('email', { required: true })}
+              placeholder="Correo Institucional"
+              // Estilo "Input transparente" de Windows
+              className="w-full bg-black/50 text-white placeholder-gray-400 border border-transparent focus:border-white/50 focus:bg-black/70 rounded-sm px-3 py-2 outline-none transition-all text-center"
+            />
+            {errors.email && <span className="text-red-400 text-xs block text-center mt-1">Ingresa tu correo</span>}
           </div>
 
           {/* Input Password */}
           <div className="relative flex items-center">
-             <input
-                type="password"
-                {...register('password', { required: true })}
-                placeholder="Contraseña"
-                className="w-full bg-black/50 text-white placeholder-gray-400 border border-transparent focus:border-white/50 focus:bg-black/70 rounded-sm px-3 py-2 outline-none transition-all text-center"
-             />
-             {/* Botón Flecha (Submit) estilo Windows */}
-             <button 
-                type="submit" 
+            <input
+              type={showPassword ? "text" : "password"}
+              {...register('password', { required: true })}
+              placeholder="Contraseña"
+              className="w-full bg-black/50 text-white placeholder-gray-400 border border-transparent focus:border-white/50 focus:bg-black/70 rounded-sm pl-3 pr-16 py-2 outline-none transition-all text-center"
+            />
+            <div className="absolute right-1 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="p-1 text-gray-400 hover:text-white transition-colors"
+                title="Mostrar/Ocultar Contraseña"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+              {/* Botón Flecha (Submit) estilo Windows */}
+              <button
+                type="submit"
                 disabled={loading}
-                className="absolute right-1 p-1 bg-white/20 hover:bg-white/40 rounded-sm text-white transition-colors"
-             >
+                className="p-1 bg-white/20 hover:bg-white/40 rounded-sm text-white transition-colors"
+              >
                 {loading ? '...' : '➜'}
-             </button>
+              </button>
+            </div>
           </div>
         </form>
 
@@ -182,12 +193,12 @@ function Login() {
 
         {/* Links de ayuda */}
         <div className="mt-6 flex flex-col items-center space-y-2 text-sm">
-            <Link to="/forgot" className="text-gray-300 hover:text-white transition-colors">
-                ¿Olvidaste tu contraseña?
-            </Link>
-            <Link to="/register" className="text-gray-300 hover:text-white transition-colors font-medium">
-                Crear una cuenta nueva
-            </Link>
+          <Link to="/forgot" className="text-gray-300 hover:text-white transition-colors">
+            ¿Olvidaste tu contraseña?
+          </Link>
+          <Link to="/register" className="text-gray-300 hover:text-white transition-colors font-medium">
+            Crear una cuenta nueva
+          </Link>
         </div>
 
       </div>

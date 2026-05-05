@@ -12,6 +12,7 @@ import Reset from './features/auth/pages/Reset';
 import Dashboard from './features/desktop/pages/Dashboard';
 import GoogleSuccess from './features/auth/pages/GoogleSuccess';
 import { useThemeStore } from './core/store/useThemeStore';
+import AcceptInvite from './features/workspace/AcceptInvite';
 
 function App() {
 
@@ -38,6 +39,7 @@ function App() {
       <Route path="/confirmar/:token" element={<Confirm />} />
       <Route path="/forgot" element={<Forgot />} />
       <Route path="/reset/:token" element={<Reset />} />
+      <Route path="/workspace/accept/:token" element={<AcceptInvite />} />
       
       <Route 
         path="/dashboard" 
