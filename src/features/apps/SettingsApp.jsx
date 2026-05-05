@@ -32,7 +32,7 @@ const SettingsApp = () => {
     const token = localStorage.getItem('token');
 
 
-    const { mode, setMode, accent, setAccent } = useThemeStore();
+    const { mode, setMode, accent, setAccent, setWallpaper } = useThemeStore();
 
     // Array de colores disponibles
     const colorOptions = [
@@ -196,7 +196,9 @@ const SettingsApp = () => {
                 // 👇 SOLO ACTUALIZA EL ESTADO LOCAL Y EL STORE
                 // No llames a savePreferences() porque el backend ya lo guardó en el DB
                 setCurrentWallpaper(data.url);
-                setWallpaper(data.url); // Función del useThemeStore
+                setWallpaper(data.url);
+                // Disparar el evento para que Desktop.jsx lo detecte
+                window.dispatchEvent(new CustomEvent('wallpaper-changed', { detail: data.url }));
 
                 sileo.success({ title: "¡Imagen generada y aplicada!" });
                 setAiPrompt("");

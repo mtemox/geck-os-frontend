@@ -8,47 +8,47 @@ import { sileo } from 'sileo';
 import Modal from '../../core/ui/components/Modal';
 import NewLinkForm from './NewLinkForm';
 
-import codeIcon from '../../assets/icons/code.png'; 
-import noteIcon from '../../assets/icons/note.png'; 
+import codeIcon from '../../assets/icons/code.png';
+import noteIcon from '../../assets/icons/note.png';
 import folderIcon from '../../assets/icons/folder.png';
-import linkIcon from '../../assets/icons/link.png'; 
+import linkIcon from '../../assets/icons/link.png';
 import unknownIcon from '../../assets/icons/doc.png';
 import fileIcon from '../../assets/icons/file.png';
 
 const getIconSrc = (type) => {
     switch (type) {
         case 'folder': return folderIcon;
-        case 'link':   return linkIcon;
-        case 'note':   return noteIcon;
-        case 'code':   return codeIcon;
-        case 'file':   return fileIcon;
-        default:       return unknownIcon;
+        case 'link': return linkIcon;
+        case 'note': return noteIcon;
+        case 'code': return codeIcon;
+        case 'file': return fileIcon;
+        default: return unknownIcon;
     }
 };
 
 const getTypeIcon = (type) => {
     switch (type) {
         case 'folder': return Folder;
-        case 'link':   return Link2;
-        case 'note':   return FileText;
-        case 'code':   return Code2;
-        default:       return File;
+        case 'link': return Link2;
+        case 'note': return FileText;
+        case 'code': return Code2;
+        default: return File;
     }
 };
 
 const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderName, onOpenItem, onContextMenu }) => {
     const [folderHistory, setFolderHistory] = useState([{ id: initialFolderId, name: initialFolderName }]);
     const currentFolder = folderHistory[folderHistory.length - 1];
-    
+
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState(null);
     const fileInputRef = useRef(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    
+
     const fetchDataBackend = useFetch();
     const { socket } = useSocket();
-    
+
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const token = localStorage.getItem('token');
 
@@ -56,7 +56,7 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
         setLoading(true);
         try {
             const data = await fetchDataBackend(
-                `${backendUrl}/items/desktop?folderId=${currentFolder.id}`, 
+                `${backendUrl}/items/desktop?folderId=${currentFolder.id}`,
                 null, "GET", { Authorization: `Bearer ${token}` }
             );
             if (data && data.items) setItems(data.items);
@@ -70,17 +70,25 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
     useEffect(() => { loadFolderContent(); }, [currentFolder.id]);
 
     useEffect(() => {
-        if (socket) {
-            socket.on('item-created', (newItem) => {
-                if (newItem.parentId === currentFolder.id) loadFolderContent();
-            });
-            socket.on('item-deleted', () => loadFolderContent());
-        }
+        if (!socket) return;
+
+        // 1. Nombramos las funciones para poder referenciarlas
+        const handleItemCreated = (newItem) => {
+            if (newItem.parentId === currentFolder.id) loadFolderContent();
+        };
+
+        const handleItemDeleted = () => {
+            loadFolderContent();
+        };
+
+        // 2. Encendemos la escucha
+        socket.on('item-created', handleItemCreated);
+        socket.on('item-deleted', handleItemDeleted);
+
+        // 3. Apagamos SOLO la escucha de esta carpeta al salir
         return () => {
-            if (socket) {
-                socket.off('item-created');
-                socket.off('item-deleted');
-            }
+            socket.off('item-created', handleItemCreated);
+            socket.off('item-deleted', handleItemDeleted);
         };
     }, [socket, currentFolder.id]);
 
@@ -175,12 +183,12 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
         try {
             await uploadPromise;
             loadFolderContent();
-        } catch (_) {}
+        } catch (_) { }
     };
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('es-ES', { 
+        return new Date(dateString).toLocaleDateString('es-ES', {
             year: 'numeric', month: 'short', day: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
@@ -195,21 +203,21 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
         if (selected) return 'bg-white/20 text-white';
         switch (type) {
             case 'folder': return 'bg-amber-50  dark:bg-amber-500/10  text-amber-700  dark:text-amber-400';
-            case 'code':   return 'bg-green-50  dark:bg-green-500/10  text-green-700  dark:text-green-400';
-            case 'link':   return 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400';
-            case 'file':   return 'bg-pink-50   dark:bg-pink-500/10   text-pink-700   dark:text-pink-400';
-            default:       return 'bg-blue-50   dark:bg-blue-500/10   text-blue-700   dark:text-blue-400';
+            case 'code': return 'bg-green-50  dark:bg-green-500/10  text-green-700  dark:text-green-400';
+            case 'link': return 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400';
+            case 'file': return 'bg-pink-50   dark:bg-pink-500/10   text-pink-700   dark:text-pink-400';
+            default: return 'bg-blue-50   dark:bg-blue-500/10   text-blue-700   dark:text-blue-400';
         }
     };
 
     return (
-        <div 
-        
+        <div
+
             className="flex h-full w-full bg-background overflow-hidden font-sans select-none transition-colors duration-300"
             onContextMenu={(e) => {
                 e.stopPropagation();
             }}
-        
+
         >
 
             {/* ========== PANEL IZQUIERDO ========== */}
@@ -267,11 +275,10 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
                                         if (index < folderHistory.length - 1)
                                             setFolderHistory(prev => prev.slice(0, index + 1));
                                     }}
-                                    className={`font-medium hover:text-brand-500 transition-colors ${
-                                        index === folderHistory.length - 1
+                                    className={`font-medium hover:text-brand-500 transition-colors ${index === folderHistory.length - 1
                                             ? 'text-foreground'
                                             : 'text-muted-foreground'
-                                    }`}
+                                        }`}
                                 >
                                     {folder.name}
                                 </button>
@@ -314,10 +321,10 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
                                         onClick={() => setSelectedItem(item)}
                                         onDoubleClick={() => handleDoubleClick(item)}
                                         onContextMenu={(e) => {
-                                                                e.preventDefault();
-                                                                e.stopPropagation(); // Evita que llegue al fondo de la carpeta
-                                                                if (onContextMenu) onContextMenu(e, item); // Llama al menú del escritorio
-                                                            }}
+                                            e.preventDefault();
+                                            e.stopPropagation(); // Evita que llegue al fondo de la carpeta
+                                            if (onContextMenu) onContextMenu(e, item); // Llama al menú del escritorio
+                                        }}
                                         className={`
                                             flex items-center gap-3 px-4 py-2.5 cursor-default transition-all group
                                             ${isSelected
@@ -397,8 +404,8 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
                                 <div className="space-y-2.5">
                                     {[
                                         { label: 'Tipo', value: selectedItem.type === 'folder' ? 'Carpeta' : selectedItem.type },
-                                        { label: 'ID',   value: <span className="font-mono text-[10px] bg-muted px-2 py-0.5 rounded">{selectedItem._id.slice(-8)}</span> },
-                                        selectedItem.createdAt && { label: 'Creado',     value: formatDate(selectedItem.createdAt) },
+                                        { label: 'ID', value: <span className="font-mono text-[10px] bg-muted px-2 py-0.5 rounded">{selectedItem._id.slice(-8)}</span> },
+                                        selectedItem.createdAt && { label: 'Creado', value: formatDate(selectedItem.createdAt) },
                                         selectedItem.updatedAt && { label: 'Modificado', value: formatDate(selectedItem.updatedAt) },
                                     ].filter(Boolean).map(({ label, value }) => (
                                         <div key={label} className="flex items-start justify-between text-xs">

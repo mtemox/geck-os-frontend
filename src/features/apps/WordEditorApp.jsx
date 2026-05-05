@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSocket } from '../../core/context/SocketContext';
 import { 
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, 
-  List, ListOrdered, Undo, Redo, Download, Type, Palette, Sparkles, Save, Code
+  List, ListOrdered, Undo, Redo, Download, Type, Palette, Sparkles, Save, Code, ChevronDown
 } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useFetch } from '../../core/api/useFetch';
@@ -15,9 +15,24 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
   const [fontSize, setFontSize] = useState('16');
   const [textColor, setTextColor] = useState('#1e293b');
   const editorRef = useRef(null);
+  
+  // Estados para la IA
   const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [showAIOptions, setShowAIOptions] = useState(false);
+  const aiMenuRef = useRef(null);
   
   const fetchDataBackend = useFetch();
+
+  // Cerrar el menú IA al hacer clic afuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (aiMenuRef.current && !aiMenuRef.current.contains(event.target)) {
+        setShowAIOptions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!socket || !fileId) return;
@@ -99,30 +114,45 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
     }
   };
 
-  const improveWithAI = async () => {
-    const content = editorRef.current?.innerText || '';
-    if (!content.trim()) {
-      sileo.warning({title: 'Escribe algo primero para que la IA pueda mejorarlo.'});
+  // Función IA con Prompt Dinámico
+  const handleAIAction = async (promptElegido) => {
+    setShowAIOptions(false); // Cerramos el menú
+    
+    const contentHTML = editorRef.current?.innerHTML || '';
+    const rawText = editorRef.current?.innerText || '';
+    
+    if (!rawText.trim()) {
+      sileo.warning({title: 'Escribe algo en el documento primero para que la IA pueda trabajar.'});
       return;
     }
+    
     setIsAIProcessing(true);
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    
     try {
       const response = await fetchDataBackend(
         `${backendUrl}/ai/improve-text`,
-        { text: content }, 
+        { 
+          texto: contentHTML, 
+          // Anexamos reglas estrictas al prompt que elige el usuario
+          accion: `${promptElegido} MUY IMPORTANTE: El texto contiene etiquetas HTML. Debes devolver la respuesta manteniendo y respetando estrictamente todas las etiquetas HTML originales para no perder el formato del documento.` 
+        }, 
         "POST",
         { Authorization: `Bearer ${token}` }
       );
-      if (response && response.ok && response.data) {
+
+      if (response && response.ok && response.data?.respuesta?.resultado) {
         if (editorRef.current) {
-          editorRef.current.innerText = response.data; 
-          sileo.success({title: "¡Texto mejorado por IA!"});
+          editorRef.current.innerHTML = response.data.respuesta.resultado; 
+          sileo.success({title: "¡Documento actualizado con IA!"});
+          handleInput(); 
         }
+      } else {
+         sileo.error({title: "La IA no pudo procesar el formato adecuadamente."});
       }
     } catch (error) {
-      console.error('Error al mejorar con IA:', error);
+      console.error('Error al procesar con IA:', error);
     } finally {
       setIsAIProcessing(false);
     }
@@ -138,7 +168,7 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
     }
   };
 
-  // Clases reutilizables para botones de la toolbar
+  // Clases reutilizables
   const toolbarBtn = "p-2 hover:bg-muted rounded-lg transition-all duration-150 active:scale-95 group";
   const toolbarIcon = "text-muted-foreground group-hover:text-foreground";
   const toolbarSep  = "h-6 w-px bg-border mx-1";
@@ -252,20 +282,61 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
 
         <div className="flex-1"></div>
 
-        {/* Botón IA */}
-        <button
-          onClick={improveWithAI}
-          disabled={isAIProcessing}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm shadow-md transition-all duration-200 mr-2
-            ${isAIProcessing 
-              ? 'bg-brand-500/40 text-muted-foreground cursor-wait' 
-              : 'bg-gradient-to-r from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-700 text-white hover:scale-105 shadow-brand-500/30'
-            }`}
-          title="Mejorar con IA"
-        >
-          <Sparkles size={16} strokeWidth={2.5} className={isAIProcessing ? 'animate-pulse' : ''} />
-          <span className="hidden sm:inline">{isAIProcessing ? 'Procesando...' : 'IA'}</span>
-        </button>
+        {/* ========== MENÚ INTELIGENTE IA ========== */}
+        <div className="relative mr-2" ref={aiMenuRef}>
+          <button
+            onClick={() => setShowAIOptions(!showAIOptions)}
+            disabled={isAIProcessing}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm shadow-md transition-all duration-200
+              ${isAIProcessing 
+                ? 'bg-brand-500/40 text-muted-foreground cursor-wait' 
+                : 'bg-gradient-to-r from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-700 text-white hover:scale-105 shadow-brand-500/30'
+              }`}
+            title="Herramientas IA"
+          >
+            <Sparkles size={16} strokeWidth={2.5} className={isAIProcessing ? 'animate-pulse' : ''} />
+            <span className="hidden sm:inline">{isAIProcessing ? 'Generando...' : 'Asistente IA'}</span>
+            {!isAIProcessing && <ChevronDown size={14} />}
+          </button>
+
+          {/* Opciones Desplegables Estilo Apple */}
+          {showAIOptions && !isAIProcessing && (
+            <div className="absolute right-0 top-full mt-2 w-64 bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden z-50 animate-scale-in">
+              <div className="py-1">
+                <p className="px-4 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider bg-muted/50 border-b border-border">Acciones de Texto</p>
+                
+                <button 
+                  onClick={() => handleAIAction("Mejora la redacción, claridad y corrige la ortografía de este documento completo.")} 
+                  className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-brand-500 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  ✨ Mejorar redacción general
+                </button>
+                
+                <button 
+                  onClick={() => handleAIAction("Reescribe este texto con un tono académico formal, usando palabras sencillas, redactado en tercera persona, sin usar analogías con la vida real y utilizando conectores lógicos como 'Además', 'No obstante' y 'Asimismo'.")} 
+                  className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-brand-500 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  🎓 Tono académico (3ra persona)
+                </button>
+                
+                <button 
+                  onClick={() => handleAIAction("Genera un resumen conciso de este texto, eliminando redundancias pero manteniendo los puntos principales.")} 
+                  className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-brand-500 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  📝 Resumir documento
+                </button>
+                
+                <button 
+                  onClick={() => handleAIAction("Traduce todo el contenido de este documento al inglés de manera natural y profesional.")} 
+                  className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-brand-500 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  🌐 Traducir al Inglés
+                </button>
+
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Exportar */}
         <button 

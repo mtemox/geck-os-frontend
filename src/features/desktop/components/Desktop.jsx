@@ -10,9 +10,9 @@ import { useTheme } from '../../../core/context/ThemeContext';
 // Componentes UI
 import AppWindow from '../../../core/ui/components/AppWindow';
 import ContextMenu from '../../file-system/ContextMenu';
-import Icon from './Icon'; 
+import Icon from './Icon';
 import Modal from '../../../core/ui/components/Modal'; // Importar Modal
-import NewLinkForm from '../../file-system/NewLinkForm'; 
+import NewLinkForm from '../../file-system/NewLinkForm';
 import FolderContent from '../../file-system/FolderContent';
 import NewFolderForm from '../../file-system/NewFolderForm';
 import FileViewer from '../../file-system/FileViewer'; // <--- IMPORTAR
@@ -25,7 +25,7 @@ import WordEditorApp from '../../apps/WordEditorApp';
 import ProfileApp from '../../apps/ProfileApp';
 import NewsApp from '../../apps/NewsApp';
 import WallpaperApp from '../../apps/WallpaperApp';
-import ComputerApp from '../../apps/ComputerApp'; 
+import ComputerApp from '../../apps/ComputerApp';
 import RecommendationsApp from '../../apps/RecommendationsApp';
 import CodeComparator from '../../apps/DiffEditorApp';
 import SettingsApp from '../../apps/SettingsApp';
@@ -35,16 +35,16 @@ import PostItWidget from '../../widgets/PostItWidget';
 import WeatherWidget from '../../widgets/WeatherWidget';
 
 // Imágenes e Íconos
-import codeIcon from '../../../assets/icons/code.png'; 
-import weatherIcon from '../../../assets/icons/weather.png'; 
+import codeIcon from '../../../assets/icons/code.png';
+import weatherIcon from '../../../assets/icons/weather.png';
 import newsIcon from '../../../assets/icons/news.png';
-import noteIcon from '../../../assets/icons/note.png'; 
-import wallpaperIcon from '../../../assets/icons/wallpaper.png'; 
+import noteIcon from '../../../assets/icons/note.png';
+import wallpaperIcon from '../../../assets/icons/wallpaper.png';
 import backgroundImageUrl from '../../../assets/wallpapers/mi-fondo.jpg';
 import defaultWallpaper from '../../../assets/wallpapers/wallpaperDefault1.png';
 import folderIcon from '../../../assets/icons/folder.png';
 import computerIcon from '../../../assets/icons/desktop.png';
-import linkIcon from '../../../assets/icons/link.png'; 
+import linkIcon from '../../../assets/icons/link.png';
 import wordIcon from '../../../assets/icons/doc.png';
 import aiIcon from '../../../assets/icons/chat.png';
 import shopIcon from '../../../assets/icons/shop.png';   // <--- O usa computerIcon si no tienes este
@@ -59,33 +59,33 @@ import { useThemeStore } from '../../../core/store/useThemeStore';
 // Traemos las imágenes que ya tenías
 
 const systemAppsBase = [
-  { 
+  {
     _id: 'sys-10', // Siguiente ID libre
-    nombre: 'Pizarrón', 
+    nombre: 'Pizarrón',
     imgSrc: whiteBoard, // O un nuevo icono como boardIcon
-    type: 'app', 
-    appId: 'whiteboard', 
+    type: 'app',
+    appId: 'whiteboard',
     windowOptions: { defaultWidth: 800, defaultHeight: 600 } // Más grande por defecto
   },
-  { 
+  {
     _id: 'sys-9',
-    nombre: 'Chat MiDesk', 
-    imgSrc: aiIcon, 
-    type: 'app', 
-    appId: 'ai-chat', 
-    windowOptions: { defaultWidth: 400, defaultHeight: 600 } 
+    nombre: 'Chat MiDesk',
+    imgSrc: aiIcon,
+    type: 'app',
+    appId: 'ai-chat',
+    windowOptions: { defaultWidth: 400, defaultHeight: 600 }
   },
   { _id: 'sys-8', nombre: 'Asistente IA', imgSrc: aiIcon, type: 'app', appId: 'ai-recommendations' },
-  { 
-    _id: 'sys-store', 
-    nombre: 'Tienda Cloud', 
+  {
+    _id: 'sys-store',
+    nombre: 'Tienda Cloud',
     imgSrc: shopIcon, // O computerIcon
-    type: 'app', 
+    type: 'app',
     appId: 'store', // <--- ESTE ID ES IMPORTANTE
-    windowOptions: { defaultWidth: 900, defaultHeight: 600 } 
+    windowOptions: { defaultWidth: 900, defaultHeight: 600 }
   },
   { _id: 'sys-7', nombre: 'Bloc de Notas', imgSrc: noteIcon, type: 'app', appId: 'notepad' },
-  
+
   { _id: 'sys-6', nombre: 'Mi Equipo', imgSrc: computerIcon, type: 'computer', appId: 'computer', windowOptions: { defaultWidth: 850, defaultHeight: 550 } },
   { _id: 'sys-5', nombre: 'VS Code (Sim)', imgSrc: codeIcon, type: 'app', appId: 'codeEditor' },
   { _id: 'sys-4', nombre: 'Word Pro', imgSrc: wordIcon, type: 'app', appId: 'wordprocessor' },
@@ -95,129 +95,129 @@ const systemAppsBase = [
 
 // --- HELPER: Mapear Tipo de BD a Imagen ---
 const getIconImage = (type) => {
-    switch (type) {
-        case 'folder': return folderIcon;
-        case 'link': return linkIcon;
-        case 'note': return wordIcon;
-        case 'code': return codeIcon;
-        case 'file': return fileIcon;
-        default: return linkIcon;
-    }
+  switch (type) {
+    case 'folder': return folderIcon;
+    case 'link': return linkIcon;
+    case 'note': return wordIcon;
+    case 'code': return codeIcon;
+    case 'file': return fileIcon;
+    default: return linkIcon;
+  }
 };
 
 // --- FUNCIÓN PARA RENDERIZAR EL CONTENIDO DE LA APP ---
-  // Esto decide qué mostrar DENTRO de la ventana
-  const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow, onContextMenu }) => {
-    switch (appId) {
+// Esto decide qué mostrar DENTRO de la ventana
+const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow, onContextMenu }) => {
+  switch (appId) {
 
-      case 'folder': // <--- NUEVO CASO PARA CARPETAS
-        return (
-          <FolderContent 
-            folderId={data?._id} 
-            folderName={data?.nombre}
-            // 👇👇 AGREGAMOS ESTA LÍNEA CLAVE 👇👇
-            onOpenItem={onOpenWindow} 
-            // 👆👆 Esto permite que la carpeta abra nuevas ventanas
-            onContextMenu={onContextMenu}
-          />
-        );
+    case 'folder': // <--- NUEVO CASO PARA CARPETAS
+      return (
+        <FolderContent
+          folderId={data?._id}
+          folderName={data?.nombre}
+          // 👇👇 AGREGAMOS ESTA LÍNEA CLAVE 👇👇
+          onOpenItem={onOpenWindow}
+          // 👆👆 Esto permite que la carpeta abra nuevas ventanas
+          onContextMenu={onContextMenu}
+        />
+      );
 
-      case 'notepad':
-      case 'note': 
-        return (
-          <WordEditorApp
-            key={`word-${windowId}`}
-            fileId={data?._id} 
-            fileName={data?.nombre}
-            initialContent={data?.content} // El backend lo envía si el endpoint está bien
-          />
-        );
-      
-      case 'code': 
-        return (
-          <CodeEditorApp
-            key={`code-${windowId}`}
-            fileId={data?._id} 
-            fileName={data?.nombre}
-            initialContent={data?.content} 
-          />
-        );
-        
-      case 'codeEditor':
-        return (
-          <CodeEditorApp
-            key={`code-sim-${windowId}`}
-            language="javascript"
-            initialContent="console.log('¡Hola desde el editor de código!');"
-          />
-        );
-        
-      case 'diffEditor':
-        const v1 = "function saludo() {\n  console.log('Hola');\n}";
-        const v2 = "function saludo() {\n  console.log('Hola Mundo!');\n}";
-        return (
-          <CodeComparator
-            language="javascript"
-            originalCode={v1}
-            modifiedCode={v2}
-          />
-        );
+    case 'notepad':
+    case 'note':
+      return (
+        <WordEditorApp
+          key={`word-${windowId}`}
+          fileId={data?._id}
+          fileName={data?.nombre}
+          initialContent={data?.content} // El backend lo envía si el endpoint está bien
+        />
+      );
 
-        // ¡AÑADE ESTOS DOS CASOS! 👇
-      case 'weather':
-        return <WeatherApp />;
-        
-      case 'news':
-        return <NewsApp />;
+    case 'code':
+      return (
+        <CodeEditorApp
+          key={`code-${windowId}`}
+          fileId={data?._id}
+          fileName={data?.nombre}
+          initialContent={data?.content}
+        />
+      );
 
-      case 'wallpaper':
-        return <WallpaperApp />;
+    case 'codeEditor':
+      return (
+        <CodeEditorApp
+          key={`code-sim-${windowId}`}
+          language="javascript"
+          initialContent="console.log('¡Hola desde el editor de código!');"
+        />
+      );
 
-      // case 'wordprocessor':
-      //     return <RichTextEditor />;
+    case 'diffEditor':
+      const v1 = "function saludo() {\n  console.log('Hola');\n}";
+      const v2 = "function saludo() {\n  console.log('Hola Mundo!');\n}";
+      return (
+        <CodeComparator
+          language="javascript"
+          originalCode={v1}
+          modifiedCode={v2}
+        />
+      );
 
-      case 'wordprocessor':
+    // ¡AÑADE ESTOS DOS CASOS! 👇
+    case 'weather':
+      return <WeatherApp />;
+
+    case 'news':
+      return <NewsApp />;
+
+    case 'wallpaper':
+      return <WallpaperApp />;
+
+    // case 'wordprocessor':
+    //     return <RichTextEditor />;
+
+    case 'wordprocessor':
       return (
         <WordEditorApp
           key={`wordprocessor-${windowId}`}
         />
       );
-      
-      case 'profile': 
-          return <ProfileApp />; // 👈 NUEVO
-      
-      case 'ai-recommendations': // <--- NUEVO CASE
-       return <RecommendationsApp />;
 
-      case 'settings':
-        return <SettingsApp />;
+    case 'profile':
+      return <ProfileApp />; // 👈 NUEVO
 
-      case 'ai-chat':
-        return <ChatApp />;
+    case 'ai-recommendations': // <--- NUEVO CASE
+      return <RecommendationsApp />;
 
-      case 'store':
-        return <StoragePlans />;
+    case 'settings':
+      return <SettingsApp />;
 
-      case 'file': 
-        // ✅ AHORA USAMOS EL VISUALIZADOR INTELIGENTE
-        return <FileViewer file={data} />;
+    case 'ai-chat':
+      return <ChatApp />;
 
-      case 'whiteboard':
-        return <WhiteboardApp />;
+    case 'store':
+      return <StoragePlans />;
 
-      case 'computer':
-        return <ComputerApp onOpenItem={onOpenWindow} />;
+    case 'file':
+      // ✅ AHORA USAMOS EL VISUALIZADOR INTELIGENTE
+      return <FileViewer file={data} />;
 
-      default:
-        return <div className="text-white p-4">App no encontrada</div>;
-      }
-  });
+    case 'whiteboard':
+      return <WhiteboardApp />;
+
+    case 'computer':
+      return <ComputerApp onOpenItem={onOpenWindow} />;
+
+    default:
+      return <div className="text-white p-4">App no encontrada</div>;
+  }
+});
 
 function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMinimizeWindow, onMaximizeWindow, onDragStop, taskbarPosition }) {
 
   // Archivos
   const fileInputRef = useRef(null);
-  
+
   // Theme
   const { setSpecificTheme } = useTheme();
 
@@ -227,7 +227,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
   const { wallpaper, setWallpaper, setAccent } = useThemeStore();
   // Si hay un fondo guardado lo usamos, si está vacío usamos el predeterminado
   const currentWallpaper = wallpaper || defaultWallpaper;
-  
+
   // Socket
   const { socket } = useSocket();
   const [searchParams] = useSearchParams();
@@ -264,15 +264,15 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
   // --- FUNCIÓN PARA CALCULAR POSICIONES SEGÚN RESOLUCIÓN ---
   const calculateSystemPositions = () => {
-    const MARGIN_X = 10; 
+    const MARGIN_X = 10;
     const TASKBAR_HEIGHT = 55; // 👈 1. Primero declaramos el alto
     const MARGIN_Y = taskbarPosition === 'top' ? TASKBAR_HEIGHT + 10 : 10; // 👈 2. Luego lo usamos para el margen
-    
-    const CELL_WIDTH = 90; 
-    const CELL_HEIGHT = 100; 
-    
+
+    const CELL_WIDTH = 90;
+    const CELL_HEIGHT = 100;
+
     const availableHeight = window.innerHeight - TASKBAR_HEIGHT - MARGIN_Y;
-    
+
     let maxRows = Math.floor(availableHeight / CELL_HEIGHT);
     if (maxRows < 1) maxRows = 1;
 
@@ -292,143 +292,143 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
   // --- CARGA INICIAL Y REDIMENSIONAMIENTO ---
   useEffect(() => {
-  const loadEverything = async () => {
-    setIcons([]);
-    const positionedSystemApps = calculateSystemPositions();
-    
-    const token = localStorage.getItem('token');
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    
-    const rawRemoteId = searchParams.get('remote'); 
-    const rawFolderId = searchParams.get('folder');
-    const remoteIdParam = (rawRemoteId && rawRemoteId !== "null" && rawRemoteId !== "undefined") 
-                          ? rawRemoteId 
-                          : null;
-    const workspaceIdParam = (rawFolderId && rawFolderId !== "null") ? rawFolderId : null;
-    const workspaceParam = searchParams.get('workspace');
+    const loadEverything = async () => {
+      setIcons([]);
+      const positionedSystemApps = calculateSystemPositions();
 
-    try {
-       const params = new URLSearchParams();
-       if (remoteIdParam) params.append('remoteUserId', remoteIdParam);
-       if (workspaceParam) params.append('workspaceId', workspaceParam);
-       
-       const baseUrl = backendUrl.replace(/\/$/, ''); 
-       const finalUrl = `${baseUrl}/items/desktop?${params.toString()}`;
+      const token = localStorage.getItem('token');
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-       const data = await fetchDataBackend(
-          finalUrl, 
-          null, 
-          "GET", 
+      const rawRemoteId = searchParams.get('remote');
+      const rawFolderId = searchParams.get('folder');
+      const remoteIdParam = (rawRemoteId && rawRemoteId !== "null" && rawRemoteId !== "undefined")
+        ? rawRemoteId
+        : null;
+      const workspaceIdParam = (rawFolderId && rawFolderId !== "null") ? rawFolderId : null;
+      const workspaceParam = searchParams.get('workspace');
+
+      try {
+        const params = new URLSearchParams();
+        if (remoteIdParam) params.append('remoteUserId', remoteIdParam);
+        if (workspaceParam) params.append('workspaceId', workspaceParam);
+
+        const baseUrl = backendUrl.replace(/\/$/, '');
+        const finalUrl = `${baseUrl}/items/desktop?${params.toString()}`;
+
+        const data = await fetchDataBackend(
+          finalUrl,
+          null,
+          "GET",
           { Authorization: `Bearer ${token}` }
-       );
+        );
 
-      if (data && data.ok) {
-        const userItems = data.items.map(item => ({
-           _id: item._id,
-           nombre: item.name,
-           imgSrc: getIconImage(item.type),
-           type: item.type,
-           appId: item.type === 'file' ? 'file' : item.type,
-           url: item.url,
-           fileFormat: item.fileFormat,
-           position: item.position || { x: 100, y: 100 }, 
-           content: item.content || ""
-         }));
+        if (data && data.ok) {
+          const userItems = data.items.map(item => ({
+            _id: item._id,
+            nombre: item.name,
+            imgSrc: getIconImage(item.type),
+            type: item.type,
+            appId: item.type === 'file' ? 'file' : item.type,
+            url: item.url,
+            fileFormat: item.fileFormat,
+            position: item.position || { x: 100, y: 100 },
+            content: item.content || ""
+          }));
 
-        setIcons([...positionedSystemApps, ...userItems]);
+          setIcons([...positionedSystemApps, ...userItems]);
 
-        // 👇 CARGAR PREFERENCIAS (Tema + Wallpaper)
-        if (data.preferences) {
+          // 👇 CARGAR PREFERENCIAS (Tema + Wallpaper)
+          if (data.preferences) {
             if (data.preferences.theme) {
-                setSpecificTheme(data.preferences.theme);
+              setSpecificTheme(data.preferences.theme);
             }
             if (data.preferences.accent) {
-                setAccent(data.preferences.accent); // Carga el color al iniciar
+              setAccent(data.preferences.accent); // Carga el color al iniciar
             }
             // CAMBIAR AQUÍ
             if (data.preferences.wallpaperUrl) {
-                setWallpaper(data.preferences.wallpaperUrl);
+              setWallpaper(data.preferences.wallpaperUrl);
             } else {
-                setWallpaper('');
+              setWallpaper('');
             }
-        }
+          }
 
-      } else {
+        } else {
           console.warn("⚠️ No se pudieron cargar items remotos:", data?.msg);
           setIcons(positionedSystemApps);
+        }
+      } catch (error) {
+        console.error("❌ Error carga inicial:", error);
+        setIcons(positionedSystemApps);
       }
-    } catch (error) {
-      console.error("❌ Error carga inicial:", error);
-      setIcons(positionedSystemApps); 
-    }
-  };
+    };
 
-  loadEverything();
+    loadEverything();
 
     // --- AQUÍ EMPIEZA LA LÓGICA NUEVA DE WEB SOCKETS ---
     if (socket) {
       const myUser = JSON.parse(localStorage.getItem('user'));
-      
+
       // 👇 MODIFICAR ESTE BLOQUE LOGICO 👇
       if (workspaceId) {
-          // CASO 1: ESPACIO DE TRABAJO
-          console.log(`🔌 Socket: Uniéndose a WORKSPACE room: workspace:${workspaceId}`);
-          socket.emit('join-workspace-room', workspaceId); // Evento especial para workspaces
-      } 
-      else if (isRemote) {
-          // CASO 2: ESCRITORIO REMOTO (Espejo)
-          console.log("🔭 Modo Remoto: Conectando a sala de", remoteUserId);
-          socket.emit('join-user-room', remoteUserId);
-      } 
-      else {
-          // CASO 3: MI ESCRITORIO (Local)
-          console.log(`🔌 Socket: Uniéndose a MI sala: user:${myUser.id}`);
-          socket.emit('join-user-room', myUser.id);
+        // CASO 1: ESPACIO DE TRABAJO
+        console.log(`🔌 Socket: Uniéndose a WORKSPACE room: workspace:${workspaceId}`);
+        socket.emit('join-workspace-room', workspaceId); // Evento especial para workspaces
       }
-      
+      else if (isRemote) {
+        // CASO 2: ESCRITORIO REMOTO (Espejo)
+        console.log("🔭 Modo Remoto: Conectando a sala de", remoteUserId);
+        socket.emit('join-user-room', remoteUserId);
+      }
+      else {
+        // CASO 3: MI ESCRITORIO (Local)
+        console.log(`🔌 Socket: Uniéndose a MI sala: user:${myUser.id}`);
+        socket.emit('join-user-room', myUser.id);
+      }
+
       // A. Escuchar cuando se CREA un ítem (por otro usuario o por mí en otra pestaña)
       socket.on('item-created', (newItem) => {
         console.log("📡 Socket: item-created", newItem);
-        
+
         // Si el ítem tiene un "parentId", significa que 
         // pertenece a una carpeta. Por lo tanto, el Escritorio debe ignorarlo.
         if (newItem.parentId) {
-            return;
+          return;
         }
 
         // Formateamos el ítem que llega del socket para que coincida con nuestra UI
         const newIconUI = {
-            _id: newItem._id,
-            nombre: newItem.name,
-            imgSrc: getIconImage(newItem.type),
-            type: newItem.type,
-            url: newItem.url,
-            fileFormat: newItem.fileFormat,
-            position: newItem.position || { x: 100, y: 100 },
-            content: newItem.content || ""
+          _id: newItem._id,
+          nombre: newItem.name,
+          imgSrc: getIconImage(newItem.type),
+          type: newItem.type,
+          url: newItem.url,
+          fileFormat: newItem.fileFormat,
+          position: newItem.position || { x: 100, y: 100 },
+          content: newItem.content || ""
         };
 
         // Lo agregamos al estado si no existe ya
         setIcons(prev => {
-            if (prev.find(i => i._id === newItem._id)) return prev;
-            return [...prev, newIconUI];
+          if (prev.find(i => i._id === newItem._id)) return prev;
+          return [...prev, newIconUI];
         });
       });
 
       // B. Escuchar cuando se MUEVE un ítem
       socket.on('item-moved', ({ id, position }) => {
         console.log("📡 Socket: item-moved", id, position);
-        setIcons(prev => prev.map(icon => 
-            icon._id === id ? { ...icon, position } : icon
+        setIcons(prev => prev.map(icon =>
+          icon._id === id ? { ...icon, position } : icon
         ));
       });
 
       // C. Escuchar cuando se RENOMBRA un ítem
       socket.on('item-renamed', ({ id, name }) => {
-         console.log("📡 Socket: item-renamed", id, name);
-         setIcons(prev => prev.map(icon => 
-            icon._id === id ? { ...icon, nombre: name } : icon
-         ));
+        console.log("📡 Socket: item-renamed", id, name);
+        setIcons(prev => prev.map(icon =>
+          icon._id === id ? { ...icon, nombre: name } : icon
+        ));
       });
 
       // D. Escuchar cuando se ELIMINA un ítem (o varios)
@@ -441,63 +441,63 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
       // E. Escuchar cuando alguien me comparte algo
       socket.on('item-shared', (sharedItem) => {
         console.log("🎁 ¡Me compartieron algo!", sharedItem);
-        sileo.info({title: `Te han compartido: ${sharedItem.name}`});
+        sileo.info({ title: `Te han compartido: ${sharedItem.name}` });
 
         // Lo formateamos para la UI
         const newIconUI = {
-            _id: sharedItem._id,
-            nombre: sharedItem.name,
-            imgSrc: getIconImage(sharedItem.type),
-            type: sharedItem.type,
-            url: sharedItem.url,
-            position: { x: 50, y: 50 }, // Lo ponemos en la esquina por defecto
-            content: sharedItem.content || "",
-            // Podrías añadir un flag visual para saber que es compartido
-            isShared: true 
+          _id: sharedItem._id,
+          nombre: sharedItem.name,
+          imgSrc: getIconImage(sharedItem.type),
+          type: sharedItem.type,
+          url: sharedItem.url,
+          position: { x: 50, y: 50 }, // Lo ponemos en la esquina por defecto
+          content: sharedItem.content || "",
+          // Podrías añadir un flag visual para saber que es compartido
+          isShared: true
         };
 
         setIcons(prev => {
-             // Evitar duplicados
-             if (prev.find(i => i._id === sharedItem._id)) return prev;
-             return [...prev, newIconUI];
+          // Evitar duplicados
+          if (prev.find(i => i._id === sharedItem._id)) return prev;
+          return [...prev, newIconUI];
         });
       });
 
       // F. Escuchar cambios de preferencias (Tema/Fondo)
       socket.on('preferences-updated', (prefs) => {
-          console.log("🎨 Preferencias actualizadas:", prefs);
-          
-          // 1. ACTUALIZAR TEMA (Esto fuerza el cambio visual)
-          if (prefs.theme) {
-              setSpecificTheme(prefs.theme);
-          }
-          if (prefs.accent) {
-              setAccent(prefs.accent); // Actualiza en tiempo real si abres otra pestaña
-          }
+        console.log("🎨 Preferencias actualizadas:", prefs);
 
-          // 2. ACTUALIZAR WALLPAPER (CORREGIDO)
-          // Si viene definido, verificamos si es cadena vacía.
-          // Si es vacía -> Default. Si tiene URL -> Esa URL.
-          if (prefs.wallpaperUrl !== undefined) {
-              const bgToUse = prefs.wallpaperUrl && prefs.wallpaperUrl !== "" 
-                              ? prefs.wallpaperUrl 
-                              : defaultWallpaper; // 👈 Tu import del fondo .jpg
-              
-              setWallpaper(prefs.wallpaperUrl);
-          }
+        // 1. ACTUALIZAR TEMA (Esto fuerza el cambio visual)
+        if (prefs.theme) {
+          setSpecificTheme(prefs.theme);
+        }
+        if (prefs.accent) {
+          setAccent(prefs.accent); // Actualiza en tiempo real si abres otra pestaña
+        }
+
+        // 2. ACTUALIZAR WALLPAPER (CORREGIDO)
+        // Si viene definido, verificamos si es cadena vacía.
+        // Si es vacía -> Default. Si tiene URL -> Esa URL.
+        if (prefs.wallpaperUrl !== undefined) {
+          const bgToUse = prefs.wallpaperUrl && prefs.wallpaperUrl !== ""
+            ? prefs.wallpaperUrl
+            : defaultWallpaper; // 👈 Tu import del fondo .jpg
+
+          setWallpaper(prefs.wallpaperUrl);
+        }
       });
 
       socket.on('file-change', ({ fileId, content }) => {
         // Buscamos el ícono y le actualizamos su contenido interno
-        setIcons(prev => prev.map(icon => 
-            icon._id === fileId ? { ...icon, content: content } : icon
+        setIcons(prev => prev.map(icon =>
+          icon._id === fileId ? { ...icon, content: content } : icon
         ));
       });
 
 
     }
 
-    
+
 
     // Opcional: Recalcular si el usuario cambia el tamaño de la ventana
     const handleResize = () => {
@@ -512,143 +512,143 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     // Limpieza de eventos al desmontar
     return () => {
-       window.removeEventListener('resize', () => {}); // Tu resize existente
-       
-       if (socket && isRemote) {
-             const myUser = JSON.parse(localStorage.getItem('user'));
-             socket.emit('join-user-room', myUser.id); // Volver a mi sala
-        }
-       
-       if (socket) {
-         socket.off('item-created');
-         socket.off('item-moved');
-         socket.off('item-renamed');
-         socket.off('item-deleted');
-         socket.off('item-shared');
-         socket.off('preferences-updated');
-         socket.off('file-change');
-       }
+      window.removeEventListener('resize', () => { }); // Tu resize existente
+
+      if (socket && isRemote) {
+        const myUser = JSON.parse(localStorage.getItem('user'));
+        socket.emit('join-user-room', myUser.id); // Volver a mi sala
+      }
+
+      if (socket) {
+        socket.off('item-created');
+        socket.off('item-moved');
+        socket.off('item-renamed');
+        socket.off('item-deleted');
+        socket.off('item-shared');
+        socket.off('preferences-updated');
+        socket.off('file-change');
+      }
     };
 
   }, [socket, remoteUserId, searchParams]);
 
   // 2. USE EFFECT PARA CARGAR PREFERENCIAS Y ESCUCHAR CAMBIOS
   useEffect(() => {
-   const token = localStorage.getItem('token');
-   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = localStorage.getItem('token');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-   const fetchWallpaper = async () => {
+    const fetchWallpaper = async () => {
       try {
-          const data = await fetchDataBackend(`${backendUrl}/users/profile`, null, "GET", { Authorization: `Bearer ${token}` });
-          if (data && data.preferences && data.preferences.wallpaperUrl) {
-              setWallpaper(data.preferences.wallpaperUrl);
-          }
+        const data = await fetchDataBackend(`${backendUrl}/users/profile`, null, "GET", { Authorization: `Bearer ${token}` });
+        if (data && data.preferences && data.preferences.wallpaperUrl) {
+          setWallpaper(data.preferences.wallpaperUrl);
+        }
       } catch (e) { console.error(e); }
-   };
-   fetchWallpaper();
+    };
+    fetchWallpaper();
 
-   const handleWallpaperChange = (e) => {
-       if (e.detail !== undefined) {
-           setWallpaper(e.detail === defaultWallpaper ? '' : e.detail);
-       }
-   };
-   
-   // 👇 NUEVO: Listener para tema
-   const handleThemeChange = (e) => {
-       if (e.detail) {
-           console.log("🎨 Tema actualizado localmente:", e.detail);
-           setSpecificTheme(e.detail);
-       }
-   };
+    const handleWallpaperChange = (e) => {
+      if (e.detail !== undefined) {
+        setWallpaper(e.detail === defaultWallpaper ? '' : e.detail);
+      }
+    };
 
-   const handleLocalUpdate = (e) => {
-        const { id, content } = e.detail;
-        setIcons(prev => prev.map(icon => 
-            icon._id === id ? { ...icon, content: content } : icon
-        ));
+    // 👇 NUEVO: Listener para tema
+    const handleThemeChange = (e) => {
+      if (e.detail) {
+        console.log("🎨 Tema actualizado localmente:", e.detail);
+        setSpecificTheme(e.detail);
+      }
+    };
+
+    const handleLocalUpdate = (e) => {
+      const { id, content } = e.detail;
+      setIcons(prev => prev.map(icon =>
+        icon._id === id ? { ...icon, content: content } : icon
+      ));
     };
 
     const handleOpenShareEvent = () => {
-       handleOpenShareDesktopModal();
-   };
+      handleOpenShareDesktopModal();
+    };
 
-   window.addEventListener('wallpaper-changed', handleWallpaperChange);
-   window.addEventListener('theme-changed', handleThemeChange); // 👈 NUEVO
-   window.addEventListener('local-file-update', handleLocalUpdate);
-   window.addEventListener('open-share-desktop-modal', handleOpenShareEvent);
+    window.addEventListener('wallpaper-changed', handleWallpaperChange);
+    window.addEventListener('theme-changed', handleThemeChange); // 👈 NUEVO
+    window.addEventListener('local-file-update', handleLocalUpdate);
+    window.addEventListener('open-share-desktop-modal', handleOpenShareEvent);
 
-   return () => {
-       window.removeEventListener('wallpaper-changed', handleWallpaperChange);
-       window.removeEventListener('theme-changed', handleThemeChange); // 👈 NUEVO
-       window.removeEventListener('local-file-update', handleLocalUpdate);
-       window.removeEventListener('open-share-desktop-modal', handleOpenShareEvent);
-   };
-}, []);
+    return () => {
+      window.removeEventListener('wallpaper-changed', handleWallpaperChange);
+      window.removeEventListener('theme-changed', handleThemeChange); // 👈 NUEVO
+      window.removeEventListener('local-file-update', handleLocalUpdate);
+      window.removeEventListener('open-share-desktop-modal', handleOpenShareEvent);
+    };
+  }, []);
 
   // --- NUEVA FUNCIÓN: Persistir movimiento en Backend ---
   const handleMoveIcon = async (id, x, y) => {
-  if (id.toString().startsWith('sys-')) return;
+    if (id.toString().startsWith('sys-')) return;
 
-  // Ajustado al nuevo tamaño reducido
-  const ICON_WIDTH = 74;  
-  const ICON_HEIGHT = 88; 
+    // Ajustado al nuevo tamaño reducido
+    const ICON_WIDTH = 74;
+    const ICON_HEIGHT = 88;
 
-  let finalX = x;
-  let finalY = y;
+    let finalX = x;
+    let finalY = y;
 
-  let isOccupied = true;
-  let safetyNet = 0;
+    let isOccupied = true;
+    let safetyNet = 0;
 
-  while (isOccupied && safetyNet < 100) {
-    const collision = icons.find(icon => {
-      if (icon._id === id) return false;
-      
-      const otherX = icon.position?.x || 0;
-      const otherY = icon.position?.y || 0;
+    while (isOccupied && safetyNet < 100) {
+      const collision = icons.find(icon => {
+        if (icon._id === id) return false;
 
-      // Colisión AABB ajustada al nuevo tamaño
-      return (
-        finalX < otherX + ICON_WIDTH &&
-        finalX + ICON_WIDTH > otherX &&
-        finalY < otherY + ICON_HEIGHT &&
-        finalY + ICON_HEIGHT > otherY
-      );
-    });
+        const otherX = icon.position?.x || 0;
+        const otherY = icon.position?.y || 0;
 
-    if (collision) {
-      finalX += 15; // Desplazamiento menor para mayor precisión
-      if (finalX + ICON_WIDTH > window.innerWidth - 10) {
-        finalX = 10;
-        finalY += 15;
+        // Colisión AABB ajustada al nuevo tamaño
+        return (
+          finalX < otherX + ICON_WIDTH &&
+          finalX + ICON_WIDTH > otherX &&
+          finalY < otherY + ICON_HEIGHT &&
+          finalY + ICON_HEIGHT > otherY
+        );
+      });
+
+      if (collision) {
+        finalX += 15; // Desplazamiento menor para mayor precisión
+        if (finalX + ICON_WIDTH > window.innerWidth - 10) {
+          finalX = 10;
+          finalY += 15;
+        }
+        safetyNet++;
+      } else {
+        isOccupied = false;
       }
-      safetyNet++;
-    } else {
-      isOccupied = false;
     }
-  }
 
-  // Actualización optimista (Sin LAG)
-  setIcons(prev => prev.map(icon => 
-    icon._id === id ? { ...icon, position: { x: finalX, y: finalY } } : icon
-  ));
+    // Actualización optimista (Sin LAG)
+    setIcons(prev => prev.map(icon =>
+      icon._id === id ? { ...icon, position: { x: finalX, y: finalY } } : icon
+    ));
 
-  const token = localStorage.getItem('token');
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = localStorage.getItem('token');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  try {
-    // Sincronización con Backend (Persiste el orden y posición)
-    await fetchDataBackend(
-      `${backendUrl}/items/${id}/move`,
-      { x: finalX, y: finalY },
-      "PATCH",
-      { Authorization: `Bearer ${token}` }
-    );
-  } catch (error) {
-    console.error("Error al persistir posición:", error);
-  }
-};
+    try {
+      // Sincronización con Backend (Persiste el orden y posición)
+      await fetchDataBackend(
+        `${backendUrl}/items/${id}/move`,
+        { x: finalX, y: finalY },
+        "PATCH",
+        { Authorization: `Bearer ${token}` }
+      );
+    } catch (error) {
+      console.error("Error al persistir posición:", error);
+    }
+  };
 
-    const handleRenameIcon = async (id, name) => {
+  const handleRenameIcon = async (id, name) => {
     // Evitamos renombrar apps del sistema
     if (id.toString().startsWith('sys-')) return;
 
@@ -666,7 +666,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
       if (response && response.ok) {
         // Actualizamos el estado local para que el cambio sea visible
-        setIcons(prev => prev.map(icon => 
+        setIcons(prev => prev.map(icon =>
           icon._id === id ? { ...icon, nombre: name } : icon
         ));
       }
@@ -680,7 +680,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     // ¡SÚPER IMPORTANTE!
     // Esto previene que aparezca el menú
     // normal del navegador (Copiar, Pegar, Inspeccionar...)
-    e.preventDefault(); 
+    e.preventDefault();
 
     // Ocultamos el menú si ya estaba visible
     // (para evitar menús duplicados si hace clic derecho varias veces)
@@ -699,11 +699,11 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
   // 1. Clic en el Fondo (Escritorio vacío)
   const handleContextMenuDesktop = (e) => {
     e.preventDefault();
-    setMenuState({ 
-        isVisible: true, 
-        x: e.clientX, 
-        y: e.clientY, 
-        selectedItem: null // No hay ítem seleccionado
+    setMenuState({
+      isVisible: true,
+      x: e.clientX,
+      y: e.clientY,
+      selectedItem: null // No hay ítem seleccionado
     });
   };
 
@@ -711,11 +711,11 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
   const handleContextMenuIcon = (e, iconData) => {
     e.preventDefault();
     e.stopPropagation(); // Evita que se dispare el del fondo
-    setMenuState({ 
-        isVisible: true, 
-        x: e.clientX, 
-        y: e.clientY, 
-        selectedItem: iconData // Guardamos el ítem
+    setMenuState({
+      isVisible: true,
+      x: e.clientX,
+      y: e.clientY,
+      selectedItem: iconData // Guardamos el ítem
     });
   };
 
@@ -757,43 +757,43 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     // Preparamos los datos para el Backend
     const newItemData = {
-        type: 'link', // Por ahora solo links desde este modal
-        name: formData.name,
-        url: formData.url,
-        x: 100, // Posición por defecto (podríamos aleatorizarla)
-        y: 100
+      type: 'link', // Por ahora solo links desde este modal
+      name: formData.name,
+      url: formData.url,
+      x: 100, // Posición por defecto (podríamos aleatorizarla)
+      y: 100
     };
 
-  
+
 
     try {
-        const response = await fetchDataBackend(
-            `${backendUrl}/items`,
-            newItemData,
-            "POST",
-            { Authorization: `Bearer ${token}` }
-        );
+      const response = await fetchDataBackend(
+        `${backendUrl}/items`,
+        newItemData,
+        "POST",
+        { Authorization: `Bearer ${token}` }
+      );
 
-        if (response && response.ok) {
-            // Backend nos devuelve el ítem creado
-            const createdItem = response.item;
-            
-            // Lo formateamos para la UI
-            const newIconUI = {
-                _id: createdItem._id,
-                nombre: createdItem.name,
-                imgSrc: linkIcon,
-                type: 'link',
-                url: createdItem.url
-            };
+      if (response && response.ok) {
+        // Backend nos devuelve el ítem creado
+        const createdItem = response.item;
 
-            // Actualizamos el estado visualmente
-            setIcons(prev => [...prev, newIconUI]);
-            closeModal();
-            sileo.success({title: "Enlace creado exitosamente"});
-        }
+        // Lo formateamos para la UI
+        const newIconUI = {
+          _id: createdItem._id,
+          nombre: createdItem.name,
+          imgSrc: linkIcon,
+          type: 'link',
+          url: createdItem.url
+        };
+
+        // Actualizamos el estado visualmente
+        setIcons(prev => [...prev, newIconUI]);
+        closeModal();
+        sileo.success({ title: "Enlace creado exitosamente" });
+      }
     } catch (error) {
-        console.error("Error creando ítem:", error);
+      console.error("Error creando ítem:", error);
     }
   };
   // FIN REMPLAZO
@@ -806,7 +806,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     const itemType = modalMode === 'link' ? 'link' : 'folder';
 
     // Centro de la pantalla
-    const centerX = Math.floor(window.innerWidth / 2) - 40; 
+    const centerX = Math.floor(window.innerWidth / 2) - 40;
     const centerY = Math.floor(window.innerHeight / 2) - 50;
 
     // Se usa donde el usuario hizo clic derecho, o el centro si no existe 
@@ -815,40 +815,44 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     // Preparamos datos para el Backend (Endpoint: POST /items)
     const newItemData = {
-        type: itemType,
-        name: formData.name,
-        url: formData.url || null,
-        x: posX,
-        y: posY
+      type: itemType,
+      name: formData.name,
+      url: formData.url || null,
+      x: posX,
+      y: posY
     };
 
     try {
-        const response = await fetchDataBackend(
-            `${backendUrl}/items`,
-            newItemData,
-            "POST",
-            { Authorization: `Bearer ${token}` }
-        );
+      const response = await fetchDataBackend(
+        `${backendUrl}/items`,
+        newItemData,
+        "POST",
+        { Authorization: `Bearer ${token}` }
+      );
 
-        if (response && response.ok) {
-            const createdItem = response.item; 
-            const newIconUI = {
-                _id: createdItem._id,
-                nombre: createdItem.name,
-                imgSrc: getIconImage(itemType),
-                type: itemType,
-                url: createdItem.url || null,
-                content: "",
-                position: { x: posX, y: posY }
-            };
+      if (response && response.ok) {
+        const createdItem = response.item;
+        const newIconUI = {
+          _id: createdItem._id,
+          nombre: createdItem.name,
+          imgSrc: getIconImage(itemType),
+          type: itemType,
+          url: createdItem.url || null,
+          content: "",
+          position: { x: posX, y: posY }
+        };
 
-            setIcons(prev => [...prev, newIconUI]); // Refleja el cambio al instante
+        // CAMBIO: verificar duplicado antes de insertar
+        setIcons(prev => {
+          if (prev.find(i => i._id === createdItem._id)) return prev;
+          return [...prev, newIconUI];
+        });
 
-            closeModal();
-            sileo.success({title: itemType === 'folder' ? "Carpeta creada" : "Enlace creado"});
-        }
+        closeModal();
+        sileo.success({ title: itemType === 'folder' ? "Carpeta creada" : "Enlace creado" });
+      }
     } catch (error) {
-        console.error("Error creando ítem:", error);
+      console.error("Error creando ítem:", error);
     }
   };
 
@@ -859,36 +863,36 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     // Verificamos si es app del sistema (no se pueden borrar)
     if (item._id.startsWith('sys-')) {
-        sileo.error({title: "No puedes eliminar aplicaciones del sistema."});
-        return;
+      sileo.error({ title: "No puedes eliminar aplicaciones del sistema." });
+      return;
     }
 
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     try {
-        const response = await fetchDataBackend(
-            `${backendUrl}/items/${item._id}`, // 👈 Endpoint SB-B-003 Delete
-            null,
-            "DELETE",
-            { Authorization: `Bearer ${token}` }
-        );
+      const response = await fetchDataBackend(
+        `${backendUrl}/items/${item._id}`, // 👈 Endpoint SB-B-003 Delete
+        null,
+        "DELETE",
+        { Authorization: `Bearer ${token}` }
+      );
 
-        if (response && response.ok) {
-            // Actualizamos el estado local quitando el ítem
-            setIcons(prev => prev.filter(icon => icon._id !== item._id));
-            sileo.success({title: "Elemento eliminado"});
-        }
+      if (response && response.ok) {
+        // Actualizamos el estado local quitando el ítem
+        setIcons(prev => prev.filter(icon => icon._id !== item._id));
+        sileo.success({ title: "Elemento eliminado" });
+      }
     } catch (error) {
-        console.error("Error eliminando:", error);
+      console.error("Error eliminando:", error);
     }
   };
 
-  
+
 
   const handleCreateQuickNote = async () => {
     handleCloseMenu(); // Cerramos el menú
-    
+
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -898,46 +902,49 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     const posY = menuState.y > 0 ? menuState.y - 50 : Math.floor(window.innerHeight / 2) - 50;
 
     const newItemData = {
-        type: 'note',        // Tipo Nota
-        name: 'Nueva Nota',  // Nombre por defecto
-        url: null,
-        x: posX,
-        y: posY
+      type: 'note',        // Tipo Nota
+      name: 'Nueva Nota',  // Nombre por defecto
+      url: null,
+      x: posX,
+      y: posY
     };
 
     try {
-        const response = await fetchDataBackend(
-            `${backendUrl}/items`,
-            newItemData,
-            "POST",
-            { Authorization: `Bearer ${token}` }
-        );
+      const response = await fetchDataBackend(
+        `${backendUrl}/items`,
+        newItemData,
+        "POST",
+        { Authorization: `Bearer ${token}` }
+      );
 
-        if (response && response.ok) {
-            const createdItem = response.item;
-            
-            const newIconUI = {
-                 _id: createdItem._id,
-                 nombre: createdItem.name,
-                 imgSrc: getIconImage('note'), 
-                 type: 'note',
-                 url: null,
-                 content: "", 
-                 position: { x: posX, y: posY }
-            };
+      if (response && response.ok) {
+        const createdItem = response.item;
 
-            setIcons(prev => [...prev, newIconUI]);
-            sileo.success({title: "Nota creada. Haz clic en el nombre para renombrar."});
-        }
+        const newIconUI = {
+          _id: createdItem._id,
+          nombre: createdItem.name,
+          imgSrc: getIconImage('note'),
+          type: 'note',
+          url: null,
+          content: "",
+          position: { x: posX, y: posY }
+        };
+
+        setIcons(prev => {
+          if (prev.find(i => i._id === createdItem._id)) return prev;
+          return [...prev, newIconUI];
+        });
+        sileo.success({ title: "Nota creada. Haz clic en el nombre para renombrar." });
+      }
     } catch (error) {
-        console.error("Error creando nota rápida:", error);
+      console.error("Error creando nota rápida:", error);
     }
   };
 
   // --- NUEVA FUNCIÓN: CREAR ARCHIVO DE CÓDIGO ---
   const handleCreateQuickCode = async () => {
     handleCloseMenu();
-    
+
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -946,39 +953,42 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     const posY = menuState.y > 0 ? menuState.y - 50 : Math.floor(window.innerHeight / 2) - 50;
 
     const newItemData = {
-        type: 'code',           // <--- TIPO CODE
-        name: 'script.js',      // Nombre por defecto
-        url: null,
-        x: posX,
-        y: posY
+      type: 'code',           // <--- TIPO CODE
+      name: 'script.js',      // Nombre por defecto
+      url: null,
+      x: posX,
+      y: posY
     };
 
     try {
-        const response = await fetchDataBackend(
-            `${backendUrl}/items`,
-            newItemData,
-            "POST",
-            { Authorization: `Bearer ${token}` }
-        );
+      const response = await fetchDataBackend(
+        `${backendUrl}/items`,
+        newItemData,
+        "POST",
+        { Authorization: `Bearer ${token}` }
+      );
 
-        if (response && response.ok) {
-            const createdItem = response.item;
-            
-            const newIconUI = {
-                 _id: createdItem._id,
-                 nombre: createdItem.name,
-                 imgSrc: getIconImage('code'),
-                 type: 'code',
-                 url: null,
-                 content: "", 
-                 position: { x: posX, y: posY }
-            };
+      if (response && response.ok) {
+        const createdItem = response.item;
 
-            setIcons(prev => [...prev, newIconUI]);
-            sileo.success({title: "Archivo de código creado."});
-        }
+        const newIconUI = {
+          _id: createdItem._id,
+          nombre: createdItem.name,
+          imgSrc: getIconImage('code'),
+          type: 'code',
+          url: null,
+          content: "",
+          position: { x: posX, y: posY }
+        };
+
+        setIcons(prev => {
+          if (prev.find(i => i._id === createdItem._id)) return prev;
+          return [...prev, newIconUI];
+        });
+        sileo.success({ title: "Archivo de código creado." });
+      }
     } catch (error) {
-        console.error("Error creando código:", error);
+      console.error("Error creando código:", error);
     }
   };
 
@@ -986,42 +996,42 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
   const handleOpenShareModal = () => {
     // Verificamos que sea un item del usuario (no de sistema)
     if (menuState.selectedItem && !menuState.selectedItem._id.toString().startsWith('sys-')) {
-        handleCloseMenu();
-        setModalMode('share'); // Modo Compartir
-        setIsModalVisible(true);
+      handleCloseMenu();
+      setModalMode('share'); // Modo Compartir
+      setIsModalVisible(true);
     } else {
-        sileo.error({title: "No puedes compartir este elemento."});
-        handleCloseMenu();
+      sileo.error({ title: "No puedes compartir este elemento." });
+      handleCloseMenu();
     }
   };
 
   // NUEVA FUNCIÓN: Abrir modal para compartir MI escritorio
   const handleOpenShareDesktopModal = () => {
-      // Cerramos el menú inicio si estuviera abierto (opcional, si tienes acceso al estado)
-      setModalMode('share-desktop'); // Nuevo modo
-      setIsModalVisible(true);
+    // Cerramos el menú inicio si estuviera abierto (opcional, si tienes acceso al estado)
+    setModalMode('share-desktop'); // Nuevo modo
+    setIsModalVisible(true);
   };
 
   // NUEVA FUNCIÓN: Llamar al backend para compartir escritorio
   const handleShareDesktop = async (formData) => {
-      const token = localStorage.getItem('token');
-      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = localStorage.getItem('token');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-      try {
-          const response = await fetchDataBackend(
-              `${backendUrl}/dashboard/share-desktop`, // Endpoint del backend
-              { email: formData.email },     // Body
-              "POST",
-              { Authorization: `Bearer ${token}` }
-          );
+    try {
+      const response = await fetchDataBackend(
+        `${backendUrl}/dashboard/share-desktop`, // Endpoint del backend
+        { email: formData.email },     // Body
+        "POST",
+        { Authorization: `Bearer ${token}` }
+      );
 
-          if (response && response.ok) {
-              sileo.success({title: response.msg || "¡Acceso concedido correctamente!"});
-              closeModal();
-          }
-      } catch (error) {
-          console.error("Error compartiendo escritorio:", error);
+      if (response && response.ok) {
+        sileo.success({ title: response.msg || "¡Acceso concedido correctamente!" });
+        closeModal();
       }
+    } catch (error) {
+      console.error("Error compartiendo escritorio:", error);
+    }
   };
 
   // 3. FUNCIÓN PARA LLAMAR AL BACKEND (POST /share/:id)
@@ -1031,56 +1041,56 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     const itemId = menuState.selectedItem._id; // El item que seleccionamos con click derecho
 
     try {
-        const response = await fetchDataBackend(
-            `${backendUrl}/items/share/${itemId}`, // Endpoint memorizado
-            { email: formData.email, permission: formData.permission },
-            "POST",
-            { Authorization: `Bearer ${token}` }
-        );
+      const response = await fetchDataBackend(
+        `${backendUrl}/items/share/${itemId}`, // Endpoint memorizado
+        { email: formData.email, permission: formData.permission },
+        "POST",
+        { Authorization: `Bearer ${token}` }
+      );
 
-        if (response && response.ok) {
-            sileo.success({title: `Invitación enviada a ${formData.email}`});
-            closeModal();
-        }
+      if (response && response.ok) {
+        sileo.success({ title: `Invitación enviada a ${formData.email}` });
+        closeModal();
+      }
     } catch (error) {
-        console.error("Error al compartir:", error);
+      console.error("Error al compartir:", error);
     }
   };
 
   // Para no esconder íconos
 
   const saveLayoutToBackend = async (changedItems) => {
-      if (changedItems.length === 0) return;
+    if (changedItems.length === 0) return;
 
-      const token = localStorage.getItem('token');
-      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = localStorage.getItem('token');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-      try {
-          // Preparamos los datos limpios para el backend
-          const payload = changedItems.map(icon => ({
-              id: icon._id,
-              x: icon.position.x,
-              y: icon.position.y
-          }));
+    try {
+      // Preparamos los datos limpios para el backend
+      const payload = changedItems.map(icon => ({
+        id: icon._id,
+        x: icon.position.x,
+        y: icon.position.y
+      }));
 
-          await fetch(`${backendUrl}/items/positions/bulk`, {
-              method: 'PATCH',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({ items: payload })
-          });
-          
-          console.log(`💾 Auto-guardado: ${changedItems.length} íconos actualizados.`);
-      } catch (error) {
-          console.error("Error auto-guardando escritorio:", error);
-      }
+      await fetch(`${backendUrl}/items/positions/bulk`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ items: payload })
+      });
+
+      console.log(`💾 Auto-guardado: ${changedItems.length} íconos actualizados.`);
+    } catch (error) {
+      console.error("Error auto-guardando escritorio:", error);
+    }
   };
 
   const autoArrangeIcons = () => {
-    const CELL_W = 90; 
-    const CELL_H = 100; 
+    const CELL_W = 90;
+    const CELL_H = 100;
     const MARGIN_X = 10;
     const TASKBAR_HEIGHT = 55; // 👈 1. Primero declaramos el alto
     const MARGIN_Y = taskbarPosition === 'top' ? TASKBAR_HEIGHT + 10 : 10; // 👈 2. Luego lo usamos aquí
@@ -1093,12 +1103,12 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     setIcons(prevIcons => {
       const sortedIcons = [...prevIcons].sort((a, b) => {
         if (Math.abs(a.position.x - b.position.x) > (CELL_W / 2)) {
-            return a.position.x - b.position.x;
+          return a.position.x - b.position.x;
         }
         return a.position.y - b.position.y;
       });
 
-      const changedIcons = []; 
+      const changedIcons = [];
 
       const arrangedIcons = sortedIcons.map((icon, index) => {
         const col = Math.floor(index / maxRows);
@@ -1108,18 +1118,18 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         const newY = MARGIN_Y + (row * CELL_H);
 
         if (Math.abs(icon.position.x - newX) > 1 || Math.abs(icon.position.y - newY) > 1) {
-            const updatedIcon = { ...icon, position: { x: newX, y: newY } };
-            
-            if (!icon._id.toString().startsWith('sys-')) {
-                changedIcons.push(updatedIcon);
-            }
-            return updatedIcon;
+          const updatedIcon = { ...icon, position: { x: newX, y: newY } };
+
+          if (!icon._id.toString().startsWith('sys-')) {
+            changedIcons.push(updatedIcon);
+          }
+          return updatedIcon;
         }
         return icon;
       });
 
       if (changedIcons.length > 0) {
-          saveLayoutToBackend(changedIcons);
+        saveLayoutToBackend(changedIcons);
       }
 
       return arrangedIcons;
@@ -1127,37 +1137,37 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
   };
 
   useEffect(() => {
-  // Función auxiliar para guardar en backend sin bloquear la UI
-  let resizeTimer;
-  const onResize = () => {
-    clearTimeout(resizeTimer);
-    // Esperamos 500ms después de que dejes de redimensionar para guardar
-    resizeTimer = setTimeout(autoArrangeIcons, 500);
-  };
+    // Función auxiliar para guardar en backend sin bloquear la UI
+    let resizeTimer;
+    const onResize = () => {
+      clearTimeout(resizeTimer);
+      // Esperamos 500ms después de que dejes de redimensionar para guardar
+      resizeTimer = setTimeout(autoArrangeIcons, 500);
+    };
 
-  // Ejecutar al inicio para alinear todo
-  autoArrangeIcons();
+    // Ejecutar al inicio para alinear todo
+    autoArrangeIcons();
 
-  window.addEventListener('resize', onResize);
-  return () => window.removeEventListener('resize', onResize);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
 
-}, []);
+  }, []);
 
-useEffect(() => {
+  useEffect(() => {
     autoArrangeIcons();
   }, [taskbarPosition]);
 
-const handleSortDesktop = () => {
+  const handleSortDesktop = () => {
     handleCloseMenu();
     autoArrangeIcons();
-    sileo.success({title: "Escritorio organizado"});
+    sileo.success({ title: "Escritorio organizado" });
   };
 
   // 2. FUNCIÓN QUE ABRE EL SELECTOR DE ARCHIVOS
   const triggerFileUpload = () => {
     handleCloseMenu(); // Cierra el menú contextual
     if (fileInputRef.current) {
-        fileInputRef.current.click(); // Simula clic en el input oculto
+      fileInputRef.current.click(); // Simula clic en el input oculto
     }
   };
 
@@ -1166,7 +1176,7 @@ const handleSortDesktop = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    e.target.value = null; 
+    e.target.value = null;
 
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -1180,72 +1190,72 @@ const handleSortDesktop = () => {
     if (workspaceId) formData.append('workspaceId', workspaceId);
 
     const uploadPromise = new Promise(async (resolve, reject) => {
-        try {
-            const response = await fetch(`${backendUrl}/items/upload`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            const data = await response.json();
+      try {
+        const response = await fetch(`${backendUrl}/items/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        const data = await response.json();
 
-            if (response.ok) {
-                resolve(data);
-            } else {
-                reject(new Error(data.msg || "Error al subir"));
-            }
-        } catch (error) {
-            console.error(error);
-            reject(new Error("Error al subir archivo"));
+        if (response.ok) {
+          resolve(data);
+        } else {
+          reject(new Error(data.msg || "Error al subir"));
         }
+      } catch (error) {
+        console.error(error);
+        reject(new Error("Error al subir archivo"));
+      }
     });
 
     sileo.promise(uploadPromise, {
-        loading: { title: `Subiendo ${file.name}...` },
-        success: { title: "Archivo subido exitosamente" },
-        error: (err) => ({ title: err.message })
+      loading: { title: `Subiendo ${file.name}...` },
+      success: { title: "Archivo subido exitosamente" },
+      error: (err) => ({ title: err.message })
     });
 
     try {
-        // 👇 1. ESPERAMOS A QUE TERMINE LA PROMESA Y CAPTURAMOS LOS DATOS 👇
-        const data = await uploadPromise;
-        
-        // Dependiendo de tu backend, el item suele venir en data.item o directamente en data
-        const uploadedItem = data.item || data;
+      // 👇 1. ESPERAMOS A QUE TERMINE LA PROMESA Y CAPTURAMOS LOS DATOS 👇
+      const data = await uploadPromise;
 
-        // 👇 2. CREAMOS EL OBJETO VISUAL PARA EL ESCRITORIO 👇
-        const newIconUI = {
-            _id: uploadedItem._id,
-            nombre: uploadedItem.name,
-            imgSrc: getIconImage(uploadedItem.type || 'file'), 
-            type: uploadedItem.type || 'file',
-            url: uploadedItem.url,
-            fileFormat: uploadedItem.fileFormat,
-            position: { x: posX, y: posY },
-            content: uploadedItem.content || ""
-        };
+      // Dependiendo de tu backend, el item suele venir en data.item o directamente en data
+      const uploadedItem = data.item || data;
 
-        // 👇 3. ACTUALIZAMOS EL ESTADO LOCAL INMEDIATAMENTE 👇
-        setIcons(prev => [...prev, newIconUI]);
+      // 👇 2. CREAMOS EL OBJETO VISUAL PARA EL ESCRITORIO 👇
+      const newIconUI = {
+        _id: uploadedItem._id,
+        nombre: uploadedItem.name,
+        imgSrc: getIconImage(uploadedItem.type || 'file'),
+        type: uploadedItem.type || 'file',
+        url: uploadedItem.url,
+        fileFormat: uploadedItem.fileFormat,
+        position: { x: posX, y: posY },
+        content: uploadedItem.content || ""
+      };
+
+      // 👇 3. ACTUALIZAMOS EL ESTADO LOCAL INMEDIATAMENTE 👇
+      setIcons(prev => [...prev, newIconUI]);
 
     } catch (error) {
-        // Si falla la subida, cae aquí (Sileo ya muestra el error visualmente)
-        console.error("Fallo al procesar el archivo subido:", error);
+      // Si falla la subida, cae aquí (Sileo ya muestra el error visualmente)
+      console.error("Fallo al procesar el archivo subido:", error);
     }
   };
 
 
   return (
     <div className="w-full h-screen overflow-hidden" onContextMenu={handleContextMenu} onClick={handleCloseMenu}>
-      
+
       {/* Fondo */}
-      <div className="fixed inset-0 -z-10" 
-            style={{ 
-                backgroundImage: `url(${currentWallpaper})`, // <--- USAR ESTADO
-                backgroundSize: 'cover', 
-                backgroundPosition: 'center',
-                transition: 'background-image 0.5s ease-in-out' // Efecto suave
-            }} 
-       />
+      <div className="fixed inset-0 -z-10"
+        style={{
+          backgroundImage: `url(${currentWallpaper})`, // <--- USAR ESTADO
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          transition: 'background-image 0.5s ease-in-out' // Efecto suave
+        }}
+      />
 
       <CalendarWidget />
       <PostItWidget />
@@ -1255,18 +1265,18 @@ const handleSortDesktop = () => {
       {/* BARRA DE AVISO (Solo si es remoto) */}
       {isRemote && (
         <div className="fixed top-0 left-0 right-0 h-8 bg-red-600 z-[100] flex items-center justify-center text-white text-xs font-bold shadow-lg">
-            VISUALIZANDO ESCRITORIO DE: {remoteUserName?.toUpperCase()} (Modo Espectador)
+          VISUALIZANDO ESCRITORIO DE: {remoteUserName?.toUpperCase()} (Modo Espectador)
         </div>
       )}
 
       {/* Grid de Íconos */}
       <div className="p-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 content-start h-[calc(100vh-3rem)] overflow-y-auto">
         {icons.map(icon => (
-          <Icon 
-            key={icon._id} 
-            nombre={icon.nombre} 
-            imgSrc={icon.imgSrc} 
-            iconData={icon} 
+          <Icon
+            key={icon._id}
+            nombre={icon.nombre}
+            imgSrc={icon.imgSrc}
+            iconData={icon}
             onOpen={onOpenWindow}
             onContextMenu={handleContextMenuIcon}
             onMove={handleMoveIcon}
@@ -1275,18 +1285,18 @@ const handleSortDesktop = () => {
         ))}
       </div>
 
-      <input 
-        type="file" 
-        style={{ display: 'none' }} 
-        ref={fileInputRef} 
-        onChange={handleFileSelect} 
+      <input
+        type="file"
+        style={{ display: 'none' }}
+        ref={fileInputRef}
+        onChange={handleFileSelect}
       />
 
       {/* Menú Contextual y Modales */}
-      <ContextMenu 
-        isVisible={menuState.isVisible} 
-        x={menuState.x} 
-        y={menuState.y} 
+      <ContextMenu
+        isVisible={menuState.isVisible}
+        x={menuState.x}
+        y={menuState.y}
         selectedItem={menuState.selectedItem}
         onNewLink={handleOpenNewLinkModal}
         onNewFolder={handleOpenNewFolderModal}
@@ -1298,33 +1308,33 @@ const handleSortDesktop = () => {
         onSort={handleSortDesktop}
       />
 
-      <Modal 
-        isVisible={isModalVisible} 
-        onClose={closeModal} 
+      <Modal
+        isVisible={isModalVisible}
+        onClose={closeModal}
         title={
-            modalMode === 'folder' ? "Nueva Carpeta" : 
-            modalMode === 'link' ? "Nuevo Enlace Web" : 
-            modalMode === 'share' ? "Compartir Elemento" : // <--- Título dinámico
-            modalMode === 'share-desktop' ? "Dar Acceso a mi PC" : ""
+          modalMode === 'folder' ? "Nueva Carpeta" :
+            modalMode === 'link' ? "Nuevo Enlace Web" :
+              modalMode === 'share' ? "Compartir Elemento" : // <--- Título dinámico
+                modalMode === 'share-desktop' ? "Dar Acceso a mi PC" : ""
         }
       >
         {modalMode === 'folder' && <NewFolderForm onSubmit={handleCreateItem} />}
         {modalMode === 'link' && <NewLinkForm onSubmit={handleCreateItem} />}
-        
+
         {/* Renderizamos el formulario de compartir */}
         {modalMode === 'share' && (
-            <ShareForm 
-                onSubmit={handleShareItem} 
-                itemToShare={menuState.selectedItem} 
-            />
+          <ShareForm
+            onSubmit={handleShareItem}
+            itemToShare={menuState.selectedItem}
+          />
         )}
 
         {/* 👇 NUEVO: Compartir Escritorio 👇 */}
         {modalMode === 'share-desktop' && (
-            <ShareForm 
-                onSubmit={handleShareDesktop} 
-                isDesktop={true} // Prop para cambiar textos
-            />
+          <ShareForm
+            onSubmit={handleShareDesktop}
+            isDesktop={true} // Prop para cambiar textos
+          />
         )}
 
       </Modal>
@@ -1333,32 +1343,32 @@ const handleSortDesktop = () => {
       <div className="fixed inset-0 z-20 pointer-events-none">
         <div id="desktop-bounds" className="absolute pointer-events-none" style={{ top: 0, left: '-5000px', right: '-5000px', bottom: '-5000px' }} />
         {openWindows.map(win => (
-            <div key={win.id} style={{ display: win.isMinimized ? 'none' : 'block' }}>
-              <AppWindow 
-                // ... (tus props siguen igual)
-                title={win.title} 
-                zIndex={win.zIndex} 
-                onClose={() => onCloseWindow(win.id)}
-                onMinimize={() => onMinimizeWindow(win.id)}
-                onMaximize={() => onMaximizeWindow(win.id)}
-                onFocus={() => onFocusWindow(win.id)}
-                isMaximized={win.isMaximized}
-                defaultX={win.defaultX}
-                defaultY={win.defaultY}
-                defaultWidth={win.defaultWidth}
-                defaultHeight={win.defaultHeight}
-                id={win.id}
-                onDragStop={onDragStop}
-              >
-                <AppRenderer 
-                  appId={win.appId} 
-                  data={win.data} 
-                  windowId={win.id} 
-                  onOpenWindow={onOpenWindow}
-                  onContextMenu={handleContextMenuIcon}
-                />
-              </AppWindow>
-            </div>
+          <div key={win.id} style={{ display: win.isMinimized ? 'none' : 'block' }}>
+            <AppWindow
+              // ... (tus props siguen igual)
+              title={win.title}
+              zIndex={win.zIndex}
+              onClose={() => onCloseWindow(win.id)}
+              onMinimize={() => onMinimizeWindow(win.id)}
+              onMaximize={() => onMaximizeWindow(win.id)}
+              onFocus={() => onFocusWindow(win.id)}
+              isMaximized={win.isMaximized}
+              defaultX={win.defaultX}
+              defaultY={win.defaultY}
+              defaultWidth={win.defaultWidth}
+              defaultHeight={win.defaultHeight}
+              id={win.id}
+              onDragStop={onDragStop}
+            >
+              <AppRenderer
+                appId={win.appId}
+                data={win.data}
+                windowId={win.id}
+                onOpenWindow={onOpenWindow}
+                onContextMenu={handleContextMenuIcon}
+              />
+            </AppWindow>
+          </div>
         ))}
       </div>
     </div>

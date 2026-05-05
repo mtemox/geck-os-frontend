@@ -4,9 +4,13 @@ import { Send, Bot, User, Loader, Sparkles, Trash2 } from 'lucide-react';
 import { useFetch } from '../../core/api/useFetch';
 
 const ChatApp = () => {
-  const [messages, setMessages] = useState([
-    { role: 'ai', text: '¡Hola Ariel! Soy MiDesk IA. ¿En qué te puedo ayudar hoy con tus estudios?' }
-  ]);
+  // Solución 1: Leer el nombre del usuario desde localStorage para que el saludo sea dinámico
+  const [messages, setMessages] = useState(() => {
+    const userStr = localStorage.getItem('user');
+    const userName = userStr ? JSON.parse(userStr).nombre : 'Estudiante';
+    return [{ role: 'ai', text: `¡Hola ${userName}! Soy GeckOS IA. ¿En qué te puedo ayudar hoy con tus estudios?` }];
+  });
+
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,26 +50,19 @@ const ChatApp = () => {
       );
 
       if (data && data.ok) {
-        // Guardamos la respuesta completa para inspeccionarla
         const respuestaCompleta = data.data;
 
         const aiResponse = {
           id: Date.now() + 1,
           role: 'ai',
-          // 👇 SOLUCIÓN: Si es un objeto, extraemos solo la propiedad 'mensaje'
-          // Si por alguna razón ya fuera un string, lo dejamos como está.
           text: typeof respuestaCompleta === 'object'
             ? respuestaCompleta.mensaje
             : respuestaCompleta,
-
-          // Si quieres guardar los otros datos (comando, apps) para usarlos luego:
           metadata: typeof respuestaCompleta === 'object' ? {
             comando: respuestaCompleta.comando,
             apps: respuestaCompleta.apps,
             contenido_nota: respuestaCompleta.contenido_nota
           } : null,
-
-          // Ajuste de métricas según tu backend anterior
           metrics: data.metrics || null
         };
 
@@ -83,7 +80,9 @@ const ChatApp = () => {
   };
 
   const handleClearChat = () => {
-    setMessages([{ role: 'ai', text: 'Chat reiniciado. ¿En qué te ayudo?' }]);
+    const userStr = localStorage.getItem('user');
+    const userName = userStr ? JSON.parse(userStr).nombre : 'Estudiante';
+    setMessages([{ role: 'ai', text: `Chat reiniciado. ¿En qué te ayudo hoy, ${userName}?` }]);
   };
 
   return (
@@ -155,7 +154,7 @@ const ChatApp = () => {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Pregunta sobre tus notas o MiDesk..."
+          placeholder="Pregunta sobre tus notas o el sistema..."
           className="flex-1 bg-background border border-input rounded-lg px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 transition-colors"
           disabled={isLoading}
         />

@@ -37,7 +37,6 @@ const ComputerApp = ({ onOpenItem }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedItem, setSelectedItem] = useState(null);
 
-    // 👇 NUEVOS ESTADOS PARA IA 👇
     const [isSearchingAI, setIsSearchingAI] = useState(false);
     const [aiResults, setAiResults] = useState(null);
 
@@ -68,7 +67,7 @@ const ComputerApp = ({ onOpenItem }) => {
         loadAllItems();
     }, []);
 
-    // 👇 NUEVA LÓGICA DE BÚSQUEDA IA 👇
+    // Solución 3: Conservar el orden de relevancia que nos devuelve Python
     const handleAISearch = async () => {
         if (!searchTerm.trim()) return;
         setIsSearchingAI(true);
@@ -80,13 +79,13 @@ const ComputerApp = ({ onOpenItem }) => {
                 { Authorization: `Bearer ${token}` }
             );
             if (data && data.ok) {
-                // Tu backend devuelve la propiedad "data", que dentro trae "resultados" de Python
-                const resultadosIA = data.data;
+                const resultadosIA = data.data; // Viene ordenado desde Python
 
-                const idsEncontrados = resultadosIA.map(r => r.id || r._id);
-                const itemsCompletos = items.filter(item =>
-                    idsEncontrados.includes(item._id?.toString() || item.id?.toString())
-                );
+                // Mapeamos iterando sobre la respuesta de la IA para NO PERDER el orden
+                const itemsCompletos = resultadosIA
+                    .map(resIA => items.find(item => (item._id?.toString() || item.id?.toString()) === resIA.id))
+                    .filter(item => item !== undefined); // Filtramos undefined por si acaso
+
                 setAiResults(itemsCompletos);
             }
         } catch (error) {
@@ -96,12 +95,10 @@ const ComputerApp = ({ onOpenItem }) => {
         }
     };
 
-    // Resetea los resultados de IA si el usuario borra el texto
     useEffect(() => {
         if (searchTerm === "") setAiResults(null);
     }, [searchTerm]);
 
-    // Filtro híbrido: Si hay resultados IA, muéstralos. Si no, usa el filtro local.
     const displayedItems = aiResults !== null
         ? aiResults
         : items.filter(item =>
@@ -170,7 +167,6 @@ const ComputerApp = ({ onOpenItem }) => {
                                 className="pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 w-64 transition-all text-foreground placeholder:text-muted-foreground"
                             />
                         </div>
-                        {/* Botón de la IA */}
                         <button
                             onClick={handleAISearch}
                             disabled={isSearchingAI || !searchTerm.trim()}
@@ -181,7 +177,6 @@ const ComputerApp = ({ onOpenItem }) => {
                                 ? <Loader size={16} className="animate-spin" />
                                 : <Sparkles size={16} />}
                         </button>
-                        {/* Badge "IA activa" cuando hay resultados de IA */}
                         {aiResults !== null && (
                             <span className="absolute -top-2 -right-2 flex h-4 w-4">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
@@ -193,7 +188,6 @@ const ComputerApp = ({ onOpenItem }) => {
                     </div>
                 </div>
 
-                {/* Banner sutil cuando la IA está activa */}
                 {aiResults !== null && (
                     <div className="px-6 py-2 bg-brand-500/5 border-b border-brand-500/20 flex items-center gap-2">
                         <Sparkles size={12} className="text-brand-500" />
@@ -253,7 +247,6 @@ const ComputerApp = ({ onOpenItem }) => {
                                     >
                                         <div className="relative flex-shrink-0">
                                             <img src={getIconSrc(item.type)} alt="" className="w-7 h-7 object-contain drop-shadow-sm" />
-                                            {/* Indicador de que vino de IA */}
                                             {aiResults !== null && (
                                                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-brand-500 rounded-full flex items-center justify-center">
                                                     <Sparkles size={6} className="text-white" />
