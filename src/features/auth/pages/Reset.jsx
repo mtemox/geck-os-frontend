@@ -5,6 +5,7 @@ import AuthLayout from '../components/Auth';
 import { useFetch } from '../../../core/api/useFetch';
 import { useForm } from "react-hook-form";
 import { sileo } from 'sileo';
+import { Eye, EyeOff } from 'lucide-react';
 
 function Reset() {
   const { token } = useParams();
@@ -15,6 +16,9 @@ function Reset() {
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const password = watch('password');
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 1. VALIDAR EL TOKEN
   useEffect(() => {
@@ -95,76 +99,65 @@ function Reset() {
   );
 
   return (
-    <AuthLayout title="Restablecer Contraseña">
-      <p className="text-sm text-gray-300 text-center mb-4">
-        Establece una nueva contraseña segura para tu escritorio virtual.
+    <AuthLayout title="Nueva contraseña">
+
+      <p className="text-xs text-white/50 text-center -mt-2 mb-2">
+        Establece una contraseña segura para tu escritorio virtual.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-        {/* NUEVO PASSWORD */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-            Nueva Contraseña
-          </label>
+          <label className="block text-xs font-medium text-white/60 mb-1.5 ml-1">Nueva contraseña</label>
           <div className="relative">
             <input
-              id="password"
               type={showPassword ? "text" : "password"}
               {...register('password', {
-                required: 'La contraseña es requerida',
+                required: 'Requerido',
                 minLength: { value: 6, message: 'Mínimo 6 caracteres' }
               })}
-              className={inputClass}
+              className="w-full bg-white/10 text-white placeholder-white/30 border border-white/15 
+                       focus:border-sky-400/50 focus:bg-white/15 rounded-xl px-4 pr-11 py-2.5 text-sm 
+                       outline-none transition-all backdrop-blur-sm"
               placeholder="Nueva contraseña"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white mt-0.5"
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            <button type="button" onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-          {errors.password && <p className="mt-1 text-xs text-red-500 font-bold">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-xs text-amber-400/90 ml-1">{errors.password.message}</p>}
         </div>
 
-        {/* CONFIRMAR PASSWORD */}
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
-            Confirmar Contraseña
-          </label>
+          <label className="block text-xs font-medium text-white/60 mb-1.5 ml-1">Confirmar contraseña</label>
           <div className="relative">
             <input
-              id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               {...register('confirmPassword', {
-                required: 'Confirma tu contraseña',
-                validate: value => value === password || 'Las contraseñas no coinciden'
+                required: 'Requerido',
+                validate: value => value === password || 'No coinciden'
               })}
-              className={inputClass}
+              className="w-full bg-white/10 text-white placeholder-white/30 border border-white/15 
+                       focus:border-sky-400/50 focus:bg-white/15 rounded-xl px-4 pr-11 py-2.5 text-sm 
+                       outline-none transition-all backdrop-blur-sm"
               placeholder="Repite la contraseña"
             />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white mt-0.5"
-            >
-              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
+              {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-          {errors.confirmPassword && <p className="mt-1 text-xs text-red-500 font-bold">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && <p className="mt-1 text-xs text-amber-400/90 ml-1">{errors.confirmPassword.message}</p>}
         </div>
 
-        {/* BOTÓN */}
-        <div>
-          <button
-            type="submit"
-            className="w-full py-2 px-4 font-bold text-white bg-red-700 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black transition-all shadow-[0_0_10px_rgba(185,28,28,0.5)]"
-          >
-            Guardar Nueva Contraseña
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="w-full py-2.5 bg-sky-500/80 hover:bg-sky-400/90 text-white font-medium rounded-xl 
+                   transition-all shadow-lg shadow-sky-500/20 text-sm"
+        >
+          Guardar contraseña
+        </button>
       </form>
     </AuthLayout>
   );

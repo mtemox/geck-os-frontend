@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/Auth'; // Reutilizamos el layout
 import { useFetch } from '../../../core/api/useFetch';
 import { useForm } from "react-hook-form";
-import dragonBg from '../../../assets/wallpapers/deg3.jpg';
+import dragonBg from '../../../assets/auth/fondo4.jpg';
 import logoMidesk from '../../../assets/logos/midesk.jpg';
 import { useSocket } from '../../../core/context/SocketContext';
 
@@ -79,26 +79,26 @@ function Login() {
     const time = new Date();
     return (
       <div
-        onClick={() => setStep(2)} // Clic en cualquier lado para entrar
-        className="h-screen w-full flex flex-col items-center justify-start pt-32 cursor-pointer select-none text-white relative overflow-hidden"
+        onClick={() => setStep(2)}
+        className="h-screen w-full flex flex-col items-center justify-start pt-28 cursor-pointer select-none text-white relative overflow-hidden"
       >
-        {/* Fondo */}
         <div
           className="absolute inset-0 -z-10 bg-cover bg-center transition-transform duration-700 hover:scale-105"
           style={{ backgroundImage: `url(${dragonBg})` }}
         />
-        <div className="absolute inset-0 -z-10 bg-black/20" /> {/* Filtro oscuro leve */}
+        {/* Overlay más suave */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-sky-950/20 to-slate-950/50" />
 
-        {/* Hora y Fecha Gigante */}
-        <h1 className="text-9xl font-thin drop-shadow-lg">
+        {/* Hora */}
+        <h1 className="text-[7rem] font-thin tracking-tight drop-shadow-lg">
           {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </h1>
-        <p className="text-2xl mt-4 font-medium drop-shadow-md">
+        <p className="text-xl mt-3 font-light text-white/80 capitalize drop-shadow-md">
           {time.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
 
-        <p className="absolute bottom-10 animate-bounce text-sm text-gray-300">
-          Haz clic o presiona una tecla para desbloquear
+        <p className="absolute bottom-10 animate-bounce text-xs text-white/50 tracking-widest uppercase">
+          Clic para continuar
         </p>
       </div>
     );

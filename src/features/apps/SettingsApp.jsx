@@ -140,6 +140,7 @@ const SettingsApp = () => {
         setIsUploading(true);
         const formData = new FormData();
         formData.append('image', file);
+        formData.append('type', 'wallpaper');
 
         // Creamos la promesa que Sileo va a observar
         const uploadPromise = new Promise(async (resolve, reject) => {
@@ -152,7 +153,7 @@ const SettingsApp = () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    await savePreferences({ wallpaperUrl: data.wallpaperUrl });
+                    await savePreferences({ wallpaperUrl: data.url });
                     resolve(data);
                 } else {
                     reject(new Error(data.msg || "Error subiendo"));
@@ -245,7 +246,7 @@ const SettingsApp = () => {
                     className={`
             w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 text-sm font-medium transition-all
             ${activeTab === 'unsplash'
-                            ? 'bg-blue-500 dark:bg-purple-600 text-white shadow-md'
+                            ? 'bg-brand-500 dark:bg-brand-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}
           `}
                 >
@@ -257,7 +258,7 @@ const SettingsApp = () => {
                     className={`
             w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 text-sm font-medium transition-all
             ${activeTab === 'upload'
-                            ? 'bg-blue-500 dark:bg-purple-600 text-white shadow-md'
+                            ? 'bg-brand-500 dark:bg-brand-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}
           `}
                 >
@@ -269,7 +270,7 @@ const SettingsApp = () => {
                     className={`
             w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 text-sm font-medium transition-all
             ${activeTab === 'ai'
-                            ? 'bg-blue-500 dark:bg-purple-600 text-white shadow-md'
+                            ? 'bg-brand-500 dark:bg-brand-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}
           `}
                 >

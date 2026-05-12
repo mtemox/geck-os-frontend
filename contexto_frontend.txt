@@ -2912,6 +2912,7 @@ const SettingsApp = () => {
         setIsUploading(true);
         const formData = new FormData();
         formData.append('image', file);
+        formData.append('type', 'wallpaper');
 
         // Creamos la promesa que Sileo va a observar
         const uploadPromise = new Promise(async (resolve, reject) => {
@@ -2924,7 +2925,7 @@ const SettingsApp = () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    await savePreferences({ wallpaperUrl: data.wallpaperUrl });
+                    await savePreferences({ wallpaperUrl: data.url });
                     resolve(data);
                 } else {
                     reject(new Error(data.msg || "Error subiendo"));
@@ -3017,7 +3018,7 @@ const SettingsApp = () => {
                     className={`
             w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 text-sm font-medium transition-all
             ${activeTab === 'unsplash'
-                            ? 'bg-blue-500 dark:bg-purple-600 text-white shadow-md'
+                            ? 'bg-brand-500 dark:bg-brand-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}
           `}
                 >
@@ -3029,7 +3030,7 @@ const SettingsApp = () => {
                     className={`
             w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 text-sm font-medium transition-all
             ${activeTab === 'upload'
-                            ? 'bg-blue-500 dark:bg-purple-600 text-white shadow-md'
+                            ? 'bg-brand-500 dark:bg-brand-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}
           `}
                 >
@@ -3041,7 +3042,7 @@ const SettingsApp = () => {
                     className={`
             w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 text-sm font-medium transition-all
             ${activeTab === 'ai'
-                            ? 'bg-blue-500 dark:bg-purple-600 text-white shadow-md'
+                            ? 'bg-brand-500 dark:bg-brand-600 text-white shadow-md'
                             : 'text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'}
           `}
                 >
@@ -4032,33 +4033,34 @@ export default WordEditorApp;
 
 // src/features/auth/components/Auth.jsx
 import React from 'react';
-import dragonBg from '../../../assets/wallpapers/deg3.jpg'; // Asegúrate de tener la imagen aquí
+import dragonBg from '../../../assets/auth/fondo4.jpg'; // Asegúrate de tener la imagen aquí
 
 function AuthLayout({ children, title }) {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black relative overflow-hidden">
-      
-      {/* --- FONDO CON IMAGEN Y DEGRADADO --- */}
-      <div 
+    <div className="flex items-center justify-center min-h-screen relative overflow-hidden">
+
+      {/* Fondo cielo con overlay */}
+      <div
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,1)), url(${dragonBg})`,
+          backgroundImage: `url(${dragonBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       />
+      {/* Overlay gradiente suave */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-sky-900/30 via-sky-800/20 to-slate-900/60" />
 
-      {/* --- CONTENEDOR DEL FORMULARIO --- */}
-      {/* Usamos un fondo negro semitransparente con borde rojo */}
-      <div className="relative z-10 w-full max-w-md p-8 space-y-6 
-                      bg-black/80 backdrop-blur-sm 
-                      rounded-xl shadow-2xl border border-red-600/50">
-        
-        {/* Título con efecto de brillo rojo sutil */}
-        <h2 className="text-3xl font-bold text-center text-white drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">
-            {title}
+      {/* Formulario */}
+      <div className="relative z-10 w-full max-w-md px-8 py-10 space-y-6
+                    bg-white/10 backdrop-blur-2xl
+                    rounded-2xl shadow-2xl
+                    border border-white/20">
+
+        <h2 className="text-2xl font-semibold text-center text-white tracking-wide">
+          {title}
         </h2>
-        
+
         {children}
       </div>
     </div>
@@ -4099,20 +4101,21 @@ import React, { useEffect } from 'react';
 import logoMidesk from '../../../assets/logos/midesk.jpg'; // Asumo que esta imagen se mantiene
 import { Link, useParams } from 'react-router-dom';
 import { useFetch } from '../../../core/api/useFetch';
+import dragonBg from '../../../assets/auth/fondo4.jpg';
 // No necesitas ToastContainer aquí, ya está en main.jsx
 
 export const Confirm = () => {
 
     const fetchDataBackend = useFetch();
     const { token } = useParams();
-    
+
     // --- LÓGICA (Esta parte se mantiene igual) ---
     // Se ejecuta al cargar la página para validar el token
     useEffect(() => {
-        
+
         const verifyToken = async () => {
             const url = `${import.meta.env.VITE_BACKEND_URL}/auth/confirm/${token}`;
-            
+
             // El hook se encarga de mostrar los toasts
             // de carga, éxito o error.
             await fetchDataBackend(url, null, 'GET');
@@ -4126,36 +4129,46 @@ export const Confirm = () => {
 
     // --- INTERFAZ CON ESTILO (ROJO, BLANCO, NEGRO) ---
     return (
-        // Fondo negro
-        <div className="flex flex-col items-center justify-center h-screen bg-black">
+        <div className="flex flex-col items-center justify-center h-screen relative overflow-hidden">
 
-            {/* Imagen con borde rojo */}
-            <img 
-                className="object-cover h-80 w-80 rounded-full border-4 border-solid border-red-600" // <-- CAMBIADO
-                src={logoMidesk} 
-                alt="Logo de Confirmación"
+            {/* Fondo */}
+            <div
+                className="absolute inset-0 -z-10 bg-cover bg-center"
+                style={{ backgroundImage: `url(${dragonBg})` }}
             />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-sky-950/30 to-slate-950/70" />
 
-            <div className="flex flex-col items-center justify-center text-center max-w-md px-4">
-                
-                {/* Textos blancos */}
-                <p className="text-3xl md:text-4xl lg:text-5xl text-white mt-12">
-                    ¡Muchas Gracias!
+            {/* Card */}
+            <div className="flex flex-col items-center text-center max-w-sm px-10 py-12 
+                    bg-white/10 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-2xl
+                    animate-scale-in">
+
+                {/* Logo */}
+                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/20 shadow-xl mb-6 ring-4 ring-orange-400/20">
+                    <img src={logoMidesk} alt="MiDesk" className="w-full h-full object-cover" />
+                </div>
+
+                {/* Icono de check animado */}
+                <div className="w-12 h-12 rounded-full bg-orange-500/20 border border-orange-400/30 flex items-center justify-center mb-5">
+                    <svg className="w-6 h-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+
+                <h2 className="text-2xl font-light text-white mb-2">¡Muchas gracias!</h2>
+                <p className="text-sm text-white/50 leading-relaxed mb-1">
+                    Estamos verificando tu cuenta.
                 </p>
-                <p className="md:text-lg lg:text-xl text-gray-300 mt-8"> {/* <-- CAMBIADO (Gris claro) */}
-                    Estamos procesando tu confirmación.
+                <p className="text-sm text-white/50 leading-relaxed mb-8">
+                    Si el enlace es válido, ya puedes iniciar sesión.
                 </p>
-                <p className="md:text-lg lg:text-xl text-gray-300 mt-2"> {/* <-- CAMBIADO (Gris claro) */}
-                    Si el token es válido, podrás iniciar sesión.
-                </p>
-                
-                {/* Botón rojo */}
-                <Link 
-                    to="/login" 
-                    // --- Clases del botón cambiadas a rojo ---
-                    className="w-full py-2 px-4 mt-8 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black"
+
+                <Link
+                    to="/login"
+                    className="w-full py-2.5 bg-sky-500/70 hover:bg-sky-400/80 text-white font-medium rounded-xl 
+                   transition-all shadow-lg shadow-sky-500/10 text-sm text-center block"
                 >
-                    Ir a Iniciar Sesión
+                    Ir a iniciar sesión
                 </Link>
             </div>
         </div>
@@ -4171,21 +4184,21 @@ export default Confirm;
 // src/features/auth/pages/Forgot.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import AuthLayout from '../components/Auth'; 
+import AuthLayout from '../components/Auth';
 import { useFetch } from '../../../core/api/useFetch';
 import { useForm } from "react-hook-form";
 
 function Forgot() {
   const [loading, setLoading] = useState(false);
   const fetchDataBackend = useFetch();
-  
+
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   const onSubmit = async (data) => {
     setLoading(true);
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      
+
       // Consumimos el endpoint que ya tienes en tu backend
       // router.post('/recuperarPassword', recuperarPassword)
       await fetchDataBackend(
@@ -4193,7 +4206,7 @@ function Forgot() {
         data, // data contiene { email }
         "POST"
       );
-      
+
       // El hook useFetch ya muestra el Toast de éxito o error.
       // No necesitamos redirigir inmediatamente, el usuario debe revisar su correo.
 
@@ -4205,51 +4218,44 @@ function Forgot() {
   };
 
   return (
-    <AuthLayout title="Recuperar Acceso">
-      
-      <div className="text-sm text-gray-300 text-center mb-4">
-        Ingresa tu correo institucional y te enviaremos las instrucciones para restablecer tu contraseña.
-      </div>
+    <AuthLayout title="Recuperar acceso">
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        
-        {/* --- CAMPO EMAIL --- */}
+      <p className="text-xs text-white/50 text-center -mt-2 mb-2">
+        Te enviaremos instrucciones a tu correo para restablecer tu contraseña.
+      </p>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-            Correo Electrónico
-          </label>
+          <label className="block text-xs font-medium text-white/60 mb-1.5 ml-1">Correo electrónico</label>
           <input
-            id="email"
             type="email"
-            {...register('email', { 
+            {...register('email', {
               required: 'El email es requerido',
-              pattern: {
-                value: /\S+@\S+\.\S+/,
-                message: 'Formato de email inválido'
-              }
+              pattern: { value: /\S+@\S+\.\S+/, message: 'Formato inválido' }
             })}
-            // ESTILO ROJO/OSCURO
-            className="w-full px-3 py-2 mt-1 text-white bg-gray-900 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent placeholder-gray-500"
-            placeholder="tu-correo@esfot.com"
+            className="w-full bg-white/10 text-white placeholder-white/30 border border-white/15 
+                     focus:border-sky-400/50 focus:bg-white/15 rounded-xl px-4 py-2.5 text-sm 
+                     outline-none transition-all backdrop-blur-sm"
+            placeholder="tu@correo.com"
           />
-          {errors.email && <p className="mt-1 text-xs text-red-500 font-bold">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-xs text-amber-400/90 ml-1">{errors.email.message}</p>}
         </div>
-        
-        {/* --- BOTÓN ENVIAR --- */}
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 px-4 font-bold text-white bg-red-700 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black transition-all shadow-[0_0_10px_rgba(185,28,28,0.5)]"
-          >
-            {loading ? 'Enviando...' : 'Enviar Instrucciones'}
-          </button>
-        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-2.5 bg-sky-500/80 hover:bg-sky-400/90 text-white font-medium rounded-xl 
+                   transition-all shadow-lg shadow-sky-500/20 text-sm
+                   disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Enviando…' : 'Enviar instrucciones'}
+        </button>
       </form>
 
-      <p className="text-sm text-center text-gray-400">
+      <p className="text-xs text-center text-white/40">
         ¿Ya la recordaste?{' '}
-        <Link to="/login" className="font-medium text-red-500 hover:text-red-400 underline">
+        <Link to="/login" className="text-sky-400/80 hover:text-sky-300 transition-colors">
           Inicia sesión
         </Link>
       </p>
@@ -4349,7 +4355,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/Auth'; // Reutilizamos el layout
 import { useFetch } from '../../../core/api/useFetch';
 import { useForm } from "react-hook-form";
-import dragonBg from '../../../assets/wallpapers/deg3.jpg';
+import dragonBg from '../../../assets/auth/fondo4.jpg';
 import logoMidesk from '../../../assets/logos/midesk.jpg';
 import { useSocket } from '../../../core/context/SocketContext';
 
@@ -4423,26 +4429,26 @@ function Login() {
     const time = new Date();
     return (
       <div
-        onClick={() => setStep(2)} // Clic en cualquier lado para entrar
-        className="h-screen w-full flex flex-col items-center justify-start pt-32 cursor-pointer select-none text-white relative overflow-hidden"
+        onClick={() => setStep(2)}
+        className="h-screen w-full flex flex-col items-center justify-start pt-28 cursor-pointer select-none text-white relative overflow-hidden"
       >
-        {/* Fondo */}
         <div
           className="absolute inset-0 -z-10 bg-cover bg-center transition-transform duration-700 hover:scale-105"
           style={{ backgroundImage: `url(${dragonBg})` }}
         />
-        <div className="absolute inset-0 -z-10 bg-black/20" /> {/* Filtro oscuro leve */}
+        {/* Overlay más suave */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-sky-950/20 to-slate-950/50" />
 
-        {/* Hora y Fecha Gigante */}
-        <h1 className="text-9xl font-thin drop-shadow-lg">
+        {/* Hora */}
+        <h1 className="text-[7rem] font-thin tracking-tight drop-shadow-lg">
           {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </h1>
-        <p className="text-2xl mt-4 font-medium drop-shadow-md">
+        <p className="text-xl mt-3 font-light text-white/80 capitalize drop-shadow-md">
           {time.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
 
-        <p className="absolute bottom-10 animate-bounce text-sm text-gray-300">
-          Haz clic o presiona una tecla para desbloquear
+        <p className="absolute bottom-10 animate-bounce text-xs text-white/50 tracking-widest uppercase">
+          Clic para continuar
         </p>
       </div>
     );
@@ -4575,7 +4581,7 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false); // <-- ESTADO VISIBILIDAD
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // <-- ESTADO VISIBILIDAD
-  
+
   const navigate = useNavigate();
   const fetchDataBackend = useFetch();
 
@@ -4587,7 +4593,7 @@ function Register() {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const { nombre, email, password } = data;
-      
+
       const response = await fetchDataBackend(
         `${backendUrl}/auth/register`,
         { nombre, email, password },
@@ -4614,119 +4620,114 @@ function Register() {
   const inputClass = "w-full px-3 py-2 mt-1 text-white bg-gray-900 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent placeholder-gray-500";
 
   return (
-    <AuthLayout title="Crear Cuenta">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        
-        {/* NOMBRE */}
+    <AuthLayout title="Crear cuenta">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
+
+        {/* Nombre */}
         <div>
-          <label htmlFor="nombre" className="block text-sm font-medium text-gray-300">Nombre Completo</label>
+          <label className="block text-xs font-medium text-white/70 mb-1.5 ml-1">Nombre completo</label>
           <input
-            id="nombre"
             type="text"
-            {...register('nombre', { 
-                required: 'El nombre es requerido',
-                pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, message: 'El nombre solo debe contener letras' }
+            {...register('nombre', {
+              required: 'Requerido',
+              pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, message: 'Solo letras' }
             })}
-            className={inputClass}
-            placeholder="Ingresa tu nombre completo"
+            className="w-full bg-white/10 text-white placeholder-white/30 border border-white/15 
+                     focus:border-sky-400/50 focus:bg-white/15 rounded-xl px-4 py-2.5 text-sm 
+                     outline-none transition-all backdrop-blur-sm"
+            placeholder="Tu nombre completo"
           />
-          {errors.nombre && <p className="mt-1 text-xs text-red-500 font-bold">{errors.nombre.message}</p>}
+          {errors.nombre && <p className="mt-1 text-xs text-amber-400/90 ml-1">{errors.nombre.message}</p>}
         </div>
 
-        {/* EMAIL */}
+        {/* Email */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-300">Correo Electrónico</label>
+          <label className="block text-xs font-medium text-white/70 mb-1.5 ml-1">Correo electrónico</label>
           <input
-            id="email"
             type="email"
-            {...register('email', { 
-              required: 'El email es requerido',
+            {...register('email', {
+              required: 'Requerido',
               pattern: { value: /\S+@\S+\.\S+/, message: 'Formato inválido' }
             })}
-            className={inputClass}
-            placeholder="tu-correo@esfot.com"
+            className="w-full bg-white/10 text-white placeholder-white/30 border border-white/15 
+                     focus:border-sky-400/50 focus:bg-white/15 rounded-xl px-4 py-2.5 text-sm 
+                     outline-none transition-all backdrop-blur-sm"
+            placeholder="tu@correo.com"
           />
-          {errors.email && <p className="mt-1 text-xs text-red-500 font-bold">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-xs text-amber-400/90 ml-1">{errors.email.message}</p>}
         </div>
 
-        {/* PASSWORD */}
+        {/* Password */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-300">Contraseña</label>
+          <label className="block text-xs font-medium text-white/70 mb-1.5 ml-1">Contraseña</label>
           <div className="relative">
             <input
-              id="password"
               type={showPassword ? "text" : "password"}
-              {...register('password', { 
-                required: 'Requerido',
-                minLength: { value: 6, message: 'Mínimo 6 caracteres' }
-              })}
-              className={inputClass}
+              {...register('password', { required: 'Requerido', minLength: { value: 6, message: 'Mínimo 6 caracteres' } })}
+              className="w-full bg-white/10 text-white placeholder-white/30 border border-white/15 
+                       focus:border-sky-400/50 focus:bg-white/15 rounded-xl px-4 pr-11 py-2.5 text-sm 
+                       outline-none transition-all backdrop-blur-sm"
               placeholder="Mínimo 6 caracteres"
             />
-            <button 
-              type="button" 
-              onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white mt-0.5"
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            <button type="button" onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-          {errors.password && <p className="mt-1 text-xs text-red-500 font-bold">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-xs text-amber-400/90 ml-1">{errors.password.message}</p>}
         </div>
 
-        {/* CONFIRM PASSWORD */}
+        {/* Confirm Password */}
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">Confirmar Contraseña</label>
+          <label className="block text-xs font-medium text-white/60 mb-1.5 ml-1">Confirmar contraseña</label>
           <div className="relative">
             <input
-              id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
-              {...register('confirmPassword', { 
-                required: 'Confirma la contraseña',
-                validate: value => value === password || 'Las contraseñas no coinciden'
+              {...register('confirmPassword', {
+                required: 'Requerido',
+                validate: value => value === password || 'No coinciden'
               })}
-              className={inputClass}
+              className="w-full bg-white/10 text-white placeholder-white/30 border border-white/15 
+                       focus:border-sky-400/50 focus:bg-white/15 rounded-xl px-4 pr-11 py-2.5 text-sm 
+                       outline-none transition-all backdrop-blur-sm"
               placeholder="Repite tu contraseña"
             />
-            <button 
-              type="button" 
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white mt-0.5"
-            >
-              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
+              {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-          {errors.confirmPassword && <p className="mt-1 text-xs text-red-500 font-bold">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && <p className="mt-1 text-xs text-amber-400/90 ml-1">{errors.confirmPassword.message}</p>}
         </div>
 
-        {/* BOTÓN REGISTRO */}
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 px-4 font-bold text-white bg-red-700 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black transition-all shadow-[0_0_10px_rgba(185,28,28,0.5)]"
-          >
-            {loading ? 'Registrando...' : 'Registrarse'}
-          </button>
-        </div>
+        {/* Botón registrar */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-2.5 bg-sky-500/60 hover:bg-sky-400/60 text-white font-medium rounded-xl 
+                   transition-all shadow-lg shadow-sky-500/10 hover:shadow-sky-400/10 text-sm mt-1
+                   disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Creando cuenta…' : 'Registrarse'}
+        </button>
 
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            className="w-full py-2 px-4 font-bold text-white bg-gray-800 border border-gray-600 rounded-md hover:bg-gray-700 transition-all flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.16-7.27c3.2 0 5.22 1.83 5.71 2.3l1.87-1.87C17.91 3.4 15.01 2.22 12.16 2.22C6.71 2.22 2.22 6.71 2.22 12.16c0 5.45 4.49 9.94 9.94 9.94c5.75 0 9.22-3.83 9.22-9.06c0-.62-.05-1.13-.13-1.94z" />
-            </svg>
-            Registrarse con Google
-          </button>
-        </div>
+        {/* Google */}
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          className="w-full py-2.5 bg-white/8 hover:bg-white/12 border border-white/15 text-white/70 
+                   hover:text-white rounded-xl flex items-center justify-center gap-2.5 transition-all text-sm"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.16-7.27c3.2 0 5.22 1.83 5.71 2.3l1.87-1.87C17.91 3.4 15.01 2.22 12.16 2.22C6.71 2.22 2.22 6.71 2.22 12.16c0 5.45 4.49 9.94 9.94 9.94c5.75 0 9.22-3.83 9.22-9.06c0-.62-.05-1.13-.13-1.94z" />
+          </svg>
+          Registrarse con Google
+        </button>
       </form>
 
-      <p className="text-sm text-center text-gray-400">
-        ¿Ya tienes una cuenta? {' '}
-        <Link to="/login" className="font-medium text-red-500 hover:text-red-400 underline">
+      <p className="text-xs text-center text-white/40">
+        ¿Ya tienes cuenta?{' '}
+        <Link to="/login" className="text-orange-400/80 hover:text-orange-300 transition-colors">
           Inicia sesión
         </Link>
       </p>
@@ -4747,6 +4748,7 @@ import AuthLayout from '../components/Auth';
 import { useFetch } from '../../../core/api/useFetch';
 import { useForm } from "react-hook-form";
 import { sileo } from 'sileo';
+import { Eye, EyeOff } from 'lucide-react';
 
 function Reset() {
   const { token } = useParams();
@@ -4757,6 +4759,9 @@ function Reset() {
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const password = watch('password');
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 1. VALIDAR EL TOKEN
   useEffect(() => {
@@ -4837,76 +4842,65 @@ function Reset() {
   );
 
   return (
-    <AuthLayout title="Restablecer Contraseña">
-      <p className="text-sm text-gray-300 text-center mb-4">
-        Establece una nueva contraseña segura para tu escritorio virtual.
+    <AuthLayout title="Nueva contraseña">
+
+      <p className="text-xs text-white/50 text-center -mt-2 mb-2">
+        Establece una contraseña segura para tu escritorio virtual.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-        {/* NUEVO PASSWORD */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-            Nueva Contraseña
-          </label>
+          <label className="block text-xs font-medium text-white/60 mb-1.5 ml-1">Nueva contraseña</label>
           <div className="relative">
             <input
-              id="password"
               type={showPassword ? "text" : "password"}
               {...register('password', {
-                required: 'La contraseña es requerida',
+                required: 'Requerido',
                 minLength: { value: 6, message: 'Mínimo 6 caracteres' }
               })}
-              className={inputClass}
+              className="w-full bg-white/10 text-white placeholder-white/30 border border-white/15 
+                       focus:border-sky-400/50 focus:bg-white/15 rounded-xl px-4 pr-11 py-2.5 text-sm 
+                       outline-none transition-all backdrop-blur-sm"
               placeholder="Nueva contraseña"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white mt-0.5"
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            <button type="button" onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-          {errors.password && <p className="mt-1 text-xs text-red-500 font-bold">{errors.password.message}</p>}
+          {errors.password && <p className="mt-1 text-xs text-amber-400/90 ml-1">{errors.password.message}</p>}
         </div>
 
-        {/* CONFIRMAR PASSWORD */}
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
-            Confirmar Contraseña
-          </label>
+          <label className="block text-xs font-medium text-white/60 mb-1.5 ml-1">Confirmar contraseña</label>
           <div className="relative">
             <input
-              id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               {...register('confirmPassword', {
-                required: 'Confirma tu contraseña',
-                validate: value => value === password || 'Las contraseñas no coinciden'
+                required: 'Requerido',
+                validate: value => value === password || 'No coinciden'
               })}
-              className={inputClass}
+              className="w-full bg-white/10 text-white placeholder-white/30 border border-white/15 
+                       focus:border-sky-400/50 focus:bg-white/15 rounded-xl px-4 pr-11 py-2.5 text-sm 
+                       outline-none transition-all backdrop-blur-sm"
               placeholder="Repite la contraseña"
             />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white mt-0.5"
-            >
-              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
+              {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-          {errors.confirmPassword && <p className="mt-1 text-xs text-red-500 font-bold">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && <p className="mt-1 text-xs text-amber-400/90 ml-1">{errors.confirmPassword.message}</p>}
         </div>
 
-        {/* BOTÓN */}
-        <div>
-          <button
-            type="submit"
-            className="w-full py-2 px-4 font-bold text-white bg-red-700 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black transition-all shadow-[0_0_10px_rgba(185,28,28,0.5)]"
-          >
-            Guardar Nueva Contraseña
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="w-full py-2.5 bg-sky-500/80 hover:bg-sky-400/90 text-white font-medium rounded-xl 
+                   transition-all shadow-lg shadow-sky-500/20 text-sm"
+        >
+          Guardar contraseña
+        </button>
       </form>
     </AuthLayout>
   );
@@ -5134,6 +5128,8 @@ const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow, onContext
 });
 
 function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMinimizeWindow, onMaximizeWindow, onDragStop, taskbarPosition }) {
+
+  const [cursors, setCursors] = useState({});
 
   // Archivos
   const fileInputRef = useRef(null);
@@ -5407,6 +5403,13 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         }
       });
 
+      socket.on('cursor-move', (data) => {
+        setCursors(prev => ({
+          ...prev,
+          [data.userId]: { x: data.x, y: data.y, name: data.userName }
+        }));
+      });
+
       socket.on('file-change', ({ fileId, content }) => {
         // Buscamos el ícono y le actualizamos su contenido interno
         setIcons(prev => prev.map(icon =>
@@ -5447,6 +5450,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
         socket.off('item-shared');
         socket.off('preferences-updated');
         socket.off('file-change');
+        socket.off('cursor-move');
       }
     };
 
@@ -6165,15 +6169,31 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
 
   return (
-    <div className="w-full h-screen overflow-hidden" onContextMenu={handleContextMenu} onClick={handleCloseMenu}>
+    <div 
+      className="w-full h-screen overflow-hidden relative"
+      onContextMenu={handleContextMenu} 
+      onClick={handleCloseMenu}
+      onMouseMove={(e) => {
+        if (socket && (workspaceId || isRemote)) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            socket.emit("workspace-cursor-move", {
+                workspaceId: workspaceId || null,
+                userId: user.id,
+                userName: user.nombre,
+                x: e.clientX,
+                y: e.clientY
+            });
+        }
+      }}
+    >
 
       {/* Fondo */}
       <div className="fixed inset-0 -z-10"
         style={{
-          backgroundImage: `url(${currentWallpaper})`, // <--- USAR ESTADO
+          backgroundImage: `url(${currentWallpaper})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          transition: 'background-image 0.5s ease-in-out' // Efecto suave
+          transition: 'background-image 0.5s ease-in-out'
         }}
       />
 
@@ -6182,12 +6202,28 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
       <WeatherWidget />
 
       {/* BARRA DE AVISO (Solo si es remoto) */}
-      {/* BARRA DE AVISO (Solo si es remoto) */}
       {isRemote && (
         <div className="fixed top-0 left-0 right-0 h-8 bg-red-600 z-[100] flex items-center justify-center text-white text-xs font-bold shadow-lg">
           VISUALIZANDO ESCRITORIO DE: {remoteUserName?.toUpperCase()} (Modo Espectador)
         </div>
       )}
+
+      {/* 👇 RENDERIZADO DE CURSORES EN TIEMPO REAL 👇 */}
+      {Object.entries(cursors).map(([userId, cursor]) => (
+        <div 
+          key={userId}
+          className="absolute z-[9999] pointer-events-none transition-all duration-75"
+          style={{ transform: `translate(${cursor.x}px, ${cursor.y}px)` }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-md text-brand-500 fill-brand-500">
+            <polygon points="3 3 10 21 14 14 21 10 3 3"></polygon>
+          </svg>
+          <span className="ml-3 px-2 py-0.5 bg-brand-500 text-white text-[10px] rounded shadow-sm whitespace-nowrap">
+            {cursor.name}
+          </span>
+        </div>
+      ))}
+      {/* 👆 FIN DE CURSORES 👆 */}
 
       {/* Grid de Íconos */}
       <div className="p-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 content-start h-[calc(100vh-3rem)] overflow-y-auto">
@@ -7152,9 +7188,10 @@ function Dashboard() {
         setIsModalVisible(true);
     };
 
-    const handleInviteToWorkspace = (e, ws) => {
+    const handleInviteToWorkspace = (e, wsId, wsName) => {
         e.stopPropagation();
-        setSelectedWorkspace(ws); // Guardamos cuál workspace vamos a invitar
+        // Reconstruimos el objeto para que confirmInviteMember pueda leer el _id
+        setSelectedWorkspace({ _id: wsId, nombre: wsName }); 
         setModalMode('invite-workspace');
         setIsModalVisible(true);
     };
