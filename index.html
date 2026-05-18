@@ -7,36 +7,23 @@
     <title>Geck-OS</title>
 
     <!--
-      PRECONNECT para recursos de terceros críticos.
-      Se añaden aquí (no solo en JS) para que el navegador
-      pueda iniciar la conexión TCP/TLS en paralelo con la
-      descarga del HTML, antes incluso de que React monte.
-
-      Lighthouse reportaba que js.stripe.com y m.stripe.network
-      no tenían preconnect → penalizaban LCP y FCP.
-
-      NOTA: NO añadimos preload de stripe.js aquí porque queremos
-      que Stripe cargue lazy (solo cuando el usuario abra el modal).
-      El preconnect solo establece la conexión, no descarga nada.
+      ELIMINAMOS los preconnect de Stripe que Lighthouse marcaba como
+      "establecidos previamente que no se han usado" → penalizaban la puntuación.
+      Stripe ahora carga lazy solo cuando el usuario abre el modal de pago.
     -->
-    <link rel="preconnect" href="https://js.stripe.com" crossorigin />
-    <link rel="preconnect" href="https://m.stripe.network" crossorigin />
 
     <!--
-      Preconnect para la fuente Geist (si se sirve desde un CDN externo).
-      Si Geist se sirve desde /assets (bundle de Vite), este preconnect
-      no es necesario — puedes eliminarlo.
-    -->
-    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin /> -->
+      NOTA SOBRE EL LCP:
+      La imagen de fondo (/assets/mi-fondo-*.jpg) se carga ahora como <img>
+      real con fetchpriority="high" en DesktopHeroSection.jsx.
+      No podemos hacer <link rel="preload"> aquí porque Vite hashea el nombre
+      del archivo en build time — la URL exacta solo se conoce después del build.
 
-    <!--
-      NO añadimos preload de las imágenes de wallpaper aquí porque:
-      1. Son muy pesadas (6-7MB) y bloquearían la carga inicial.
-      2. El componente DesktopHeroSection ya las carga con new Image()
-         de forma controlada y sin bloquear el render.
-      3. La imagen LCP real es el fondo CSS del div, que el navegador
-         descubre solo al evaluar el CSSOM — para preloads de bg-image
-         necesitarías conocer la URL exacta en build time.
+      Si quieres añadir el preload en producción, agrega en netlify.toml:
+        [[headers]]
+          for = "/"
+          [headers.values]
+            Link = '</assets/mi-fondo-HASH.jpg>; rel=preload; as=image; fetchpriority=high'
     -->
   </head>
   <body>
