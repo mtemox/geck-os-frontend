@@ -332,7 +332,7 @@ const SettingsApp = () => {
                                 {/* Nuevo Selector de Color de Acento */}
                                 <div className="mt-8">
                                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Color de Acento</h2>
-                                    <p className="text-sm text-slate-500 dark:text-gray-400 mb-4">Personaliza el color principal de MiDesk</p>
+                                    <p className="text-sm text-slate-500 dark:text-gray-400 mb-4">Personaliza el color principal de Geck-OS</p>
 
                                     <div className="flex gap-4">
                                         {colorOptions.map((color) => {
@@ -374,7 +374,7 @@ const SettingsApp = () => {
                         {/* Fondo Actual */}
                         <div>
                             <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Fondo de Pantalla</h2>
-                            <p className="text-sm text-slate-500 dark:text-gray-400 mb-6">Restaurar al fondo original de MiDesk</p>
+                            <p className="text-sm text-slate-500 dark:text-gray-400 mb-6">Restaurar al fondo original de Geck-OS</p>
 
                             <div className="flex items-start gap-6">
                                 <div
@@ -400,7 +400,7 @@ const SettingsApp = () => {
 
                                 <div className="flex flex-col gap-3">
                                     <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed">
-                                        Vuelve al fondo de escritorio predeterminado de MiDesk.
+                                        Vuelve al fondo de escritorio predeterminado de Geck-OS.
                                     </p>
                                     <button
                                         onClick={handleResetWallpaper}

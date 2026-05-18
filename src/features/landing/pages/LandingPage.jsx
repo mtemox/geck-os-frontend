@@ -1,55 +1,59 @@
 // src/features/landing/pages/LandingPage.jsx
-import React from 'react';
-
+import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import DesktopHeroSection from '../components/DesktopHeroSection';
 import FeaturesSection from '../components/FeaturesSection';
 import RoadmapSection from '../components/RoadmapSection';
 import Footer from '../components/Footer';
 
-// 1. Importaremos el Navbar aquí (próximo paso)
-// import Navbar from '../components/landing/Navbar';
-
-// 2. Importaremos la sección Hero aquí
-// import HeroSection from '../components/landing/HeroSection';
-
-// 3. Importaremos las Características aquí
-// import FeaturesSection from '../components/landing/FeaturesSection';
-
-// 4. Importaremos el Roadmap aquí
-// import RoadmapSection from '../components/landing/RoadmapSection';
-
-// 5. Importaremos el Footer aquí
-// import Footer from '../components/landing/Footer';
-
 function LandingPage() {
+  // Inyectar meta SEO dinámicamente
+  useEffect(() => {
+    // Meta descripción
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = 'Geck-OS: Tu escritorio virtual reinventado. Organiza archivos, colabora en tiempo real y potencia tu productividad con IA.';
+
+    // Title
+    document.title = 'Geck-OS — Tu Escritorio Virtual Reinventado';
+
+    // Open Graph básico
+    const ogTags = [
+      { property: 'og:title', content: 'Geck-OS — Tu Escritorio Virtual' },
+      { property: 'og:description', content: 'Organiza, colabora y potencia tu trabajo con IA en un escritorio virtual unificado.' },
+      { property: 'og:type', content: 'website' },
+    ];
+    ogTags.forEach(({ property, content }) => {
+      let tag = document.querySelector(`meta[property="${property}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('property', property);
+        document.head.appendChild(tag);
+      }
+      tag.content = content;
+    });
+
+    return () => {
+      document.title = 'Geck-OS';
+    };
+  }, []);
 
   return (
-    // Usamos bg-black como fondo base de toda la página
-    <div className="bg-black text-white">
-      
-      {/* 2. Añadimos el componente (¡descomentamos la etiqueta!) */}
+    <div
+      className="bg-white text-slate-900 font-sans"
+      style={{ overflowY: 'auto', height: '100vh' }}
+    >
       <Navbar />
-      
       <main>
-        {/* (Secciones... ) */}
         <DesktopHeroSection />
         <FeaturesSection />
         <RoadmapSection />
-        <Footer />
       </main>
-
-      {/* (Footer... ) */}
-
-      {/* 3. Modificamos el texto de prueba para ver el cambio */}
-      <div className="h-screen pt-20 p-10"> {/* Añadimos 'h-screen' y 'pt-20' */}
-        <h1 className="text-white text-3xl">
-          Contenido de LandingPage.jsx
-        </h1>
-        <p>El Navbar ya está cargado y es fijo.</p>
-        <p>(Añadí 'pt-20' aquí para que este texto no quede oculto *detrás* del navbar fijo)</p>
-      </div>
-
+      <Footer />
     </div>
   );
 }

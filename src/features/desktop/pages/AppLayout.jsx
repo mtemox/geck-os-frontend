@@ -226,32 +226,48 @@ function AppLayout() {
   return (
     <main className="font-sans h-screen overflow-hidden relative">
 
-      {/* Barra de aviso — WORKSPACE */}
+      {/* ── INDICADOR FLOTANTE — WORKSPACE ─────────────────────────────── */}
       {isWorkspace && (
-        <div className="fixed top-0 left-0 right-0 h-9 bg-indigo-600 z-[100] flex items-center justify-between px-4 text-white text-xs font-bold shadow-lg">
-          <div className="flex items-center gap-2">
-            <Users size={14} />
-            <span>ESPACIO DE TRABAJO COLABORATIVO</span>
+        <div className="fixed bottom-16 right-4 z-[100] flex flex-col items-end gap-2 animate-fade-in-up">
+          {/* Badge de estado */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/90 backdrop-blur-md text-white text-xs font-medium rounded-full shadow-lg border border-indigo-500/50">
+            <Users size={12} />
+            <span>Workspace activo</span>
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
           </div>
+
+          {/* Botón salir */}
           <button
             onClick={handleLeaveWorkspace}
-            className="flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-white font-bold"
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border hover:border-destructive/50 hover:bg-destructive/10 text-foreground hover:text-destructive rounded-xl shadow-xl backdrop-blur-md transition-all duration-200 text-sm font-medium group"
           >
-            <LogOut size={14} />
-            Salir del Workspace
+            <LogOut size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            Salir del workspace
           </button>
         </div>
       )}
 
-      {/* Barra de aviso — REMOTO */}
+      {/* ── INDICADOR FLOTANTE — REMOTO ────────────────────────────────── */}
       {isRemote && !isWorkspace && (
-        <div className="fixed top-0 left-0 right-0 h-9 bg-red-600 z-[100] flex items-center justify-between px-4 text-white text-xs font-bold shadow-lg">
-          <span>👁 VISUALIZANDO: {remoteName?.toUpperCase()} (Modo Espectador)</span>
+        <div className="fixed bottom-16 right-4 z-[100] flex flex-col items-end gap-2 animate-fade-in-up">
+          {/* Badge de estado */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-600/90 backdrop-blur-md text-white text-xs font-medium rounded-full shadow-lg border border-red-500/50">
+            <span>👁</span>
+            <span>Modo espectador</span>
+            <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
+          </div>
+
+          {/* Nombre del usuario remoto */}
+          <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white/80 text-xs rounded-lg border border-white/10">
+            {remoteName}
+          </div>
+
+          {/* Botón volver */}
           <button
             onClick={handleLeaveRemote}
-            className="flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border hover:border-red-500/50 hover:bg-red-500/10 text-foreground hover:text-red-500 rounded-xl shadow-xl backdrop-blur-md transition-all duration-200 text-sm font-medium group"
           >
-            <LogOut size={14} />
+            <LogOut size={15} className="group-hover:translate-x-0.5 transition-transform" />
             Volver a mi escritorio
           </button>
         </div>
@@ -266,8 +282,7 @@ function AppLayout() {
         onFocusWindow={handleFocusWindow}
         onDragStop={handleDragStop}
         taskbarPosition={taskbarPosition}
-        // Le avisamos al Desktop si está en modo workspace/remoto para que ajuste su UI
-        topOffset={isWorkspace || isRemote ? 36 : 0}
+        topOffset={0}
       />
 
       <Taskbar
@@ -277,8 +292,7 @@ function AppLayout() {
         onFocus={handleFocusWindow}
         position={taskbarPosition}
         onChangePosition={() => setTaskbarPosition(prev => prev === 'bottom' ? 'top' : 'bottom')}
-        // Bajar la taskbar si hay barra de aviso arriba
-        topOffset={isWorkspace || isRemote ? 36 : 0}
+        topOffset={0}
       />
     </main>
   );

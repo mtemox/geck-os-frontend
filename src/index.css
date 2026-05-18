@@ -11,6 +11,19 @@
 /* Activar modo oscuro por clase (Tailwind v4) */
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  /* ── FALLBACK brand (si no hay data-accent) ── */
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  /* ... resto igual ... */
+}
+
 /* ==========================================================================
    VARIABLES DE TEMA (ACCENT COLORS)
    ========================================================================== */
@@ -531,3 +544,13 @@ html.dark[data-accent="purple"] { --window-shell: #3b1f6b; --window-bg: #1e0f38;
 html.dark[data-accent="pink"]   { --window-shell: #6b1f3b; --window-bg: #380f1e; --window-border: #7d2446; }
 html.dark[data-accent="green"]  { --window-shell: #1f4a2e; --window-bg: #0f2518; --window-border: #275c39; }
 html.dark[data-accent="orange"] { --window-shell: #6b3010; --window-bg: #381808; --window-border: #7d3a14; }
+
+/* ==========================================================================
+   FALLBACK — brand color cuando no hay data-accent definido
+   ========================================================================== */
+:root {
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+}

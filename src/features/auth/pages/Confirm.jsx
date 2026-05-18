@@ -47,7 +47,7 @@ export const Confirm = () => {
 
                 {/* Logo */}
                 <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/20 shadow-xl mb-6 ring-4 ring-orange-400/20">
-                    <img src={logoMidesk} alt="MiDesk" className="w-full h-full object-cover" />
+                    <img src={logoMidesk} alt="Geck-OS" className="w-full h-full object-cover" />
                 </div>
 
                 {/* Icono de check animado */}

@@ -26,7 +26,7 @@ function LandingWindow() {
         
         {/* Título de la Ventana */}
         <span className="text-gray-300 text-sm">
-          Bienvenido a MiDesk
+          Bienvenido a Geck-OS
         </span>
         
         {/* Espaciador (para centrar el título) */}
@@ -45,7 +45,7 @@ function LandingWindow() {
               lineHeight: '0.85'
             }}
           >
-            MiDesk
+            GeckOS
           </h1>
           
           <p className="text-white text-xl md:text-2xl uppercase tracking-widest pt-4">

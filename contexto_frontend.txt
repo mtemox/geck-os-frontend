@@ -658,72 +658,39 @@ export default AppWindow;
 // src/core/ui/components/Modal.jsx
 import React from 'react';
 
-// Recibe 4 props:
-// - isVisible: (true/false) para mostrarse
-// - onClose: la función que se ejecuta al cerrar (ej. clic en backdrop o 'X')
-// - title: El título de la ventana
-// - children: El contenido (nuestro futuro formulario)
 function Modal({ isVisible, onClose, title, children }) {
   
-  // Si no es visible, no renderiza nada.
-  if (!isVisible) {
-    return null;
-  }
+  if (!isVisible) return null;
 
-  // Esta función maneja el clic en el fondo oscuro.
-  // 'e.target' es el elemento donde se hizo clic.
-  // 'e.currentTarget' es el elemento que tiene el 'onClick' (el fondo).
-  // Si son el mismo, significa que se hizo clic en el fondo
-  // y no en el contenido del modal.
   const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   return (
-    // Contenedor principal (Fondo oscuro)
-    // 'fixed inset-0' hace que ocupe toda la pantalla.
-    
-    // --- 1. FONDO (BACKDROP) MODIFICADO ---
-    // Cambiamos 'backdrop-blur-sm' por 'backdrop-blur-lg' (10px es 'lg')
-    
     <div 
-      className="fixed inset-0 z-40 bg-black bg-opacity-60 backdrop-blur-lg 
-                 flex items-center justify-center"
-      onClick={handleBackdropClick} // Clic en el fondo para cerrar
+      className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center"
+      onClick={handleBackdropClick}
     >
-      
-      {/* El contenedor del Modal (La ventana) */}
-
-      {/* --- 2. VENTANA MODIFICADA --- */}
-      {/* Añadimos 'animate-scale-in' (del Paso 0) */}
-
       <div 
-        className="w-full max-w-lg p-6 bg-gray-800 bg-opacity-90 
-                   rounded-lg shadow-2xl border border-purple-500/30 text-white
-                   animate-scale-in"
-        // Evitamos que el clic en el modal se propague al fondo
-        onClick={e => e.stopPropagation()} 
+        className="w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl overflow-hidden animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
       >
-        
-        {/* Encabezado del Modal (Título y Botón de Cerrar) */}
-        <div className="flex justify-between items-center pb-3 border-b border-purple-500/30">
-          <h3 className="text-2xl font-semibold">{title}</h3>
-          <button 
-            onClick={onClose} // Clic en la 'X' para cerrar
-            className="text-gray-400 hover:text-white text-3xl font-light"
-            title="Cerrar"
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 bg-muted border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-lg leading-none"
+            aria-label="Cerrar"
           >
-            &times; {/* Este es el caracter 'X' */}
+            &times;
           </button>
         </div>
 
-        {/* Contenido (Aquí irá nuestro formulario) */}
-        <div className="mt-4">
+        {/* Content */}
+        <div className="p-5">
           {children}
         </div>
-
       </div>
     </div>
   );
@@ -4983,7 +4950,7 @@ const systemAppsBase = [
   },
   {
     _id: 'sys-9',
-    nombre: 'Chat MiDesk',
+    nombre: 'GeckChat IA',
     imgSrc: aiIcon,
     type: 'app',
     appId: 'ai-chat',
@@ -7088,32 +7055,48 @@ function AppLayout() {
   return (
     <main className="font-sans h-screen overflow-hidden relative">
 
-      {/* Barra de aviso — WORKSPACE */}
+      {/* ── INDICADOR FLOTANTE — WORKSPACE ─────────────────────────────── */}
       {isWorkspace && (
-        <div className="fixed top-0 left-0 right-0 h-9 bg-indigo-600 z-[100] flex items-center justify-between px-4 text-white text-xs font-bold shadow-lg">
-          <div className="flex items-center gap-2">
-            <Users size={14} />
-            <span>ESPACIO DE TRABAJO COLABORATIVO</span>
+        <div className="fixed bottom-16 right-4 z-[100] flex flex-col items-end gap-2 animate-fade-in-up">
+          {/* Badge de estado */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/90 backdrop-blur-md text-white text-xs font-medium rounded-full shadow-lg border border-indigo-500/50">
+            <Users size={12} />
+            <span>Workspace activo</span>
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
           </div>
+
+          {/* Botón salir */}
           <button
             onClick={handleLeaveWorkspace}
-            className="flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-white font-bold"
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border hover:border-destructive/50 hover:bg-destructive/10 text-foreground hover:text-destructive rounded-xl shadow-xl backdrop-blur-md transition-all duration-200 text-sm font-medium group"
           >
-            <LogOut size={14} />
-            Salir del Workspace
+            <LogOut size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            Salir del workspace
           </button>
         </div>
       )}
 
-      {/* Barra de aviso — REMOTO */}
+      {/* ── INDICADOR FLOTANTE — REMOTO ────────────────────────────────── */}
       {isRemote && !isWorkspace && (
-        <div className="fixed top-0 left-0 right-0 h-9 bg-red-600 z-[100] flex items-center justify-between px-4 text-white text-xs font-bold shadow-lg">
-          <span>👁 VISUALIZANDO: {remoteName?.toUpperCase()} (Modo Espectador)</span>
+        <div className="fixed bottom-16 right-4 z-[100] flex flex-col items-end gap-2 animate-fade-in-up">
+          {/* Badge de estado */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-600/90 backdrop-blur-md text-white text-xs font-medium rounded-full shadow-lg border border-red-500/50">
+            <span>👁</span>
+            <span>Modo espectador</span>
+            <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
+          </div>
+
+          {/* Nombre del usuario remoto */}
+          <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white/80 text-xs rounded-lg border border-white/10">
+            {remoteName}
+          </div>
+
+          {/* Botón volver */}
           <button
             onClick={handleLeaveRemote}
-            className="flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border hover:border-red-500/50 hover:bg-red-500/10 text-foreground hover:text-red-500 rounded-xl shadow-xl backdrop-blur-md transition-all duration-200 text-sm font-medium group"
           >
-            <LogOut size={14} />
+            <LogOut size={15} className="group-hover:translate-x-0.5 transition-transform" />
             Volver a mi escritorio
           </button>
         </div>
@@ -7128,8 +7111,7 @@ function AppLayout() {
         onFocusWindow={handleFocusWindow}
         onDragStop={handleDragStop}
         taskbarPosition={taskbarPosition}
-        // Le avisamos al Desktop si está en modo workspace/remoto para que ajuste su UI
-        topOffset={isWorkspace || isRemote ? 36 : 0}
+        topOffset={0}
       />
 
       <Taskbar
@@ -7139,8 +7121,7 @@ function AppLayout() {
         onFocus={handleFocusWindow}
         position={taskbarPosition}
         onChangePosition={() => setTaskbarPosition(prev => prev === 'bottom' ? 'top' : 'bottom')}
-        // Bajar la taskbar si hay barra de aviso arriba
-        topOffset={isWorkspace || isRemote ? 36 : 0}
+        topOffset={0}
       />
     </main>
   );
@@ -8539,6 +8520,7 @@ export default FolderContent;
 
 // src/features/file-system/NewFolderForm.jsx
 import React, { useState } from 'react';
+import { FolderPlus } from 'lucide-react';
 
 function NewFolderForm({
   onSubmit,
@@ -8551,36 +8533,32 @@ function NewFolderForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-
-    // Enviamos solo el nombre. El tipo "folder" lo gestionará Desktop.jsx
     onSubmit({ name });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="folderName" className="block text-sm font-medium text-purple-200">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
           {title}
         </label>
         <input
-          id="folderName"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoFocus
-          className="w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors"
           placeholder={placeholder}
         />
       </div>
 
-      <div className="flex justify-end pt-2">
-        <button
-          type="submit"
-          className="w-full py-2 px-4 font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          {buttonText}
-        </button>
-      </div>
+      <button
+        type="submit"
+        className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-medium text-sm rounded-lg transition-colors"
+      >
+        <FolderPlus size={16} />
+        {buttonText}
+      </button>
     </form>
   );
 }
@@ -8593,70 +8571,56 @@ export default NewFolderForm;
 
 // src/features/file-system/NewLinkForm.jsx
 import React, { useState } from 'react';
+import { Link2 } from 'lucide-react';
 
-// Recibe la función 'onSubmit' desde Desktop.jsx
 function NewLinkForm({ onSubmit }) {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
 
   const handleSubmit = (e) => {
-    e.preventDefault(); // Evita que la página se recargue
-
-    // Validación simple
-    if (!name || !url) {
-      alert('Por favor, completa ambos campos.');
-      return;
-    }
-    
-    // Si la URL no empieza con http:// o https://, la añadimos
+    e.preventDefault();
+    if (!name || !url) return;
     let finalUrl = url;
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       finalUrl = 'https://' + url;
     }
-
-    // Llama a la función que nos pasaron por props
-    // con los datos del formulario.
     onSubmit({ name, url: finalUrl });
   };
 
+  const inputClass = "w-full bg-white/50 dark:bg-black/20 border border-gray-300/50 dark:border-gray-700/50 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all backdrop-blur-sm shadow-inner";
+  const labelClass = "block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 ml-1";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-purple-200">
-          Nombre del Enlace
-        </label>
+        <label className={labelClass}>Nombre del Enlace</label>
         <input
-          id="name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          autoFocus
+          className={inputClass}
           placeholder="Ej: Google"
         />
       </div>
       <div>
-        <label htmlFor="url" className="block text-sm font-medium text-purple-200">
-          URL (Página Web)
-        </label>
+        <label className={labelClass}>URL (Página Web)</label>
         <input
-          id="url"
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className={inputClass}
           placeholder="Ej: google.com"
         />
       </div>
 
-      {/* Botón de envío */}
-      <div className="flex justify-end pt-2">
-        <button
-          type="submit"
-          className="w-full py-2 px-4 font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-        >
-          Crear Enlace
-        </button>
-      </div>
+      <button
+        type="submit"
+        className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white font-medium text-sm rounded-xl transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-[1.01] active:scale-95 mt-2"
+      >
+        <Link2 size={18} />
+        Crear Enlace
+      </button>
     </form>
   );
 }
@@ -8670,47 +8634,36 @@ export default NewLinkForm;
 // src/features/file-system/ShareForm.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { UserPlus, Check, Loader, Monitor, Briefcase, Search } from 'lucide-react';
-import { useFetch } from '../../core/api/useFetch'; // 👈 Importamos tu hook
+import { useFetch } from '../../core/api/useFetch';
 
 function ShareForm({ onSubmit, itemToShare, isDesktop = false, isWorkspace = false }) {
   const [email, setEmail] = useState('');
-  const [permission, setPermission] = useState('read'); 
+  const [permission, setPermission] = useState('read');
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Nuevos estados para el buscador
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchTimeoutRef = useRef(null);
-  
+
   const fetchDataBackend = useFetch();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const token = localStorage.getItem('token');
 
-  // Efecto buscador "As you type" (Debounce)
   useEffect(() => {
-    // Si el usuario borra o el correo es muy corto, limpiamos
     if (email.trim().length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
-
-    // Cancelamos la búsqueda anterior si el usuario sigue escribiendo rápido
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-
-    // Esperamos 400ms después de que deje de escribir para hacer la petición
     searchTimeoutRef.current = setTimeout(async () => {
       setIsSearching(true);
       try {
         const response = await fetchDataBackend(
           `${backendUrl}/users/search?q=${encodeURIComponent(email)}`,
-          null,
-          "GET",
-          { Authorization: `Bearer ${token}` }
+          null, "GET", { Authorization: `Bearer ${token}` }
         );
-
-        if (response && response.ok) {
+        if (response?.ok) {
           setSuggestions(response.users);
           setShowSuggestions(true);
         }
@@ -8720,14 +8673,12 @@ function ShareForm({ onSubmit, itemToShare, isDesktop = false, isWorkspace = fal
         setIsSearching(false);
       }
     }, 400);
-
     return () => clearTimeout(searchTimeoutRef.current);
   }, [email]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
-
     setIsLoading(true);
     await onSubmit({ email, permission: (isDesktop || isWorkspace) ? undefined : permission });
     setIsLoading(false);
@@ -8738,124 +8689,135 @@ function ShareForm({ onSubmit, itemToShare, isDesktop = false, isWorkspace = fal
     setShowSuggestions(false);
   };
 
+  // Variantes de cabecera por contexto
+  const headerVariants = {
+    desktop: {
+      icon: <Monitor size={18} className="text-brand-500" />,
+      bg: 'bg-brand-500/10 border-brand-500/30',
+      label: 'Estás dando acceso total a:',
+      name: 'Tu Escritorio Virtual',
+    },
+    workspace: {
+      icon: <Briefcase size={18} className="text-brand-500" />,
+      bg: 'bg-brand-500/10 border-brand-500/30',
+      label: 'Invitando un nuevo miembro a:',
+      name: itemToShare?.nombre,
+    },
+    item: {
+      icon: <UserPlus size={18} className="text-brand-500" />,
+      bg: 'bg-brand-500/10 border-brand-500/30',
+      label: 'Estás compartiendo:',
+      name: itemToShare?.nombre,
+    },
+  };
+
+  const variant = isDesktop ? headerVariants.desktop : isWorkspace ? headerVariants.workspace : headerVariants.item;
+
+  const inputClass = "w-full bg-background border border-input rounded-lg pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors";
+
   return (
     <div className="space-y-4">
-      
+
       {/* Cabecera informativa */}
-      <div className={`p-3 border rounded-lg flex items-center gap-3 
-          ${isDesktop ? 'bg-purple-900/20 border-purple-500/30' 
-            : isWorkspace ? 'bg-emerald-900/20 border-emerald-500/30' 
-            : 'bg-blue-900/20 border-blue-500/30'}`}>
-        
-        <div className={`p-2 rounded-full 
-          ${isDesktop ? 'bg-purple-600/20' 
-            : isWorkspace ? 'bg-emerald-600/20' 
-            : 'bg-blue-600/20'}`}>
-            {isDesktop ? <Monitor size={20} className="text-purple-400"/> 
-              : isWorkspace ? <Briefcase size={20} className="text-emerald-400" />
-              : <UserPlus size={20} className="text-blue-400" />}
+      <div className={`flex items-center gap-3 p-3 rounded-lg border ${variant.bg}`}>
+        <div className="p-2 rounded-lg bg-brand-500/10 shrink-0">
+          {variant.icon}
         </div>
-        
-        <div>
-            <p className="text-sm text-gray-200">
-                {isDesktop ? "Estás dando acceso total a:" 
-                  : isWorkspace ? "Invitando un nuevo miembro a:" 
-                  : "Estás compartiendo:"}
-            </p>
-            <p className="font-bold text-white truncate max-w-[200px]">
-                {isDesktop ? "Tu Escritorio Virtual" 
-                  : isWorkspace ? itemToShare?.nombre 
-                  : itemToShare?.nombre}
-            </p>
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">{variant.label}</p>
+          <p className="text-sm font-semibold text-foreground truncate">{variant.name}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+
+        {/* Input de búsqueda */}
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
             Correo o nombre del estudiante
           </label>
           <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              {isSearching
+                ? <Loader size={14} className="animate-spin" />
+                : <Search size={14} />}
+            </div>
             <input
-              type="text" // Cambiado de email a text por si busca por nombre
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
-              // Retrasamos el cierre para que permita hacer click en la sugerencia
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} 
-              className="w-full pl-10 pr-3 py-2 bg-gray-900 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500"
+              onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              className={inputClass}
               placeholder="amigo@epn.edu.ec o Juan..."
               required
               autoFocus
               autoComplete="off"
             />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-              {isSearching ? <Loader size={16} className="animate-spin" /> : <Search size={16} />}
-            </div>
           </div>
 
-          {/* Menú desplegable de sugerencias */}
+          {/* Sugerencias */}
           {showSuggestions && suggestions.length > 0 && (
-            <ul className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
+            <ul className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
               {suggestions.map((user) => (
-                <li 
+                <li
                   key={user._id}
                   onClick={() => handleSelectSuggestion(user.email)}
-                  className="px-4 py-2 hover:bg-gray-700 cursor-pointer border-b border-gray-700/50 last:border-none transition-colors"
+                  className="px-4 py-2.5 hover:bg-muted cursor-pointer border-b border-border last:border-none transition-colors"
                 >
-                  <p className="text-sm font-medium text-white">{user.name}</p>
-                  <p className="text-xs text-gray-400">{user.email}</p>
+                  <p className="text-sm font-medium text-foreground">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        {/* Permisos */}
-        {(!isDesktop && !isWorkspace) && (
-            <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-                Permisos
+        {/* Selector de permisos (solo para items, no desktop/workspace) */}
+        {!isDesktop && !isWorkspace && (
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+              Permisos
             </label>
             <div className="grid grid-cols-2 gap-2">
-                <button
+              <button
                 type="button"
                 onClick={() => setPermission('read')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all border ${
-                    permission === 'read'
-                    ? 'bg-blue-600 border-blue-500 text-white'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                className={`py-2 rounded-lg text-sm font-medium transition-all border ${
+                  permission === 'read'
+                    ? 'bg-brand-500 border-brand-500 text-white shadow-sm'
+                    : 'bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
-                >
-                Solo Leer
-                </button>
-                <button
+              >
+                Solo leer
+              </button>
+              <button
                 type="button"
                 onClick={() => setPermission('edit')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all border ${
-                    permission === 'edit'
-                    ? 'bg-green-600 border-green-500 text-white'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                className={`py-2 rounded-lg text-sm font-medium transition-all border ${
+                  permission === 'edit'
+                    ? 'bg-brand-500 border-brand-500 text-white shadow-sm'
+                    : 'bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
-                >
+              >
                 Editar
-                </button>
+              </button>
             </div>
-            </div>
+          </div>
         )}
 
-        <div className="pt-2">
-            <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md flex items-center justify-center gap-2 transition-colors"
-            >
-                {isLoading ? <Loader size={18} className="animate-spin" /> : <Check size={18} />}
-                {isLoading ? 'Procesando...' : (isDesktop ? 'Conceder Acceso' : 'Enviar Invitación')}
-            </button>
-        </div>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
+        >
+          {isLoading
+            ? <><Loader size={16} className="animate-spin" /> Procesando...</>
+            : isDesktop
+              ? <><Monitor size={16} /> Conceder Acceso</>
+              : <><Check size={16} /> Enviar Invitación</>}
+        </button>
       </form>
-      
     </div>
   );
 }
@@ -8964,7 +8926,7 @@ function DesktopIcon() {
     // 2. ESTILOS DE ÍCONO DE ESCRITORIO
     // Usamos los mismos estilos de tu 'Icon.jsx' original
     // para que la simulación sea idéntica a tu app real.
-    <div 
+    <div
       onClick={() => navigate('/register')} // 3. ACCIÓN: Navega al registro
       className="w-20 h-24 flex flex-col items-center justify-start p-2 m-1 
                  cursor-pointer rounded-lg 
@@ -8972,12 +8934,15 @@ function DesktopIcon() {
                  hover:bg-blue-500 hover:bg-opacity-30"
     >
       {/* 4. La imagen del ícono */}
-      <img 
-        src={iconImage} 
-        alt="Comenzar Ahora" 
-        className="w-12 h-12" 
+      <img
+        src={iconImage}
+        alt="Comenzar Ahora"
+        className="w-12 h-12 object-contain"
+        width="48"
+        height="48"
+        loading="lazy"
       />
-      
+
       {/* 5. El nombre del ícono */}
       <p className="text-white text-xs text-center mt-1 shadow-black/50 [text-shadow:_1px_1px_2px_var(--tw-shadow-color)]">
         Comenzar Ahora
@@ -8992,68 +8957,36 @@ export default DesktopIcon;
 📄 Archivo: \src\features\landing\components\FeaturesSection.jsx
 ================================================
 
-// src/features/landing/components/FeaturesSection.jsx
 import React from 'react';
 
 function FeaturesSection() {
   return (
-    // --- Estructura de la Sección (Punto 6 de tu plan) ---
-    <section 
-      // ID para el link del Navbar
-      id="features" 
-      className="py-20 bg-black"
-    >
+    <section id="features" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* --- Título de la Sección --- */}
-        <h2 className="text-5xl font-bold text-white text-center mb-16">
-          ¿Por qué MiDesk?
+        <h2 className="text-5xl font-bold text-slate-900 text-center mb-16">
+          ¿Por qué Geck-OS?
         </h2>
-        
-        {/* --- Grid Responsivo para las Tarjetas --- */}
-        {/* 1 columna en móvil, 3 en desktop */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
-          {/* --- Tarjeta 1: Organización (La que definiste) --- */}
-          <div className="bg-gray-900 border border-red-500/30 rounded-lg p-8 
-                          hover:border-red-500 transition-colors duration-300
-                          transform hover:scale-105">
-            {/* Icono (Emoji) */}
+          <div className="bg-orange-50/50 border border-orange-200 rounded-lg p-8 
+                          hover:border-orange-500 transition-colors duration-300 transform hover:scale-105 shadow-sm hover:shadow-lg">
             <div className="text-6xl mb-4">📁</div>
-            <h3 className="text-red-400 text-xl font-bold uppercase mb-4">
-              Organización
-            </h3>
-            <p className="text-gray-300">
-              Mantén todos tus archivos, notas y enlaces organizados en un escritorio virtual unificado.
-            </p>
+            <h3 className="text-orange-600 text-xl font-bold uppercase mb-4">Organización</h3>
+            <p className="text-slate-600">Mantén todos tus archivos, notas y enlaces organizados en un escritorio virtual unificado.</p>
           </div>
           
-          {/* --- Tarjeta 2: Colaboración (Completada) --- */}
-          <div className="bg-gray-900 border border-red-500/30 rounded-lg p-8 
-                          hover:border-red-500 transition-colors duration-300
-                          transform hover:scale-105">
-            {/* Icono (Emoji) */}
+          <div className="bg-orange-50/50 border border-orange-200 rounded-lg p-8 
+                          hover:border-orange-500 transition-colors duration-300 transform hover:scale-105 shadow-sm hover:shadow-lg">
             <div className="text-6xl mb-4">👥</div>
-            <h3 className="text-red-400 text-xl font-bold uppercase mb-4">
-              Colaborativo
-            </h3>
-            <p className="text-gray-300">
-              Comparte tu escritorio, trabaja en notas en tiempo real y gestiona proyectos en equipo.
-            </p>
+            <h3 className="text-orange-600 text-xl font-bold uppercase mb-4">Colaborativo</h3>
+            <p className="text-slate-600">Comparte tu escritorio, trabaja en notas en tiempo real y gestiona proyectos en equipo.</p>
           </div>
 
-          {/* --- Tarjeta 3: IA Inteligente (Completada) --- */}
-          <div className="bg-gray-900 border border-red-500/30 rounded-lg p-8 
-                          hover:border-red-500 transition-colors duration-300
-                          transform hover:scale-105">
-            {/* Icono (Emoji) */}
+          <div className="bg-orange-50/50 border border-orange-200 rounded-lg p-8 
+                          hover:border-orange-500 transition-colors duration-300 transform hover:scale-105 shadow-sm hover:shadow-lg">
             <div className="text-6xl mb-4">🤖</div>
-            <h3 className="text-red-400 text-xl font-bold uppercase mb-4">
-              Potenciado con IA
-            </h3>
-            <p className="text-gray-300">
-              Mejora tus notas, recibe recomendaciones de herramientas y organiza tu código con asistencia de IA.
-            </p>
+            <h3 className="text-orange-600 text-xl font-bold uppercase mb-4">Potenciado con IA</h3>
+            <p className="text-slate-600">Mejora tus notas, recibe recomendaciones de herramientas y organiza tu código con asistencia de IA.</p>
           </div>
 
         </div>
@@ -9133,7 +9066,6 @@ export default Footer;
 📄 Archivo: \src\features\landing\components\HeroSection.jsx
 ================================================
 
-// src/features/landing/components/HeroSection.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -9141,98 +9073,43 @@ function HeroSection() {
   const navigate = useNavigate();
 
   return (
-    // --- Estructura del Hero (Punto 5 de tu plan) ---
     <section 
-      // 'id="home"' es CRUCIAL para que el link "Inicio" del Navbar funcione
       id="home" 
-      // 'min-h-screen' hace que ocupe toda la altura de la pantalla
-      // 'flex items-center' centra el contenido verticalmente
-      // 'relative' permite posicionar el dragón de fondo
       className="min-h-screen flex items-center justify-center 
-                 bg-gradient-to-br from-black via-gray-900 to-red-900 
+                 bg-gradient-to-br from-orange-50 via-white to-orange-100 
                  relative overflow-hidden"
     >
-
-      
-      {/* --- Dragón de Fondo Decorativo --- */}
+      {/* Formas Decorativas */}
       <div className="absolute inset-0 opacity-10" aria-hidden="true">
-        {/* Usamos tu idea del emoji gigante.
-          'absolute -right-40 -top-20' lo saca de la pantalla
-          'select-none' evita que se pueda seleccionar el emoji
-        */}
-        <span 
-          className="text-[40rem] absolute -right-40 -top-20 select-none"
-        >
-          🐉
-        </span>
-
-        {/* --- Forma Decorativa Circular Rotada (SVG) --- */}
+        <span className="text-[40rem] absolute -right-40 -top-20 select-none">🦎</span>
         <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <svg 
-            width="600" 
-            height="600" 
-            viewBox="0 0 612 612" 
-            className="opacity-20"
-            style={{ transform: 'rotate(-15deg)' }}
-          >
-            <rect 
-              x="0" 
-              y="0" 
-              width="612" 
-              height="612" 
-              rx="60" 
-              fill="#DC2626" 
-            />
+          <svg width="600" height="600" viewBox="0 0 612 612" className="opacity-20" style={{ transform: 'rotate(-15deg)' }}>
+            <rect x="0" y="0" width="612" height="612" rx="60" fill="#F97316" />
           </svg>
         </div>
-
       </div>
       
-      {/* --- Formas Decorativas Adicionales --- */}
-      <div className="absolute top-20 right-20 opacity-10">
-        <svg width="200" height="200" viewBox="0 0 200 200">
-          <circle cx="100" cy="100" r="80" fill="#FFFFFF" />
-        </svg>
-      </div>
-
-      <div className="absolute bottom-32 left-20 opacity-10">
-        <svg width="150" height="150" viewBox="0 0 150 150">
-          <rect x="10" y="10" width="130" height="130" rx="20" fill="#DC2626" />
-        </svg>
-      </div>
-
-      {/* --- Contenido Principal --- */}
-      {/* 'relative z-10' lo pone POR ENCIMA del dragón de fondo */}
+      {/* Contenido Principal */}
       <div className="relative z-10 text-center px-4 max-w-4xl">
-        {/* Contenedor del texto con disposición vertical */}
         <div className="flex flex-col items-center space-y-2">
-          
-          {/* Título principal - GRANDE y CENTRADO */}
           <h1 
-            className="text-8xl md:text-[10rem] font-black text-white leading-none" 
-            style={{ 
-              letterSpacing: '-0.06em',
-              lineHeight: '0.85'
-            }}
+            className="text-8xl md:text-[10rem] font-black text-slate-900 leading-none" 
+            style={{ letterSpacing: '-0.06em', lineHeight: '0.85' }}
           >
-            MiDesk
+            Geck-OS
           </h1>
-          
-          {/* Subtítulo - Más pequeño y espaciado */}
-          <p className="text-white text-2xl md:text-4xl uppercase tracking-widest mt-8">
-            as of 30 Nov, 2025
+          <p className="text-orange-600 text-2xl md:text-4xl uppercase tracking-widest mt-8 font-semibold">
+            Tu Escritorio Virtual. Reinventado.
           </p>
-          
         </div>
         
-        {/* Botón CTA - Más abajo */}
         <div className="mt-16">
           <button 
             onClick={() => navigate('/register')}
-            className="bg-red-600 hover:bg-red-700 text-white 
+            className="bg-orange-500 hover:bg-orange-600 text-white 
                       px-12 py-5 rounded-full text-xl font-bold
                       transition-all duration-300 transform hover:scale-105
-                      shadow-2xl shadow-red-600/50"
+                      shadow-2xl shadow-orange-500/50"
           >
             Comenzar Ahora
           </button>
@@ -9317,9 +9194,9 @@ export default LandingWindow;
 // src/features/landing/components/Navbar.jsx
 import React from 'react';
 // Importamos 'useNavigate' para los botones de Login/Register
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 
-import logoIcono from '../../../assets/logos/esfot.png'; 
+import logoIcono from '../../../assets/logos/esfot.png';
 
 function Navbar() {
   // 'useNavigate' nos da una función para cambiar de página
@@ -9328,10 +9205,10 @@ function Navbar() {
   // --- Lógica para el Scroll Suave (Punto 9 de tu plan) ---
   const handleScroll = (e, targetId) => {
     e.preventDefault(); // Evita el salto brusco del 'href'
-    
+
     // Quita el '#' del 'targetId'
     const targetElement = document.getElementById(targetId.substring(1));
-    
+
     if (targetElement) {
       targetElement.scrollIntoView({
         behavior: 'smooth', // ¡La magia del scroll suave!
@@ -9342,73 +9219,67 @@ function Navbar() {
 
   return (
     // --- Estructura del Navbar (Punto 4 de tu plan) ---
-    <nav className="fixed top-0 w-full bg-black/90 backdrop-blur-md z-50 border-b border-red-500/30">
+    <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-orange-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          
+
           {/* --- Logo (MODIFICADO) --- */}
           <div className="flex-shrink-0 flex items-center">
-            <div 
-              className="flex items-center space-x-3 cursor-pointer" 
+            <div
+              className="flex items-center space-x-3 cursor-pointer"
               onClick={() => navigate('/')}
             >
               {/* 3. Logo 1 (Imagen de Ícono) */}
-              <img 
-                src={logoIcono} 
-                alt="MiDesk Icono" 
-                className="h-8 w-auto" // 'w-auto' mantiene la proporción
+              <img
+                src={logoIcono}
+                alt="Geck-OS Icono"
+                className="h-8 w-auto object-contain"
+                width="32"
+                height="32"
               />
-              
+
               {/* Un separador bonito */}
               <div className="h-6 w-px bg-red-500/30"></div>
 
               {/* 4. Logo 2 (Imagen de Texto) */}
               {/* <-- 3. Logo 2 (El Texto) */}
-              <span className="text-2xl font-bold text-red-500">
-                MiDesk
-              </span>
+              <span className="text-2xl font-bold text-orange-500">Geck-OS</span>
 
             </div>
           </div>
-          
+
           {/* --- Links de Navegación (Desktop) --- */}
           {/* 'hidden md:flex' = Oculto en móvil, visible en desktop */}
           <div className="hidden md:flex space-x-8">
-            <a 
-              href="#home" 
+            <a
+              href="#home"
               onClick={(e) => handleScroll(e, '#home')}
-              className="text-gray-300 hover:text-white transition-colors"
+              className="text-slate-600 hover:text-orange-500 transition-colors font-medium"
             >
               Inicio
             </a>
-            <a 
-              href="#features" 
+            <a
+              href="#features"
               onClick={(e) => handleScroll(e, '#features')}
-              className="text-gray-300 hover:text-white transition-colors"
+              className="text-slate-600 hover:text-orange-500 transition-colors font-medium"
             >
               Características
             </a>
-            <a 
-              href="#roadmap" 
+            <a
+              href="#roadmap"
               onClick={(e) => handleScroll(e, '#roadmap')}
-              className="text-gray-300 hover:text-white transition-colors"
+              className="text-slate-600 hover:text-orange-500 transition-colors font-medium"
             >
               Roadmap
             </a>
           </div>
-          
+
           {/* --- Botones de Autenticación --- */}
           <div className="flex items-center space-x-4">
-            <button 
-              onClick={() => navigate('/login')}
-              className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
+            <button onClick={() => navigate('/login')} className="text-slate-600 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
               Iniciar Sesión
             </button>
-            <button 
-              onClick={() => navigate('/register')}
-              className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-transform hover:scale-105"
-            >
+            <button onClick={() => navigate('/register')} className="bg-orange-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-600 transition-transform hover:scale-105 shadow-md shadow-orange-500/20">
               Registrarse
             </button>
           </div>
@@ -9506,56 +9377,24 @@ export default RoadmapSection;
 
 // src/features/landing/pages/LandingPage.jsx
 import React from 'react';
-
 import Navbar from '../components/Navbar';
 import DesktopHeroSection from '../components/DesktopHeroSection';
 import FeaturesSection from '../components/FeaturesSection';
 import RoadmapSection from '../components/RoadmapSection';
 import Footer from '../components/Footer';
 
-// 1. Importaremos el Navbar aquí (próximo paso)
-// import Navbar from '../components/landing/Navbar';
-
-// 2. Importaremos la sección Hero aquí
-// import HeroSection from '../components/landing/HeroSection';
-
-// 3. Importaremos las Características aquí
-// import FeaturesSection from '../components/landing/FeaturesSection';
-
-// 4. Importaremos el Roadmap aquí
-// import RoadmapSection from '../components/landing/RoadmapSection';
-
-// 5. Importaremos el Footer aquí
-// import Footer from '../components/landing/Footer';
-
 function LandingPage() {
-
   return (
-    // Usamos bg-black como fondo base de toda la página
-    <div className="bg-black text-white">
-      
-      {/* 2. Añadimos el componente (¡descomentamos la etiqueta!) */}
+    <div className="bg-slate-50 text-slate-900 selection:bg-blue-200 selection:text-blue-900 font-sans">
       <Navbar />
       
       <main>
-        {/* (Secciones... ) */}
         <DesktopHeroSection />
         <FeaturesSection />
         <RoadmapSection />
-        <Footer />
       </main>
 
-      {/* (Footer... ) */}
-
-      {/* 3. Modificamos el texto de prueba para ver el cambio */}
-      <div className="h-screen pt-20 p-10"> {/* Añadimos 'h-screen' y 'pt-20' */}
-        <h1 className="text-white text-3xl">
-          Contenido de LandingPage.jsx
-        </h1>
-        <p>El Navbar ya está cargado y es fijo.</p>
-        <p>(Añadí 'pt-20' aquí para que este texto no quede oculto *detrás* del navbar fijo)</p>
-      </div>
-
+      <Footer />
     </div>
   );
 }
@@ -10322,6 +10161,19 @@ export default AcceptInvite;
 /* Activar modo oscuro por clase (Tailwind v4) */
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  /* ── FALLBACK brand (si no hay data-accent) ── */
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  /* ... resto igual ... */
+}
+
 /* ==========================================================================
    VARIABLES DE TEMA (ACCENT COLORS)
    ========================================================================== */
@@ -10842,6 +10694,16 @@ html.dark[data-accent="purple"] { --window-shell: #3b1f6b; --window-bg: #1e0f38;
 html.dark[data-accent="pink"]   { --window-shell: #6b1f3b; --window-bg: #380f1e; --window-border: #7d2446; }
 html.dark[data-accent="green"]  { --window-shell: #1f4a2e; --window-bg: #0f2518; --window-border: #275c39; }
 html.dark[data-accent="orange"] { --window-shell: #6b3010; --window-bg: #381808; --window-border: #7d3a14; }
+
+/* ==========================================================================
+   FALLBACK — brand color cuando no hay data-accent definido
+   ========================================================================== */
+:root {
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+}
 
 ================================================
 📄 Archivo: \src\main.jsx

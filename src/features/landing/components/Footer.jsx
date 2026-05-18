@@ -5,47 +5,38 @@ import { useNavigate } from 'react-router-dom';
 function Footer() {
   const navigate = useNavigate();
 
-  // (Podríamos reusar la lógica de scroll suave aquí,
-  // pero por ahora, los links pueden ser simples)
-
   return (
-    <footer 
-      // Usamos el mismo 'to-gray-900' del Roadmap para
-      // que el gradiente continúe suavemente
-      className="bg-gray-900 border-t border-red-500/30 pt-12 pb-8"
+    <footer
+      className="bg-white pt-12 pb-8"
+      style={{ borderTop: '2px solid #e8472a33' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          
-          {/* --- Logo y Copyright --- */}
-          <div className="text-center md:text-left mb-4 md:mb-0">
-            <span 
-              className="text-2xl font-bold text-red-500 cursor-pointer"
-              onClick={() => navigate('/')} // Navega al inicio
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+
+          <div className="text-center md:text-left">
+            <span
+              className="text-2xl font-bold cursor-pointer"
+              style={{ color: '#e8472a' }}
+              onClick={() => navigate('/')}
             >
-              MiDesk
+              Geck-OS
             </span>
-            <p className="text-gray-400 text-sm mt-2">
-              {/* Usamos el año de tu plan para ser consistentes */}
-              &copy; 2025 MiDesk. Todos los derechos reservados.
+            <p className="text-slate-400 text-sm mt-2">
+              &copy; 2025 Geck-OS. Todos los derechos reservados.
             </p>
           </div>
-          
-          {/* --- Links Adicionales --- */}
+
           <div className="flex space-x-6">
-            <a href="#" className="text-gray-300 hover:text-white transition-colors">
+            <a href="#" className="text-slate-500 hover:text-slate-900 transition-colors text-sm">
               Términos
             </a>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors">
+            <a href="#" className="text-slate-500 hover:text-slate-900 transition-colors text-sm">
               Privacidad
             </a>
-            <a 
-              href="#contact" 
-              onClick={(e) => {
-                // (Simulamos un scroll a 'contacto' si existiera)
-                e.preventDefault(); 
-              }}
-              className="text-gray-300 hover:text-white transition-colors"
+            <a
+              href="#contact"
+              onClick={e => e.preventDefault()}
+              className="text-slate-500 hover:text-slate-900 transition-colors text-sm"
             >
               Contacto
             </a>

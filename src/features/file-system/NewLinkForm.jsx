@@ -1,69 +1,55 @@
 // src/features/file-system/NewLinkForm.jsx
 import React, { useState } from 'react';
+import { Link2 } from 'lucide-react';
 
-// Recibe la función 'onSubmit' desde Desktop.jsx
 function NewLinkForm({ onSubmit }) {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
 
   const handleSubmit = (e) => {
-    e.preventDefault(); // Evita que la página se recargue
-
-    // Validación simple
-    if (!name || !url) {
-      alert('Por favor, completa ambos campos.');
-      return;
-    }
-    
-    // Si la URL no empieza con http:// o https://, la añadimos
+    e.preventDefault();
+    if (!name || !url) return;
     let finalUrl = url;
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       finalUrl = 'https://' + url;
     }
-
-    // Llama a la función que nos pasaron por props
-    // con los datos del formulario.
     onSubmit({ name, url: finalUrl });
   };
 
+  const inputClass = "w-full bg-white/50 dark:bg-black/20 border border-gray-300/50 dark:border-gray-700/50 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all backdrop-blur-sm shadow-inner";
+  const labelClass = "block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 ml-1";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-purple-200">
-          Nombre del Enlace
-        </label>
+        <label className={labelClass}>Nombre del Enlace</label>
         <input
-          id="name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          autoFocus
+          className={inputClass}
           placeholder="Ej: Google"
         />
       </div>
       <div>
-        <label htmlFor="url" className="block text-sm font-medium text-purple-200">
-          URL (Página Web)
-        </label>
+        <label className={labelClass}>URL (Página Web)</label>
         <input
-          id="url"
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className={inputClass}
           placeholder="Ej: google.com"
         />
       </div>
 
-      {/* Botón de envío */}
-      <div className="flex justify-end pt-2">
-        <button
-          type="submit"
-          className="w-full py-2 px-4 font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-        >
-          Crear Enlace
-        </button>
-      </div>
+      <button
+        type="submit"
+        className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white font-medium text-sm rounded-xl transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-[1.01] active:scale-95 mt-2"
+      >
+        <Link2 size={18} />
+        Crear Enlace
+      </button>
     </form>
   );
 }

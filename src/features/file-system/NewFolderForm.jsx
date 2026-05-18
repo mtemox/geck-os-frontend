@@ -1,5 +1,6 @@
 // src/features/file-system/NewFolderForm.jsx
 import React, { useState } from 'react';
+import { FolderPlus } from 'lucide-react';
 
 function NewFolderForm({
   onSubmit,
@@ -12,36 +13,32 @@ function NewFolderForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-
-    // Enviamos solo el nombre. El tipo "folder" lo gestionará Desktop.jsx
     onSubmit({ name });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="folderName" className="block text-sm font-medium text-purple-200">
+        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
           {title}
         </label>
         <input
-          id="folderName"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoFocus
-          className="w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors"
           placeholder={placeholder}
         />
       </div>
 
-      <div className="flex justify-end pt-2">
-        <button
-          type="submit"
-          className="w-full py-2 px-4 font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          {buttonText}
-        </button>
-      </div>
+      <button
+        type="submit"
+        className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-medium text-sm rounded-lg transition-colors"
+      >
+        <FolderPlus size={16} />
+        {buttonText}
+      </button>
     </form>
   );
 }

@@ -69,7 +69,7 @@ const systemAppsBase = [
   },
   {
     _id: 'sys-9',
-    nombre: 'Chat MiDesk',
+    nombre: 'GeckChat IA',
     imgSrc: aiIcon,
     type: 'app',
     appId: 'ai-chat',

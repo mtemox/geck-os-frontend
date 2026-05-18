@@ -54,7 +54,7 @@ const PostItWidget = () => {
     const [colorTheme, setColorTheme] = useState('yellow'); // Color por defecto
     
     const [tasks, setTasks] = useState([
-        { id: 1, text: "Avanzar en widgets de MiDesk", done: false },
+        { id: 1, text: "Avanzar en widgets de Geck-OS", done: false },
         { id: 2, text: "Revisar conexión ESP32", done: false },
         { id: 3, text: "Integrar IA en backend", done: true },
     ]);
