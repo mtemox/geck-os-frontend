@@ -7,9 +7,8 @@ import RoadmapSection from '../components/RoadmapSection';
 import Footer from '../components/Footer';
 
 function LandingPage() {
-  // Inyectar meta SEO dinámicamente
   useEffect(() => {
-    // Meta descripción
+    // ── Meta SEO ──────────────────────────────────────────────────────────
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement('meta');
@@ -18,10 +17,8 @@ function LandingPage() {
     }
     meta.content = 'Geck-OS: Tu escritorio virtual reinventado. Organiza archivos, colabora en tiempo real y potencia tu productividad con IA.';
 
-    // Title
     document.title = 'Geck-OS — Tu Escritorio Virtual Reinventado';
 
-    // Open Graph básico
     const ogTags = [
       { property: 'og:title', content: 'Geck-OS — Tu Escritorio Virtual' },
       { property: 'og:description', content: 'Organiza, colabora y potencia tu trabajo con IA en un escritorio virtual unificado.' },
@@ -37,8 +34,40 @@ function LandingPage() {
       tag.content = content;
     });
 
+    /*
+      PRECONNECT para recursos que se cargarán luego (Stripe, fuentes).
+      Esto reduce el tiempo de DNS + TCP + TLS handshake cuando se necesiten.
+      Los origins de Stripe se añaden aquí (no en index.html) para no penalizar
+      a páginas que no los necesitan.
+
+      Lighthouse reportaba:
+        - https://m.stripe.network → 90ms de ahorro en LCP
+        - https://js.stripe.com    → 80ms de ahorro en LCP
+
+      Con preconnect se establece la conexión anticipada pero la descarga
+      del JS no ocurre hasta que el usuario abra el modal de pago.
+    */
+    const preconnects = [
+      'https://m.stripe.network',
+      'https://js.stripe.com',
+    ];
+
+    const addedLinks = [];
+    preconnects.forEach((href) => {
+      if (!document.querySelector(`link[rel="preconnect"][href="${href}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'preconnect';
+        link.href = href;
+        link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+        addedLinks.push(link);
+      }
+    });
+
     return () => {
       document.title = 'Geck-OS';
+      // Limpiamos los preconnect al salir de la landing
+      addedLinks.forEach((link) => link.remove());
     };
   }, []);
 

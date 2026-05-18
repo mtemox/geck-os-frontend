@@ -13,22 +13,43 @@ function DesktopHeroSection() {
   const [currentBg, setCurrentBg] = useState(wallpapers[0]);
   const [loaded, setLoaded] = useState(false);
 
-  // Precargar solo el primer fondo para no bloquear LCP
   useEffect(() => {
     const img = new Image();
     img.src = wallpapers[0];
     img.onload = () => setLoaded(true);
   }, []);
 
+  // Precargar los fondos alternativos DESPUÉS del LCP (idle)
+  useEffect(() => {
+    if (!loaded) return;
+    const preloadAlternatives = () => {
+      wallpapers.slice(1).forEach((wp) => {
+        const img = new Image();
+        img.src = wp;
+      });
+    };
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(preloadAlternatives);
+    } else {
+      setTimeout(preloadAlternatives, 2000);
+    }
+  }, [loaded]);
+
   return (
     <section id="home" className="min-h-screen relative overflow-hidden">
 
-      {/* Fondo — solo se muestra cuando cargó para evitar CLS */}
+      {/*
+        Fondo LCP:
+        - Solo se activa cuando la imagen ya cargó (evita CLS)
+        - Sin transition para el primer render (mejora LCP)
+        - placeholder oscuro mientras carga
+      */}
       <div
-        className="absolute inset-0 w-full h-full bg-cover bg-center transition-all duration-1000"
+        className="absolute inset-0 w-full h-full bg-cover bg-center"
         style={{
           backgroundImage: loaded ? `url(${currentBg})` : 'none',
-          backgroundColor: '#1e293b', // placeholder oscuro mientras carga
+          backgroundColor: '#1e293b',
+          transition: loaded ? 'background-image 1s ease' : 'none',
         }}
         aria-hidden="true"
       />

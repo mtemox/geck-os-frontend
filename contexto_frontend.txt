@@ -3071,7 +3071,7 @@ const SettingsApp = () => {
                                 {/* Nuevo Selector de Color de Acento */}
                                 <div className="mt-8">
                                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Color de Acento</h2>
-                                    <p className="text-sm text-slate-500 dark:text-gray-400 mb-4">Personaliza el color principal de MiDesk</p>
+                                    <p className="text-sm text-slate-500 dark:text-gray-400 mb-4">Personaliza el color principal de Geck-OS</p>
 
                                     <div className="flex gap-4">
                                         {colorOptions.map((color) => {
@@ -3113,7 +3113,7 @@ const SettingsApp = () => {
                         {/* Fondo Actual */}
                         <div>
                             <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Fondo de Pantalla</h2>
-                            <p className="text-sm text-slate-500 dark:text-gray-400 mb-6">Restaurar al fondo original de MiDesk</p>
+                            <p className="text-sm text-slate-500 dark:text-gray-400 mb-6">Restaurar al fondo original de Geck-OS</p>
 
                             <div className="flex items-start gap-6">
                                 <div
@@ -3139,7 +3139,7 @@ const SettingsApp = () => {
 
                                 <div className="flex flex-col gap-3">
                                     <p className="text-sm text-slate-600 dark:text-gray-400 leading-relaxed">
-                                        Vuelve al fondo de escritorio predeterminado de MiDesk.
+                                        Vuelve al fondo de escritorio predeterminado de Geck-OS.
                                     </p>
                                     <button
                                         onClick={handleResetWallpaper}
@@ -4112,7 +4112,7 @@ export const Confirm = () => {
 
                 {/* Logo */}
                 <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/20 shadow-xl mb-6 ring-4 ring-orange-400/20">
-                    <img src={logoMidesk} alt="MiDesk" className="w-full h-full object-cover" />
+                    <img src={logoMidesk} alt="Geck-OS" className="w-full h-full object-cover" />
                 </div>
 
                 {/* Icono de check animado */}
@@ -8829,70 +8829,61 @@ export default ShareForm;
 ================================================
 
 // src/features/landing/components/DesktopHeroSection.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import DesktopIcon from './DesktopIcon';
 import LandingWindow from './LandingWindow';
 
-// 1. IMPORTAMOS LOS FONDOS "QUEMADOS"
 import wp1 from '../../../assets/wallpapers/mi-fondo.jpg';
 import wp2 from '../../../assets/wallpapers/win_ni.jpg';
 import wp3 from '../../../assets/wallpapers/windows_2.jpg';
 
-// 2. Creamos un array con los fondos importados
 const wallpapers = [wp1, wp2, wp3];
 
-
 function DesktopHeroSection() {
-  const navigate = useNavigate();
   const [currentBg, setCurrentBg] = useState(wallpapers[0]);
+  const [loaded, setLoaded] = useState(false);
+
+  // Precargar solo el primer fondo para no bloquear LCP
+  useEffect(() => {
+    const img = new Image();
+    img.src = wallpapers[0];
+    img.onload = () => setLoaded(true);
+  }, []);
 
   return (
-    <section 
-      id="home" 
-      className="min-h-screen relative overflow-hidden"
-    >
-      
-      {/* --- Fondo de Pantalla (Sigue igual) --- */}
-      <div 
+    <section id="home" className="min-h-screen relative overflow-hidden">
+
+      {/* Fondo — solo se muestra cuando cargó para evitar CLS */}
+      <div
         className="absolute inset-0 w-full h-full bg-cover bg-center transition-all duration-1000"
-        style={{ backgroundImage: `url(${currentBg})` }}
+        style={{
+          backgroundImage: loaded ? `url(${currentBg})` : 'none',
+          backgroundColor: '#1e293b', // placeholder oscuro mientras carga
+        }}
         aria-hidden="true"
       />
 
-      {/* --- Contenido del Escritorio (Centrado) --- */}
-      <div className="relative z-10 w-full h-screen p-4 md:p-8 
-                      flex items-center justify-center">
-        
-        {/* --- 1. NUEVO CONTENEDOR (Wrapper) --- */}
-        {/* Este 'div' agrupa la ventana y el ícono */}
-        {/* 'flex-col' los apila verticalmente */}
-        {/* 'items-center' los centra horizontalmente */}
-        {/* 'space-y-4' les da espacio entre ellos */}
+      {/* Contenido */}
+      <div className="relative z-10 w-full h-screen p-4 md:p-8 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
-
-          {/* --- 2. LA VENTANA --- */}
-          {/* (Ahora está dentro del nuevo wrapper) */}
           <LandingWindow />
-
-          {/* --- 3. EL ÍCONO (¡YA NO ES 'ABSOLUTE'!) --- */}
-          {/* (Ahora está dentro del nuevo wrapper) */}
           <DesktopIcon />
-
-          </div>
-      
+        </div>
       </div>
 
-      {/* --- Selector de Fondos (Sigue igual) --- */}
+      {/* Selector de fondos */}
       <div className="absolute z-20 bottom-5 right-5 flex space-x-2 bg-black/50 p-2 rounded-lg backdrop-blur-sm">
         {wallpapers.map((wp, index) => (
-          <button 
+          <button
             key={index}
             onClick={() => setCurrentBg(wp)}
-            className={`w-10 h-10 rounded-md bg-cover bg-center transition-all 
-                        border-2 
-                        ${currentBg === wp ? 'border-red-500 scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
-            style={{ backgroundImage: `url(${wp})` }}
+            className="w-10 h-10 rounded-md bg-cover bg-center transition-all border-2"
+            style={{
+              backgroundImage: `url(${wp})`,
+              borderColor: currentBg === wp ? '#e8472a' : 'transparent',
+              opacity: currentBg === wp ? 1 : 0.6,
+              transform: currentBg === wp ? 'scale(1.1)' : 'scale(1)',
+            }}
             aria-label={`Seleccionar fondo ${index + 1}`}
           />
         ))}
@@ -8910,41 +8901,25 @@ export default DesktopHeroSection;
 // src/features/landing/components/DesktopIcon.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// 1. IMPORTAMOS el ícono que preparaste
-// Sube dos niveles ('../../') para llegar a 'src/assets/'
 import iconImage from '../../../assets/logos/midesk.jpg';
-
-// --- ¡Importante! ---
-// Asegúrate de que la ruta de arriba ('../../assets/icons/icon-midesk-app.png')
-// sea correcta y coincida con el nombre de tu archivo.
 
 function DesktopIcon() {
   const navigate = useNavigate();
 
   return (
-    // 2. ESTILOS DE ÍCONO DE ESCRITORIO
-    // Usamos los mismos estilos de tu 'Icon.jsx' original
-    // para que la simulación sea idéntica a tu app real.
     <div
-      onClick={() => navigate('/register')} // 3. ACCIÓN: Navega al registro
-      className="w-20 h-24 flex flex-col items-center justify-start p-2 m-1 
-                 cursor-pointer rounded-lg 
-                 transition-all duration-150 
-                 hover:bg-blue-500 hover:bg-opacity-30"
+      onClick={() => navigate('/register')}
+      className="w-20 h-24 flex flex-col items-center justify-start p-2 m-1 cursor-pointer rounded-lg transition-all duration-150 hover:bg-white/20"
     >
-      {/* 4. La imagen del ícono */}
       <img
         src={iconImage}
-        alt="Comenzar Ahora"
-        className="w-12 h-12 object-contain"
-        width="48"
-        height="48"
-        loading="lazy"
+        alt="Comenzar con Geck-OS"
+        width={48}
+        height={48}
+        className="w-12 h-12 object-contain rounded-lg"
+        loading="eager"
       />
-
-      {/* 5. El nombre del ícono */}
-      <p className="text-white text-xs text-center mt-1 shadow-black/50 [text-shadow:_1px_1px_2px_var(--tw-shadow-color)]">
+      <p className="text-white text-xs text-center mt-1 [text-shadow:_1px_1px_2px_rgba(0,0,0,0.8)]">
         Comenzar Ahora
       </p>
     </div>
@@ -8957,6 +8932,7 @@ export default DesktopIcon;
 📄 Archivo: \src\features\landing\components\FeaturesSection.jsx
 ================================================
 
+// src/features/landing/components/FeaturesSection.jsx
 import React from 'react';
 
 function FeaturesSection() {
@@ -8967,25 +8943,37 @@ function FeaturesSection() {
           ¿Por qué Geck-OS?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          <div className="bg-orange-50/50 border border-orange-200 rounded-lg p-8 
-                          hover:border-orange-500 transition-colors duration-300 transform hover:scale-105 shadow-sm hover:shadow-lg">
+
+          <div
+            className="rounded-lg p-8 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-lg border"
+            style={{ backgroundColor: '#fff7f5', borderColor: '#e8472a33' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = '#e8472a'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#e8472a33'}
+          >
             <div className="text-6xl mb-4">📁</div>
-            <h3 className="text-orange-600 text-xl font-bold uppercase mb-4">Organización</h3>
+            <h3 className="text-xl font-bold uppercase mb-4" style={{ color: '#e8472a' }}>Organización</h3>
             <p className="text-slate-600">Mantén todos tus archivos, notas y enlaces organizados en un escritorio virtual unificado.</p>
           </div>
-          
-          <div className="bg-orange-50/50 border border-orange-200 rounded-lg p-8 
-                          hover:border-orange-500 transition-colors duration-300 transform hover:scale-105 shadow-sm hover:shadow-lg">
+
+          <div
+            className="rounded-lg p-8 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-lg border"
+            style={{ backgroundColor: '#fff7f5', borderColor: '#e8472a33' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = '#e8472a'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#e8472a33'}
+          >
             <div className="text-6xl mb-4">👥</div>
-            <h3 className="text-orange-600 text-xl font-bold uppercase mb-4">Colaborativo</h3>
+            <h3 className="text-xl font-bold uppercase mb-4" style={{ color: '#e8472a' }}>Colaborativo</h3>
             <p className="text-slate-600">Comparte tu escritorio, trabaja en notas en tiempo real y gestiona proyectos en equipo.</p>
           </div>
 
-          <div className="bg-orange-50/50 border border-orange-200 rounded-lg p-8 
-                          hover:border-orange-500 transition-colors duration-300 transform hover:scale-105 shadow-sm hover:shadow-lg">
+          <div
+            className="rounded-lg p-8 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-lg border"
+            style={{ backgroundColor: '#fff7f5', borderColor: '#e8472a33' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = '#e8472a'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#e8472a33'}
+          >
             <div className="text-6xl mb-4">🤖</div>
-            <h3 className="text-orange-600 text-xl font-bold uppercase mb-4">Potenciado con IA</h3>
+            <h3 className="text-xl font-bold uppercase mb-4" style={{ color: '#e8472a' }}>Potenciado con IA</h3>
             <p className="text-slate-600">Mejora tus notas, recibe recomendaciones de herramientas y organiza tu código con asistencia de IA.</p>
           </div>
 
@@ -9008,47 +8996,38 @@ import { useNavigate } from 'react-router-dom';
 function Footer() {
   const navigate = useNavigate();
 
-  // (Podríamos reusar la lógica de scroll suave aquí,
-  // pero por ahora, los links pueden ser simples)
-
   return (
-    <footer 
-      // Usamos el mismo 'to-gray-900' del Roadmap para
-      // que el gradiente continúe suavemente
-      className="bg-gray-900 border-t border-red-500/30 pt-12 pb-8"
+    <footer
+      className="bg-white pt-12 pb-8"
+      style={{ borderTop: '2px solid #e8472a33' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          
-          {/* --- Logo y Copyright --- */}
-          <div className="text-center md:text-left mb-4 md:mb-0">
-            <span 
-              className="text-2xl font-bold text-red-500 cursor-pointer"
-              onClick={() => navigate('/')} // Navega al inicio
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+
+          <div className="text-center md:text-left">
+            <span
+              className="text-2xl font-bold cursor-pointer"
+              style={{ color: '#e8472a' }}
+              onClick={() => navigate('/')}
             >
-              MiDesk
+              Geck-OS
             </span>
-            <p className="text-gray-400 text-sm mt-2">
-              {/* Usamos el año de tu plan para ser consistentes */}
-              &copy; 2025 MiDesk. Todos los derechos reservados.
+            <p className="text-slate-400 text-sm mt-2">
+              &copy; 2025 Geck-OS. Todos los derechos reservados.
             </p>
           </div>
-          
-          {/* --- Links Adicionales --- */}
+
           <div className="flex space-x-6">
-            <a href="#" className="text-gray-300 hover:text-white transition-colors">
+            <a href="#" className="text-slate-500 hover:text-slate-900 transition-colors text-sm">
               Términos
             </a>
-            <a href="#" className="text-gray-300 hover:text-white transition-colors">
+            <a href="#" className="text-slate-500 hover:text-slate-900 transition-colors text-sm">
               Privacidad
             </a>
-            <a 
-              href="#contact" 
-              onClick={(e) => {
-                // (Simulamos un scroll a 'contacto' si existiera)
-                e.preventDefault(); 
-              }}
-              className="text-gray-300 hover:text-white transition-colors"
+            <a
+              href="#contact"
+              onClick={e => e.preventDefault()}
+              className="text-slate-500 hover:text-slate-900 transition-colors text-sm"
             >
               Contacto
             </a>
@@ -9153,7 +9132,7 @@ function LandingWindow() {
         
         {/* Título de la Ventana */}
         <span className="text-gray-300 text-sm">
-          Bienvenido a MiDesk
+          Bienvenido a Geck-OS
         </span>
         
         {/* Espaciador (para centrar el título) */}
@@ -9172,7 +9151,7 @@ function LandingWindow() {
               lineHeight: '0.85'
             }}
           >
-            MiDesk
+            GeckOS
           </h1>
           
           <p className="text-white text-xl md:text-2xl uppercase tracking-widest pt-4">
@@ -9193,98 +9172,92 @@ export default LandingWindow;
 
 // src/features/landing/components/Navbar.jsx
 import React from 'react';
-// Importamos 'useNavigate' para los botones de Login/Register
 import { useNavigate } from 'react-router-dom';
-
 import logoIcono from '../../../assets/logos/esfot.png';
 
 function Navbar() {
-  // 'useNavigate' nos da una función para cambiar de página
   const navigate = useNavigate();
 
-  // --- Lógica para el Scroll Suave (Punto 9 de tu plan) ---
   const handleScroll = (e, targetId) => {
-    e.preventDefault(); // Evita el salto brusco del 'href'
-
-    // Quita el '#' del 'targetId'
+    e.preventDefault();
     const targetElement = document.getElementById(targetId.substring(1));
-
     if (targetElement) {
-      targetElement.scrollIntoView({
-        behavior: 'smooth', // ¡La magia del scroll suave!
-        block: 'start'
-      });
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
+  const navLinks = [
+    { href: '#home', label: 'Inicio' },
+    { href: '#features', label: 'Características' },
+    { href: '#roadmap', label: 'Roadmap' },
+  ];
+
   return (
-    // --- Estructura del Navbar (Punto 4 de tu plan) ---
-    <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-orange-200 shadow-sm">
+    <nav
+      className="sticky top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b shadow-sm"
+      style={{ borderBottomColor: '#e8472a33' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
 
-          {/* --- Logo (MODIFICADO) --- */}
+          {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <div
               className="flex items-center space-x-3 cursor-pointer"
               onClick={() => navigate('/')}
             >
-              {/* 3. Logo 1 (Imagen de Ícono) */}
               <img
                 src={logoIcono}
-                alt="Geck-OS Icono"
+                alt="Geck-OS logo"
+                width={32}
+                height={32}
                 className="h-8 w-auto object-contain"
-                width="32"
-                height="32"
+                loading="eager"
               />
-
-              {/* Un separador bonito */}
-              <div className="h-6 w-px bg-red-500/30"></div>
-
-              {/* 4. Logo 2 (Imagen de Texto) */}
-              {/* <-- 3. Logo 2 (El Texto) */}
-              <span className="text-2xl font-bold text-orange-500">Geck-OS</span>
-
+              <div className="h-6 w-px" style={{ backgroundColor: '#e8472a4d' }} />
+              <span className="text-2xl font-bold" style={{ color: '#e8472a' }}>
+                Geck-OS
+              </span>
             </div>
           </div>
 
-          {/* --- Links de Navegación (Desktop) --- */}
-          {/* 'hidden md:flex' = Oculto en móvil, visible en desktop */}
+          {/* Links */}
           <div className="hidden md:flex space-x-8">
-            <a
-              href="#home"
-              onClick={(e) => handleScroll(e, '#home')}
-              className="text-slate-600 hover:text-orange-500 transition-colors font-medium"
-            >
-              Inicio
-            </a>
-            <a
-              href="#features"
-              onClick={(e) => handleScroll(e, '#features')}
-              className="text-slate-600 hover:text-orange-500 transition-colors font-medium"
-            >
-              Características
-            </a>
-            <a
-              href="#roadmap"
-              onClick={(e) => handleScroll(e, '#roadmap')}
-              className="text-slate-600 hover:text-orange-500 transition-colors font-medium"
-            >
-              Roadmap
-            </a>
+            {navLinks.map(({ href, label }) => (
+              <a
+                key={href}
+                href={href}
+                onClick={(e) => handleScroll(e, href)}
+                className="text-slate-600 font-medium transition-colors"
+                style={{ textDecoration: 'none' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#e8472a'}
+                onMouseLeave={e => e.currentTarget.style.color = ''}
+              >
+                {label}
+              </a>
+            ))}
           </div>
 
-          {/* --- Botones de Autenticación --- */}
+          {/* Auth buttons */}
           <div className="flex items-center space-x-4">
-            <button onClick={() => navigate('/login')} className="text-slate-600 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            <button
+              onClick={() => navigate('/login')}
+              className="px-3 py-2 rounded-md text-sm font-medium transition-colors text-slate-600"
+              onMouseEnter={e => e.currentTarget.style.color = '#e8472a'}
+              onMouseLeave={e => e.currentTarget.style.color = ''}
+            >
               Iniciar Sesión
             </button>
-            <button onClick={() => navigate('/register')} className="bg-orange-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-600 transition-transform hover:scale-105 shadow-md shadow-orange-500/20">
+            <button
+              onClick={() => navigate('/register')}
+              className="text-white px-4 py-2 rounded-md text-sm font-medium transition-all hover:scale-105 shadow-md"
+              style={{ backgroundColor: '#e8472a' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#d03d21'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#e8472a'}
+            >
               Registrarse
             </button>
           </div>
-
-          {/* (Aquí se podría añadir un botón de menú para móviles en el futuro) */}
 
         </div>
       </div>
@@ -9301,64 +9274,66 @@ export default Navbar;
 // src/features/landing/components/RoadmapSection.jsx
 import React from 'react';
 
+const TOMATO = '#e8472a';
+
 function RoadmapSection() {
   return (
-    // --- Estructura de la Sección (Punto 7 de tu plan) ---
-    <section 
-      // ID para el link del Navbar
-      id="roadmap" 
-      className="py-20 bg-gradient-to-b from-black to-gray-900"
-    >
+    <section id="roadmap" className="py-20 bg-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* --- Título de la Sección --- */}
-        <h2 className="text-5xl font-bold text-white text-center mb-16">
+
+        <h2 className="text-5xl font-bold text-slate-900 text-center mb-16">
           Roadmap
         </h2>
-        
-        {/* --- Contenedor del Timeline Vertical --- */}
-        {/* 'relative' es el padre para la línea y los círculos */}
-        {/* 'border-l-2 border-red-500' es la LÍNEA ROJA principal */}
-        {/* 'space-y-12' da espacio entre cada item del roadmap */}
-        <div className="relative border-l-2 border-red-500 pl-8 space-y-12">
-          
-          {/* --- Item 1: Lanzamiento Beta (El que definiste) --- */}
+
+        <div
+          className="relative pl-8 space-y-12"
+          style={{ borderLeft: `2px solid ${TOMATO}` }}
+        >
+
+          {/* Fase 01 */}
           <div className="relative">
-            {/* El CÍRCULO ROJO en la línea */}
-            {/* 'absolute' lo saca del flujo */}
-            {/* '-left-10' lo mueve 8 (del pl-8) + 2 (mitad del círculo) = 10 */}
-            <div className="absolute -left-[33px] top-2 w-6 h-6 bg-red-500 rounded-full border-4 border-black"></div>
-            
-            <span className="text-red-400 font-bold text-sm uppercase">Fase 01</span>
-            <h3 className="text-white text-3xl font-bold mt-2">Lanzamiento Beta</h3>
-            <p className="text-red-400 text-lg mt-2">Q4 2025</p>
-            <p className="text-gray-400 mt-4">
+            <div
+              className="absolute top-2 w-6 h-6 rounded-full border-4 border-white shadow-md"
+              style={{ left: '-33px', backgroundColor: TOMATO }}
+            />
+            <span className="font-bold text-sm uppercase" style={{ color: TOMATO }}>
+              Fase 01
+            </span>
+            <h3 className="text-slate-900 text-3xl font-bold mt-2">Lanzamiento Beta</h3>
+            <p className="text-lg mt-2 font-medium" style={{ color: TOMATO }}>Q4 2025</p>
+            <p className="text-slate-500 mt-4">
               Lanzamiento de la versión beta con gestión de íconos, autenticación y organización básica de escritorio.
             </p>
           </div>
-          
-          {/* --- Item 2: Integración de IA (Completado) --- */}
+
+          {/* Fase 02 */}
           <div className="relative">
-            {/* Círculo */}
-            <div className="absolute -left-[33px] top-2 w-6 h-6 bg-red-500 rounded-full border-4 border-black"></div>
-            
-            <span className="text-red-400 font-bold text-sm uppercase">Fase 02</span>
-            <h3 className="text-white text-3xl font-bold mt-2">Integración de IA</h3>
-            <p className="text-red-400 text-lg mt-2">Q2 2026</p>
-            <p className="text-gray-400 mt-4">
+            <div
+              className="absolute top-2 w-6 h-6 rounded-full border-4 border-white shadow-md"
+              style={{ left: '-33px', backgroundColor: TOMATO }}
+            />
+            <span className="font-bold text-sm uppercase" style={{ color: TOMATO }}>
+              Fase 02
+            </span>
+            <h3 className="text-slate-900 text-3xl font-bold mt-2">Integración de IA</h3>
+            <p className="text-lg mt-2 font-medium" style={{ color: TOMATO }}>Q2 2026</p>
+            <p className="text-slate-500 mt-4">
               Implementación del widget de IA, "Mejorar con IA" para notas y el editor de fragmentos de código.
             </p>
           </div>
 
-          {/* --- Item 3: Colaboración y Apps (Completado) --- */}
+          {/* Fase 03 */}
           <div className="relative">
-            {/* Círculo */}
-            <div className="absolute -left-[33px] top-2 w-6 h-6 bg-red-500 rounded-full border-4 border-black"></div>
-            
-            <span className="text-red-400 font-bold text-sm uppercase">Fase 03</span>
-            <h3 className="text-white text-3xl font-bold mt-2">Colaboración y Apps Móviles</h3>
-            <p className="text-red-400 text-lg mt-2">Q4 2026</p>
-            <p className="text-gray-400 mt-4">
+            <div
+              className="absolute top-2 w-6 h-6 rounded-full border-4 border-white shadow-md"
+              style={{ left: '-33px', backgroundColor: TOMATO }}
+            />
+            <span className="font-bold text-sm uppercase" style={{ color: TOMATO }}>
+              Fase 03
+            </span>
+            <h3 className="text-slate-900 text-3xl font-bold mt-2">Colaboración y Apps Móviles</h3>
+            <p className="text-lg mt-2 font-medium" style={{ color: TOMATO }}>Q4 2026</p>
+            <p className="text-slate-500 mt-4">
               Lanzamiento de funciones colaborativas en tiempo real y aplicaciones nativas para iOS y Android.
             </p>
           </div>
@@ -9376,7 +9351,7 @@ export default RoadmapSection;
 ================================================
 
 // src/features/landing/pages/LandingPage.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import DesktopHeroSection from '../components/DesktopHeroSection';
 import FeaturesSection from '../components/FeaturesSection';
@@ -9384,16 +9359,52 @@ import RoadmapSection from '../components/RoadmapSection';
 import Footer from '../components/Footer';
 
 function LandingPage() {
+  // Inyectar meta SEO dinámicamente
+  useEffect(() => {
+    // Meta descripción
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = 'Geck-OS: Tu escritorio virtual reinventado. Organiza archivos, colabora en tiempo real y potencia tu productividad con IA.';
+
+    // Title
+    document.title = 'Geck-OS — Tu Escritorio Virtual Reinventado';
+
+    // Open Graph básico
+    const ogTags = [
+      { property: 'og:title', content: 'Geck-OS — Tu Escritorio Virtual' },
+      { property: 'og:description', content: 'Organiza, colabora y potencia tu trabajo con IA en un escritorio virtual unificado.' },
+      { property: 'og:type', content: 'website' },
+    ];
+    ogTags.forEach(({ property, content }) => {
+      let tag = document.querySelector(`meta[property="${property}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('property', property);
+        document.head.appendChild(tag);
+      }
+      tag.content = content;
+    });
+
+    return () => {
+      document.title = 'Geck-OS';
+    };
+  }, []);
+
   return (
-    <div className="bg-slate-50 text-slate-900 selection:bg-blue-200 selection:text-blue-900 font-sans">
+    <div
+      className="bg-white text-slate-900 font-sans"
+      style={{ overflowY: 'auto', height: '100vh' }}
+    >
       <Navbar />
-      
       <main>
         <DesktopHeroSection />
         <FeaturesSection />
         <RoadmapSection />
       </main>
-
       <Footer />
     </div>
   );
@@ -9790,7 +9801,7 @@ const PostItWidget = () => {
     const [colorTheme, setColorTheme] = useState('yellow'); // Color por defecto
     
     const [tasks, setTasks] = useState([
-        { id: 1, text: "Avanzar en widgets de MiDesk", done: false },
+        { id: 1, text: "Avanzar en widgets de Geck-OS", done: false },
         { id: 2, text: "Revisar conexión ESP32", done: false },
         { id: 3, text: "Integrar IA en backend", done: true },
     ]);

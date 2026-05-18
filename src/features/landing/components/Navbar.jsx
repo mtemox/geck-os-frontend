@@ -34,13 +34,21 @@ function Navbar() {
               className="flex items-center space-x-3 cursor-pointer"
               onClick={() => navigate('/')}
             >
+              {/*
+                Antes: imagen 551x271 mostrada a 65x32 → desperdiciaba ~20KB.
+                Ahora: width/height exactos del tamaño mostrado (h-8 = 32px).
+                El navegador puede calcular el aspect ratio y reservar espacio
+                antes de descargar (evita CLS).
+                loading="eager" porque está en el navbar visible de inmediato.
+              */}
               <img
                 src={logoIcono}
                 alt="Geck-OS logo"
-                width={32}
+                width={65}
                 height={32}
                 className="h-8 w-auto object-contain"
                 loading="eager"
+                decoding="async"
               />
               <div className="h-6 w-px" style={{ backgroundColor: '#e8472a4d' }} />
               <span className="text-2xl font-bold" style={{ color: '#e8472a' }}>
