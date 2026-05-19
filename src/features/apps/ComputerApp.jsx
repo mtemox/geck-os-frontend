@@ -84,7 +84,14 @@ const ComputerApp = ({ onOpenItem }) => {
                 // Mapeamos iterando sobre la respuesta de la IA para NO PERDER el orden
                 const itemsCompletos = resultadosIA
                     .map(resIA => items.find(item => (item._id?.toString() || item.id?.toString()) === resIA.id))
-                    .filter(item => item !== undefined); // Filtramos undefined por si acaso
+                    .filter(item => {
+                        if (!item) return false;
+                        // Si es nota, código o archivo, forzamos a que tenga contenido real para mostrarlo
+                        if (['note', 'code', 'file'].includes(item.type)) {
+                            return item.content && item.content.trim() !== "";
+                        }
+                        return true;
+                    });
 
                 setAiResults(itemsCompletos);
             }

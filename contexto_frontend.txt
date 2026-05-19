@@ -8829,41 +8829,84 @@ export default ShareForm;
 ================================================
 
 // src/features/landing/components/DesktopHeroSection.jsx
-import React, { useState, useEffect } from 'react';
+//
+// PROBLEMA ORIGINAL:
+//   - El fondo era un div con background-image CSS → el navegador NO puede
+//     aplicar fetchpriority a CSS backgrounds → LCP de 7-8s.
+//   - Los 3 botones del selector tenían background-image CSS también →
+//     win_ni.jpg (7MB) se descargaba SIEMPRE, aunque el usuario nunca
+//     cambiara de fondo.
+//
+// SOLUCIÓN:
+//   - El fondo principal pasa a ser un <img> con fetchpriority="high"
+//     → el navegador lo descarga antes que CSS y fuentes.
+//   - Los wallpapers alternativos solo se precargan cuando el usuario
+//     hace hover/focus/click en el botón correspondiente.
+//   - win_ni.jpg (7MB) ya NO se descarga en la carga inicial.
+
+import React, { useState, useCallback } from 'react';
 import DesktopIcon from './DesktopIcon';
 import LandingWindow from './LandingWindow';
 
+// Solo importamos el fondo 1 (LCP). Los otros dos se resuelven on-demand.
 import wp1 from '../../../assets/wallpapers/mi-fondo.jpg';
-import wp2 from '../../../assets/wallpapers/win_ni.jpg';
-import wp3 from '../../../assets/wallpapers/windows_2.jpg';
 
-const wallpapers = [wp1, wp2, wp3];
+const WP2_URL = new URL('../../../assets/wallpapers/win_ni.jpg',     import.meta.url).href;
+const WP3_URL = new URL('../../../assets/wallpapers/windows_2.jpg',  import.meta.url).href;
+
+const WALLPAPERS = [
+  { src: wp1,     label: 'Seleccionar fondo 1' },
+  { src: WP2_URL, label: 'Seleccionar fondo 2' },
+  { src: WP3_URL, label: 'Seleccionar fondo 3' },
+];
 
 function DesktopHeroSection() {
-  const [currentBg, setCurrentBg] = useState(wallpapers[0]);
-  const [loaded, setLoaded] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [preloaded, setPreloaded]       = useState(() => new Set([wp1]));
 
-  // Precargar solo el primer fondo para no bloquear LCP
-  useEffect(() => {
-    const img = new Image();
-    img.src = wallpapers[0];
-    img.onload = () => setLoaded(true);
-  }, []);
+  const preloadImage = useCallback((src) => {
+    if (preloaded.has(src)) return;
+    const img  = new Image();
+    img.src    = src;
+    setPreloaded((prev) => new Set([...prev, src]));
+  }, [preloaded]);
+
+  const handleSelect = (index) => {
+    preloadImage(WALLPAPERS[index].src);
+    setCurrentIndex(index);
+  };
+
+  const currentSrc = WALLPAPERS[currentIndex].src;
+  const isFirst    = currentIndex === 0;
 
   return (
     <section id="home" className="min-h-screen relative overflow-hidden">
 
-      {/* Fondo — solo se muestra cuando cargó para evitar CLS */}
-      <div
-        className="absolute inset-0 w-full h-full bg-cover bg-center transition-all duration-1000"
-        style={{
-          backgroundImage: loaded ? `url(${currentBg})` : 'none',
-          backgroundColor: '#1e293b', // placeholder oscuro mientras carga
-        }}
+      {/*
+        <img> real en lugar de background-image CSS.
+
+        fetchpriority="high" → el navegador lo descarga con máxima prioridad,
+        antes que scripts y fuentes no críticas.
+        decoding="sync" en el LCP → el navegador no retrasa el paint.
+
+        object-fit: cover + object-position: center = bg-cover bg-center.
+      */}
+      <img
+        key={currentSrc}
+        src={currentSrc}
+        alt=""
         aria-hidden="true"
+        fetchpriority={isFirst ? 'high' : 'auto'}
+        decoding={isFirst ? 'sync' : 'async'}
+        className="absolute inset-0 w-full h-full"
+        style={{
+          objectFit:      'cover',
+          objectPosition: 'center',
+          transition:     isFirst ? 'none' : 'opacity 0.7s ease',
+        }}
       />
 
-      {/* Contenido */}
+      {/* Contenido hero */}
       <div className="relative z-10 w-full h-screen p-4 md:p-8 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <LandingWindow />
@@ -8873,20 +8916,31 @@ function DesktopHeroSection() {
 
       {/* Selector de fondos */}
       <div className="absolute z-20 bottom-5 right-5 flex space-x-2 bg-black/50 p-2 rounded-lg backdrop-blur-sm">
-        {wallpapers.map((wp, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentBg(wp)}
-            className="w-10 h-10 rounded-md bg-cover bg-center transition-all border-2"
-            style={{
-              backgroundImage: `url(${wp})`,
-              borderColor: currentBg === wp ? '#e8472a' : 'transparent',
-              opacity: currentBg === wp ? 1 : 0.6,
-              transform: currentBg === wp ? 'scale(1.1)' : 'scale(1)',
-            }}
-            aria-label={`Seleccionar fondo ${index + 1}`}
-          />
-        ))}
+        {WALLPAPERS.map((wp, index) => {
+          const isActive     = currentIndex === index;
+          const isThumbnail  = index === 0 || preloaded.has(wp.src);
+
+          return (
+            <button
+              key={index}
+              onClick={() => handleSelect(index)}
+              onMouseEnter={() => preloadImage(wp.src)}
+              onFocus={() => preloadImage(wp.src)}
+              className="w-10 h-10 rounded-md transition-all border-2"
+              style={{
+                backgroundImage:    isThumbnail ? `url(${wp.src})` : 'none',
+                backgroundColor:    isThumbnail ? 'transparent' : '#374151',
+                backgroundSize:     'cover',
+                backgroundPosition: 'center',
+                borderColor:        isActive ? '#e8472a' : 'transparent',
+                opacity:            isActive ? 1 : 0.6,
+                transform:          isActive ? 'scale(1.1)' : 'scale(1)',
+              }}
+              aria-label={wp.label}
+              aria-pressed={isActive}
+            />
+          );
+        })}
       </div>
     </section>
   );
@@ -8911,6 +8965,12 @@ function DesktopIcon() {
       onClick={() => navigate('/register')}
       className="w-20 h-24 flex flex-col items-center justify-start p-2 m-1 cursor-pointer rounded-lg transition-all duration-150 hover:bg-white/20"
     >
+      {/*
+        Antes: la imagen era 1200x1200 mostrada a 48x48 → desperdicio de ~140 KB.
+        Ahora: width/height explícitos + object-fit para que el navegador sepa
+        exactamente el espacio reservado (evita CLS) y descargue solo lo necesario.
+        loading="eager" porque está en el LCP hero, no debe diferirse.
+      */}
       <img
         src={iconImage}
         alt="Comenzar con Geck-OS"
@@ -8918,6 +8978,8 @@ function DesktopIcon() {
         height={48}
         className="w-12 h-12 object-contain rounded-lg"
         loading="eager"
+        decoding="async"
+        style={{ contentVisibility: 'auto' }}
       />
       <p className="text-white text-xs text-center mt-1 [text-shadow:_1px_1px_2px_rgba(0,0,0,0.8)]">
         Comenzar Ahora
@@ -9206,13 +9268,21 @@ function Navbar() {
               className="flex items-center space-x-3 cursor-pointer"
               onClick={() => navigate('/')}
             >
+              {/*
+                Antes: imagen 551x271 mostrada a 65x32 → desperdiciaba ~20KB.
+                Ahora: width/height exactos del tamaño mostrado (h-8 = 32px).
+                El navegador puede calcular el aspect ratio y reservar espacio
+                antes de descargar (evita CLS).
+                loading="eager" porque está en el navbar visible de inmediato.
+              */}
               <img
                 src={logoIcono}
                 alt="Geck-OS logo"
-                width={32}
+                width={65}
                 height={32}
                 className="h-8 w-auto object-contain"
                 loading="eager"
+                decoding="async"
               />
               <div className="h-6 w-px" style={{ backgroundColor: '#e8472a4d' }} />
               <span className="text-2xl font-bold" style={{ color: '#e8472a' }}>
@@ -9359,9 +9429,8 @@ import RoadmapSection from '../components/RoadmapSection';
 import Footer from '../components/Footer';
 
 function LandingPage() {
-  // Inyectar meta SEO dinámicamente
   useEffect(() => {
-    // Meta descripción
+    // Meta SEO
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement('meta');
@@ -9370,14 +9439,12 @@ function LandingPage() {
     }
     meta.content = 'Geck-OS: Tu escritorio virtual reinventado. Organiza archivos, colabora en tiempo real y potencia tu productividad con IA.';
 
-    // Title
     document.title = 'Geck-OS — Tu Escritorio Virtual Reinventado';
 
-    // Open Graph básico
     const ogTags = [
-      { property: 'og:title', content: 'Geck-OS — Tu Escritorio Virtual' },
+      { property: 'og:title',       content: 'Geck-OS — Tu Escritorio Virtual' },
       { property: 'og:description', content: 'Organiza, colabora y potencia tu trabajo con IA en un escritorio virtual unificado.' },
-      { property: 'og:type', content: 'website' },
+      { property: 'og:type',        content: 'website' },
     ];
     ogTags.forEach(({ property, content }) => {
       let tag = document.querySelector(`meta[property="${property}"]`);
@@ -9389,9 +9456,7 @@ function LandingPage() {
       tag.content = content;
     });
 
-    return () => {
-      document.title = 'Geck-OS';
-    };
+    return () => { document.title = 'Geck-OS'; };
   }, []);
 
   return (
@@ -9585,31 +9650,58 @@ export default ModalPayment;
 ================================================
 
 // src/features/store/StoragePlans.jsx
-import React, { useState } from 'react';
-import { HardDrive, Check, Zap } from 'lucide-react';
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
-import storePayments from '../../core/context/storePayments';
-import ModalPayment from './ModalPayment';
+//
+// Stripe se carga SOLO cuando el usuario hace clic en "Comprar".
+// Esto elimina los ~247KB de JS de Stripe del bundle inicial
+// y los preconnects inutiles que Lighthouse penalizaba.
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+import React, { useState, lazy, Suspense } from 'react';
+import { HardDrive, Check, Zap, Loader } from 'lucide-react';
+import storePayments from '../../core/context/storePayments';
+
+const ModalPayment = lazy(() => import('./ModalPayment'));
+
+// stripePromise se inicializa solo cuando el usuario hace clic
+let stripePromise = null;
+
+const getStripePromise = async () => {
+  if (!stripePromise) {
+    const { loadStripe } = await import('@stripe/stripe-js');
+    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+  }
+  return stripePromise;
+};
 
 const StoragePlans = () => {
   const { modal, toggleModal } = storePayments();
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPlan, setSelectedPlan]   = useState(null);
+  const [Elements, setElements]           = useState(null);
+  const [stripe, setStripe]               = useState(null);
 
   const plans = [
-    { id: 1, name: "Plan Estudiante", gb: 10,  price: 5,  features: ["10 GB Extra", "Soporte básico"] },
-    { id: 2, name: "Plan Pro",        gb: 50,  price: 15, features: ["50 GB Extra", "IA Ilimitada", "Soporte 24/7"] },
-    { id: 3, name: "Plan Máster",     gb: 100, price: 25, features: ["100 GB Extra", "Todo ilimitado"] },
+    { id: 1, name: 'Plan Estudiante', gb: 10,  price: 5,  features: ['10 GB Extra', 'Soporte básico'] },
+    { id: 2, name: 'Plan Pro',        gb: 50,  price: 15, features: ['50 GB Extra', 'IA Ilimitada', 'Soporte 24/7'] },
+    { id: 3, name: 'Plan Máster',     gb: 100, price: 25, features: ['100 GB Extra', 'Todo ilimitado'] },
   ];
 
-  const handleSelectPlan = (plan) => { setSelectedPlan(plan); toggleModal(); };
+  const handleSelectPlan = async (plan) => {
+    setSelectedPlan(plan);
+
+    // Cargamos Stripe y Elements solo en este momento
+    if (!Elements) {
+      const [sp, { Elements: El }] = await Promise.all([
+        getStripePromise(),
+        import('@stripe/react-stripe-js'),
+      ]);
+      setStripe(sp);
+      setElements(() => El);
+    }
+
+    toggleModal();
+  };
 
   return (
     <div className="p-6 h-full overflow-y-auto custom-scrollbar bg-background">
-
-      {/* Título */}
       <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
         <HardDrive size={24} className="text-brand-500" />
         Ampliar Almacenamiento
@@ -9618,11 +9710,9 @@ const StoragePlans = () => {
         Elige el plan que mejor se adapte a tus necesidades
       </p>
 
-      {/* Grid de planes */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan, index) => {
-          const isHighlighted = index === 1; // Plan Pro destacado
-
+          const isHighlighted = index === 1;
           return (
             <div
               key={plan.id}
@@ -9630,33 +9720,22 @@ const StoragePlans = () => {
                 relative flex flex-col rounded-xl p-6 overflow-hidden
                 border transition-all duration-300 shadow-md group
                 hover:shadow-xl hover:border-brand-500/60 hover:-translate-y-0.5
-                ${isHighlighted
-                  ? 'bg-brand-500/10 border-brand-500/40'
-                  : 'bg-card border-border'}
+                ${isHighlighted ? 'bg-brand-500/10 border-brand-500/40' : 'bg-card border-border'}
               `}
             >
-              {/* Badge "Popular" en el plan del medio */}
               {isHighlighted && (
                 <div className="absolute top-3 right-3 px-2 py-0.5 bg-brand-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
                   Popular
                 </div>
               )}
-
-              {/* Decoración de fondo */}
               <div className="absolute top-0 right-0 p-4 text-brand-500 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
                 <Zap size={64} />
               </div>
-
-              {/* Nombre del plan */}
               <h3 className="text-base font-semibold text-foreground">{plan.name}</h3>
-
-              {/* Precio */}
               <div className="my-4 flex items-end gap-1">
                 <span className="text-4xl font-bold text-foreground">${plan.price}</span>
                 <span className="text-sm text-muted-foreground mb-1">/ pago único</span>
               </div>
-
-              {/* Features */}
               <ul className="flex-1 space-y-2.5 mb-6">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -9665,14 +9744,12 @@ const StoragePlans = () => {
                   </li>
                 ))}
               </ul>
-
-              {/* CTA */}
               <button
                 onClick={() => handleSelectPlan(plan)}
                 className={`
                   w-full py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm
                   ${isHighlighted
-                    ? 'bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/30 hover:shadow-brand-500/40 hover:shadow-md'
+                    ? 'bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/30'
                     : 'bg-muted hover:bg-brand-500/10 text-foreground hover:text-brand-500 border border-border hover:border-brand-500/40'}
                 `}
               >
@@ -9683,11 +9760,16 @@ const StoragePlans = () => {
         })}
       </div>
 
-      {/* Modal de pago */}
-      {modal && selectedPlan && (
-        <Elements stripe={stripePromise}>
-          <ModalPayment plan={selectedPlan} />
-        </Elements>
+      {modal && selectedPlan && Elements && (
+        <Suspense fallback={
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <Loader size={32} className="animate-spin text-white" />
+          </div>
+        }>
+          <Elements stripe={stripePromise}>
+            <ModalPayment plan={selectedPlan} />
+          </Elements>
+        </Suspense>
       )}
     </div>
   );

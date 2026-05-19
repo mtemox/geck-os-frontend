@@ -100,7 +100,7 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
 
         try {
             await fetchDataBackend(
-                `${backendUrl}/items`,
+                `${backendUrl}/items/create`,
                 { type, name, parentId: currentFolder.id, x: 0, y: 0, url: null },
                 "POST",
                 { Authorization: `Bearer ${token}` }
@@ -115,7 +115,7 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
     const handleCreateLink = async (formData) => {
         try {
             await fetchDataBackend(
-                `${backendUrl}/items`,
+                `${backendUrl}/items/create`,
                 { type: 'link', name: formData.name, url: formData.url, parentId: currentFolder.id, x: 0, y: 0 },
                 "POST",
                 { Authorization: `Bearer ${token}` }
@@ -276,8 +276,8 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
                                             setFolderHistory(prev => prev.slice(0, index + 1));
                                     }}
                                     className={`font-medium hover:text-brand-500 transition-colors ${index === folderHistory.length - 1
-                                            ? 'text-foreground'
-                                            : 'text-muted-foreground'
+                                        ? 'text-foreground'
+                                        : 'text-muted-foreground'
                                         }`}
                                 >
                                     {folder.name}

@@ -139,21 +139,28 @@ const SettingsApp = () => {
 
         setIsUploading(true);
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('wallpaper', file);
         formData.append('type', 'wallpaper');
 
         // Creamos la promesa que Sileo va a observar
         const uploadPromise = new Promise(async (resolve, reject) => {
             try {
-                const response = await fetch(`${backendUrl}/users/update-image`, {
-                    method: 'POST',
+                const response = await fetch(`${backendUrl}/users/preferences`, {
+                    method: 'PATCH',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
                 const data = await response.json();
 
                 if (response.ok) {
-                    await savePreferences({ wallpaperUrl: data.url });
+                    // 1. Extraemos la URL desde la nueva respuesta del backend
+                    const newWallpaperUrl = data.preferences.wallpaperUrl;
+                    
+                    // 2. Actualizamos la interfaz en tiempo real al instante
+                    setCurrentWallpaper(newWallpaperUrl);
+                    setWallpaper(newWallpaperUrl); 
+                    window.dispatchEvent(new CustomEvent('wallpaper-changed', { detail: newWallpaperUrl }));
+                    
                     resolve(data);
                 } else {
                     reject(new Error(data.msg || "Error subiendo"));

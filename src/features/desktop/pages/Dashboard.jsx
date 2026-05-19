@@ -37,7 +37,7 @@ function Dashboard() {
     const handleInviteToWorkspace = (e, wsId, wsName) => {
         e.stopPropagation();
         // Reconstruimos el objeto para que confirmInviteMember pueda leer el _id
-        setSelectedWorkspace({ _id: wsId, nombre: wsName }); 
+        setSelectedWorkspace({ _id: wsId, nombre: wsName });
         setModalMode('invite-workspace');
         setIsModalVisible(true);
     };
@@ -52,7 +52,7 @@ function Dashboard() {
 
     const confirmCreateWorkspace = async (formData) => {
         try {
-            const response = await fetch(`${backendUrl}/workspaces`, {
+            const response = await fetch(`${backendUrl}/workspaces/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -374,8 +374,8 @@ function Dashboard() {
                     }
                 >
                     {modalMode === 'create-workspace' && (
-                        <NewFolderForm 
-                            onSubmit={confirmCreateWorkspace} 
+                        <NewFolderForm
+                            onSubmit={confirmCreateWorkspace}
                             title="Nombre del Espacio de Trabajo"
                             placeholder="Ej: Semestre 2"
                             buttonText="Crear Espacio"
@@ -383,7 +383,7 @@ function Dashboard() {
                     )}
 
                     {modalMode === 'invite-workspace' && (
-                        <ShareForm 
+                        <ShareForm
                             onSubmit={confirmInviteMember}
                             itemToShare={selectedWorkspace}
                             isDesktop={false}

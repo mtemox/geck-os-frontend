@@ -15,7 +15,7 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
   const [code, setCode] = useState(initialContent);
   // Estado del código original (lo último guardado en BD)
   const [originalCode, setOriginalCode] = useState(initialContent);
-  
+
   const [language, setLanguage] = useState('javascript');
   const [showDiff, setShowDiff] = useState(false);
 
@@ -26,7 +26,7 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
 
   const { socket } = useSocket();
   const [searchParams] = useSearchParams();
-  
+
   const fetchDataBackend = useFetch();
 
   // --- LOGICA DE SOCKET ---
@@ -34,40 +34,40 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
     if (!socket) return;
 
     socket.on('code-change', (data) => {
-       if (data.content !== code) {
-           setCode(data.content);
-       }
-       if (data.language && data.language !== language) {
-           setLanguage(data.language);
-       }
+      if (data.content !== code) {
+        setCode(data.content);
+      }
+      if (data.language && data.language !== language) {
+        setLanguage(data.language);
+      }
     });
 
     return () => {
-        socket.off('code-change');
+      socket.off('code-change');
     };
   }, [socket, code, language]);
 
   // --- FUNCIÓN PARA EMITIR CAMBIOS ---
   const handleEditorChange = (value) => {
-     setCode(value);
+    setCode(value);
 
-     if (socket) {
-        const user = JSON.parse(localStorage.getItem('user'));
-        const remoteId = searchParams.get('remote');
-        const targetUserId = remoteId || user.id;
+    if (socket) {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const remoteId = searchParams.get('remote');
+      const targetUserId = remoteId || user.id;
 
-        socket.emit('code-change', { 
-            userId: targetUserId,
-            content: value,
-            language 
-        });
-     }
+      socket.emit('code-change', {
+        userId: targetUserId,
+        content: value,
+        language
+      });
+    }
   };
 
   // --- FUNCIÓN GUARDAR ---
   const handleSave = async () => {
     if (!fileId || fileId.toString().startsWith('sys-')) {
-      sileo.info({title: "Modo simulación. Crea un archivo real de código para guardar."});
+      sileo.info({ title: "Modo simulación. Crea un archivo real de código para guardar." });
       return;
     }
 
@@ -76,12 +76,12 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
 
     try {
       await fetchDataBackend(
-        `${backendUrl}/items/files/${fileId}`,
+        `${backendUrl}/items/update/${fileId}`,
         { content: code }, 
-        "PUT",
+        "PATCH",
         { Authorization: `Bearer ${token}` }
       );
-      
+
       setOriginalCode(code);
       window.dispatchEvent(new CustomEvent('local-file-update', { detail: { id: fileId, content: code } }));
 
@@ -94,9 +94,9 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setLanguage(newLang);
-    if(socket) {
-        const user = JSON.parse(localStorage.getItem('user'));
-        socket.emit('code-change', { userId: user.id, content: code, language: newLang });
+    if (socket) {
+      const user = JSON.parse(localStorage.getItem('user'));
+      socket.emit('code-change', { userId: user.id, content: code, language: newLang });
     }
   };
 
@@ -140,13 +140,13 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-[#1e1e2e] text-slate-900 dark:text-white transition-colors duration-300">
-      
+
       {/* --- BARRA DE HERRAMIENTAS PREMIUM --- */}
       <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gradient-to-b dark:from-[#252536] dark:to-[#1f1f2e] bg-gradient-to-b from-slate-100 to-white border-b border-slate-200 dark:border-white/10 backdrop-blur-xl transition-colors duration-300">
-        
+
         <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-gray-800/40 rounded-lg border border-slate-200 dark:border-white/5 transition-colors duration-300">
-           <FileCode size={15} className="text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
-           <span className="text-xs font-medium text-slate-700 dark:text-gray-200 tracking-wide">{fileName || "Sin título"}</span>
+          <FileCode size={15} className="text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
+          <span className="text-xs font-medium text-slate-700 dark:text-gray-200 tracking-wide">{fileName || "Sin título"}</span>
         </div>
 
         <div className="h-6 w-px bg-slate-300 dark:bg-white/10 mx-1"></div>
@@ -173,8 +173,8 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
         <button
           onClick={() => setShowDiff(!showDiff)}
           className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border
-            ${showDiff 
-              ? 'bg-gradient-to-r from-purple-500 to-pink-500 border-transparent shadow-lg shadow-purple-500/20 text-white hover:scale-105' 
+            ${showDiff
+              ? 'bg-gradient-to-r from-purple-500 to-pink-500 border-transparent shadow-lg shadow-purple-500/20 text-white hover:scale-105'
               : 'bg-slate-200 dark:bg-gray-700/30 border-slate-300 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-300 dark:hover:bg-white/10 hover:border-slate-400 dark:hover:border-white/20'
             }`}
           title={showDiff ? "Volver a Edición" : "Comparar cambios"}
@@ -187,57 +187,57 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
 
         {/* --- SELECTOR DE LENGUAJE (SOLO LOS SOPORTADOS) --- */}
         <div className="flex items-center gap-2 bg-slate-200 dark:bg-gray-700/30 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-white/10 hover:border-blue-500 dark:hover:border-blue-400/50 transition-colors duration-200">
-            <CodeIcon size={14} className="text-slate-500 dark:text-gray-400" strokeWidth={2} />
-            <select 
-                value={language} 
-                onChange={handleLanguageChange}
-                className="bg-transparent text-slate-700 dark:text-gray-200 text-sm font-medium outline-none cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                style={{ minWidth: '100px' }}
-            >
-                <option value="javascript" className="bg-white dark:bg-[#252536]">JavaScript</option>
-                <option value="python" className="bg-white dark:bg-[#252536]">Python</option>
-                <option value="cpp" className="bg-white dark:bg-[#252536]">C++</option>
-                <option value="c" className="bg-white dark:bg-[#252536]">C</option>
-            </select>
+          <CodeIcon size={14} className="text-slate-500 dark:text-gray-400" strokeWidth={2} />
+          <select
+            value={language}
+            onChange={handleLanguageChange}
+            className="bg-transparent text-slate-700 dark:text-gray-200 text-sm font-medium outline-none cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+            style={{ minWidth: '100px' }}
+          >
+            <option value="javascript" className="bg-white dark:bg-[#252536]">JavaScript</option>
+            <option value="python" className="bg-white dark:bg-[#252536]">Python</option>
+            <option value="cpp" className="bg-white dark:bg-[#252536]">C++</option>
+            <option value="c" className="bg-white dark:bg-[#252536]">C</option>
+          </select>
         </div>
       </div>
 
       {/* --- ÁREA DEL EDITOR --- */}
       <div className="flex-1 overflow-hidden relative flex flex-col">
         <Suspense fallback={
-            <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
-                <Loader className="animate-spin mb-3" size={32} />
-                <p className="text-sm font-medium">Cargando el motor de código...</p>
-            </div>
+          <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
+            <Loader className="animate-spin mb-3" size={32} />
+            <p className="text-sm font-medium">Cargando el motor de código...</p>
+          </div>
         }>
-            {showDiff ? (
-              <MonacoDiffEditor
-                height="100%"
-                language={language}
-                theme="vs-dark"
-                original={originalCode} 
-                modified={code}         
-                options={{
-                    renderSideBySide: true,
-                    readOnly: true,
-                    minimap: { enabled: false }
-                }}
-              />
-            ) : (
-              <Editor
-                height="100%"
-                language={language}
-                theme="vs-dark"
-                value={code}
-                onChange={handleEditorChange}
-                options={{
-                  minimap: { enabled: true },
-                  fontSize: 14,
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                }}
-              />
-            )}
+          {showDiff ? (
+            <MonacoDiffEditor
+              height="100%"
+              language={language}
+              theme="vs-dark"
+              original={originalCode}
+              modified={code}
+              options={{
+                renderSideBySide: true,
+                readOnly: true,
+                minimap: { enabled: false }
+              }}
+            />
+          ) : (
+            <Editor
+              height="100%"
+              language={language}
+              theme="vs-dark"
+              value={code}
+              onChange={handleEditorChange}
+              options={{
+                minimap: { enabled: true },
+                fontSize: 14,
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+              }}
+            />
+          )}
         </Suspense>
 
         {/* --- CONSOLA / TERMINAL --- */}
@@ -248,7 +248,7 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
                 <Terminal size={14} />
                 <span className="text-xs font-semibold tracking-wider uppercase">Terminal Salida</span>
               </div>
-              <button 
+              <button
                 onClick={() => setShowTerminal(false)}
                 className="text-gray-400 hover:text-white transition-colors"
               >

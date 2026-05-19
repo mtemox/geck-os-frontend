@@ -648,7 +648,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     try {
       // Sincronización con Backend (Persiste el orden y posición)
       await fetchDataBackend(
-        `${backendUrl}/items/${id}/move`,
+        `${backendUrl}/items/update/${id}`,
         { x: finalX, y: finalY },
         "PATCH",
         { Authorization: `Bearer ${token}` }
@@ -668,8 +668,8 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
     try {
       // Según tu Backend: router.patch('/items/:id/renombrar', ...)
       const response = await fetchDataBackend(
-        `${backendUrl}/items/${id}/rename`,
-        { name }, // Enviamos el nuevo nombre en el body
+        `${backendUrl}/items/update/${id}`,
+        { name },
         "PATCH",
         { Authorization: `Bearer ${token}` }
       );
@@ -834,7 +834,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     try {
       const response = await fetchDataBackend(
-        `${backendUrl}/items`,
+        `${backendUrl}/items/create`,
         newItemData,
         "POST",
         { Authorization: `Bearer ${token}` }
@@ -882,7 +882,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     try {
       const response = await fetchDataBackend(
-        `${backendUrl}/items/${item._id}`, // 👈 Endpoint SB-B-003 Delete
+        `${backendUrl}/items/delete/${item._id}`,
         null,
         "DELETE",
         { Authorization: `Bearer ${token}` }
@@ -921,7 +921,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     try {
       const response = await fetchDataBackend(
-        `${backendUrl}/items`,
+        `${backendUrl}/items/create`,
         newItemData,
         "POST",
         { Authorization: `Bearer ${token}` }
@@ -972,7 +972,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     try {
       const response = await fetchDataBackend(
-        `${backendUrl}/items`,
+        `${backendUrl}/items/create`,
         newItemData,
         "POST",
         { Authorization: `Bearer ${token}` }
@@ -1052,9 +1052,9 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
     try {
       const response = await fetchDataBackend(
-        `${backendUrl}/items/share/${itemId}`, // Endpoint memorizado
-        { email: formData.email, permission: formData.permission },
-        "POST",
+        `${backendUrl}/items/update/${itemId}`,
+        { email: formData.email, permission: formData.permission }, // <--- Sin sharedSettings
+        "PATCH",
         { Authorization: `Bearer ${token}` }
       );
 
@@ -1255,20 +1255,20 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
 
   return (
-    <div 
+    <div
       className="w-full h-screen overflow-hidden relative"
-      onContextMenu={handleContextMenu} 
+      onContextMenu={handleContextMenu}
       onClick={handleCloseMenu}
       onMouseMove={(e) => {
         if (socket && (workspaceId || isRemote)) {
-            const user = JSON.parse(localStorage.getItem('user'));
-            socket.emit("workspace-cursor-move", {
-                workspaceId: workspaceId || null,
-                userId: user.id,
-                userName: user.nombre,
-                x: e.clientX,
-                y: e.clientY
-            });
+          const user = JSON.parse(localStorage.getItem('user'));
+          socket.emit("workspace-cursor-move", {
+            workspaceId: workspaceId || null,
+            userId: user.id,
+            userName: user.nombre,
+            x: e.clientX,
+            y: e.clientY
+          });
         }
       }}
     >
@@ -1296,7 +1296,7 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
 
       {/* 👇 RENDERIZADO DE CURSORES EN TIEMPO REAL 👇 */}
       {Object.entries(cursors).map(([userId, cursor]) => (
-        <div 
+        <div
           key={userId}
           className="absolute z-[9999] pointer-events-none transition-all duration-75"
           style={{ transform: `translate(${cursor.x}px, ${cursor.y}px)` }}

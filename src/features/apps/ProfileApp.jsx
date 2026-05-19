@@ -20,7 +20,7 @@ const ProfileApp = () => {
   // EXTRAER 'errors' DE AMBOS FORMULARIOS PARA VALIDACIÓN
   const { register: registerInfo, handleSubmit: submitInfo, setValue, formState: { errors: errorsInfo } } = useForm();
   const { register: registerPass, handleSubmit: submitPass, reset: resetPass, formState: { errors: errorsPass }, watch } = useForm();
-  
+
   const passwordNuevo = watch('passwordnuevo');
 
   useEffect(() => {
@@ -58,10 +58,11 @@ const ProfileApp = () => {
   const onUpdatePass = async (formData) => {
     const token = localStorage.getItem('token');
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
     const response = await fetchDataBackend(
       `${backendUrl}/api/users/update-password`,
       { passwordactual: formData.passwordactual, passwordnuevo: formData.passwordnuevo },
-      "PUT",
+      "PATCH",
       { Authorization: `Bearer ${token}` }
     );
     if (response) {
@@ -136,23 +137,23 @@ const ProfileApp = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Nombre</label>
-                <input 
-                  {...registerInfo('nombre', { 
-                    required: 'Requerido', 
-                    pattern: { value: /^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]+$/, message: 'Solo letras' } 
-                  })} 
-                  className={inputClass} 
+                <input
+                  {...registerInfo('nombre', {
+                    required: 'Requerido',
+                    pattern: { value: /^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]+$/, message: 'Solo letras' }
+                  })}
+                  className={inputClass}
                 />
                 {errorsInfo.nombre && <p className="text-xs text-destructive mt-1">{errorsInfo.nombre.message}</p>}
               </div>
               <div>
                 <label className={labelClass}>Apellido</label>
-                <input 
-                  {...registerInfo('apellido', { 
+                <input
+                  {...registerInfo('apellido', {
                     required: 'Requerido',
-                    pattern: { value: /^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]+$/, message: 'Solo letras' } 
-                  })} 
-                  className={inputClass} 
+                    pattern: { value: /^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]+$/, message: 'Solo letras' }
+                  })}
+                  className={inputClass}
                 />
                 {errorsInfo.apellido && <p className="text-xs text-destructive mt-1">{errorsInfo.apellido.message}</p>}
               </div>
@@ -163,21 +164,21 @@ const ProfileApp = () => {
             </div>
             <div>
               <label className={labelClass}>Celular</label>
-              <input 
-                {...registerInfo('celular', { 
+              <input
+                {...registerInfo('celular', {
                   required: 'El celular es requerido',
                   pattern: { value: /^[0-9]+$/, message: 'Solo números' },
                   minLength: { value: 9, message: 'Demasiado corto' }
-                })} 
-                className={inputClass} 
+                })}
+                className={inputClass}
               />
               {errorsInfo.celular && <p className="text-xs text-destructive mt-1">{errorsInfo.celular.message}</p>}
             </div>
             <div>
               <label className={labelClass}>Dirección</label>
-              <input 
-                {...registerInfo('direccion', { required: 'La dirección es requerida' })} 
-                className={inputClass} 
+              <input
+                {...registerInfo('direccion', { required: 'La dirección es requerida' })}
+                className={inputClass}
               />
               {errorsInfo.direccion && <p className="text-xs text-destructive mt-1">{errorsInfo.direccion.message}</p>}
             </div>
@@ -199,10 +200,10 @@ const ProfileApp = () => {
               <div>
                 <label className={labelClass}>Contraseña Actual</label>
                 <div className="relative">
-                  <input 
-                    type={showPassActual ? "text" : "password"} 
-                    {...registerPass('passwordactual', { required: 'Ingresa tu contraseña actual' })} 
-                    className={inputClass} 
+                  <input
+                    type={showPassActual ? "text" : "password"}
+                    {...registerPass('passwordactual', { required: 'Ingresa tu contraseña actual' })}
+                    className={inputClass}
                   />
                   <button type="button" onClick={() => setShowPassActual(!showPassActual)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassActual ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -217,10 +218,10 @@ const ProfileApp = () => {
               <div>
                 <label className={labelClass}>Nueva Contraseña</label>
                 <div className="relative">
-                  <input 
-                    type={showPassNuevo ? "text" : "password"} 
-                    {...registerPass('passwordnuevo', { required: 'La nueva contraseña es requerida', minLength: { value: 6, message: 'Debe tener al menos 6 caracteres' } })} 
-                    className={inputClass} 
+                  <input
+                    type={showPassNuevo ? "text" : "password"}
+                    {...registerPass('passwordnuevo', { required: 'La nueva contraseña es requerida', minLength: { value: 6, message: 'Debe tener al menos 6 caracteres' } })}
+                    className={inputClass}
                   />
                   <button type="button" onClick={() => setShowPassNuevo(!showPassNuevo)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassNuevo ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -233,13 +234,13 @@ const ProfileApp = () => {
               <div>
                 <label className={labelClass}>Confirmar Nueva Contraseña</label>
                 <div className="relative">
-                  <input 
-                    type={showPassConfirm ? "text" : "password"} 
-                    {...registerPass('confirmPassword', { 
+                  <input
+                    type={showPassConfirm ? "text" : "password"}
+                    {...registerPass('confirmPassword', {
                       required: 'Confirma la nueva contraseña',
                       validate: value => value === passwordNuevo || 'Las contraseñas no coinciden'
-                    })} 
-                    className={inputClass} 
+                    })}
+                    className={inputClass}
                   />
                   <button type="button" onClick={() => setShowPassConfirm(!showPassConfirm)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
