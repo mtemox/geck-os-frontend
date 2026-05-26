@@ -8,35 +8,34 @@ const AcceptInvite = () => {
     const { token } = useParams();
     const navigate = useNavigate();
     const fetchDataBackend = useFetch();
-    const [status, setStatus] = useState('loading'); // loading | success | error
+    const [status, setStatus] = useState('loading');
     const [message, setMessage] = useState('');
 
     useEffect(() => {
         const accept = async () => {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
-            const authToken = localStorage.getItem('token');
-
-            if (!authToken) {
-                // Guardar el token de invitación y redirigir al login
-                localStorage.setItem('pending-invite-token', token);
-                navigate(`/login?redirect=/workspace/accept/${token}`);
-                return;
-            }
 
             try {
+                // 👇 Sin verificar sesión, llamada directa como confirmación de email
                 const res = await fetchDataBackend(
                     `${backendUrl}/workspaces/accept-invite/${token}`,
                     null,
-                    "GET",
-                    { Authorization: `Bearer ${authToken}` }
+                    "GET"
+                    // Sin header de Authorization
                 );
 
                 if (res?.ok) {
                     setStatus('success');
                     setMessage(res.msg);
-                    // Redirigir al workspace después de 2 segundos
+                    
+                    // Si ya tiene sesión, redirigir al workspace
+                    const authToken = localStorage.getItem('token');
                     setTimeout(() => {
-                        navigate(`/desktop?workspace=${res.workspace._id}`);
+                        if (authToken) {
+                            navigate(`/desktop?workspace=${res.workspace._id}`);
+                        } else {
+                            navigate('/login');
+                        }
                     }, 2000);
                 } else {
                     setStatus('error');
@@ -63,9 +62,13 @@ const AcceptInvite = () => {
                 {status === 'success' && (
                     <>
                         <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
-                        <h2 className="text-xl font-bold text-green-400 mb-2">¡Bienvenido!</h2>
+                        <h2 className="text-xl font-bold text-green-400 mb-2">¡Invitación aceptada!</h2>
                         <p className="text-gray-300">{message}</p>
-                        <p className="text-gray-500 text-sm mt-4">Redirigiendo al workspace...</p>
+                        <p className="text-gray-500 text-sm mt-4">
+                            {localStorage.getItem('token') 
+                                ? 'Redirigiendo al workspace...' 
+                                : 'Redirigiendo al login...'}
+                        </p>
                     </>
                 )}
                 {status === 'error' && (
@@ -74,10 +77,10 @@ const AcceptInvite = () => {
                         <h2 className="text-xl font-bold text-red-400 mb-2">Error</h2>
                         <p className="text-gray-300">{message}</p>
                         <button
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => navigate('/login')}
                             className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors font-medium"
                         >
-                            Ir al Dashboard
+                            Ir al Login
                         </button>
                     </>
                 )}

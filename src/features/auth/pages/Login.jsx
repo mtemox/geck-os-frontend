@@ -46,20 +46,19 @@ function Login() {
 
       // 2. Verificamos si llegó el token
       if (response?.token) {
-        // Guardamos el token
         localStorage.setItem('token', response.token);
-
-        const userData = {
-          nombre: response.nombre,
-          rol: response.rol,
-          id: response._id
-        };
+        const userData = { nombre: response.nombre, rol: response.rol, id: response._id };
         localStorage.setItem('user', JSON.stringify(userData));
-
         connectSocket();
 
-        // 3. Redirigimos al DASHBOARD en lugar del Desktop
-        navigate('/dashboard'); // 👈 CAMBIO AQUÍ (Antes era '/desktop')
+        // Verificar si hay una invitación pendiente
+        const pendingInvite = localStorage.getItem('pending-invite-token');
+        if (pendingInvite) {
+          localStorage.removeItem('pending-invite-token');
+          navigate(`/workspace/accept/${pendingInvite}`);
+        } else {
+          navigate('/dashboard');
+        }
       }
 
       // Si hay un error (ej: 401, 404), el hook useFetch
