@@ -78,22 +78,20 @@ const ComputerApp = ({ onOpenItem }) => {
                 "POST",
                 { Authorization: `Bearer ${token}` }
             );
+
             if (data && data.ok) {
-                const resultadosIA = data.data; // Viene ordenado desde Python
+                const resultadosIA = data.data;
 
-                // Mapeamos iterando sobre la respuesta de la IA para NO PERDER el orden
-                const itemsCompletos = resultadosIA
-                    .map(resIA => items.find(item => (item._id?.toString() || item.id?.toString()) === resIA.id))
-                    .filter(item => {
-                        if (!item) return false;
-                        // Si es nota, código o archivo, forzamos a que tenga contenido real para mostrarlo
-                        if (['note', 'code', 'file'].includes(item.type)) {
-                            return item.content && item.content.trim() !== "";
-                        }
-                        return true;
-                    });
+                // Umbral mínimo de relevancia del 30%
+                const resultadosFiltrados = resultadosIA.filter(r => r.relevancia >= 20);
 
-                setAiResults(itemsCompletos);
+                const itemsCompletos = resultadosFiltrados
+                    .map(resIA => items.find(item =>
+                        (item._id?.toString() || item.id?.toString()) === resIA.id?.toString()
+                    ))
+                    .filter(Boolean);
+
+                setAiResults(itemsCompletos.length > 0 ? itemsCompletos : []);
             }
         } catch (error) {
             console.error("Error en búsqueda semántica:", error);
