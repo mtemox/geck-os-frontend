@@ -64,7 +64,7 @@ function WeatherWidget() {
       onStop={(_, data) => setPosition({ x: data.x, y: data.y })}
     >
       {/* Contenedor exterior — posición inicial arriba a la izquierda */}
-      <div ref={nodeRef} className="absolute top-8 left-8 z-10 pointer-events-auto w-44">
+      <div ref={nodeRef} className="absolute top-8 right-64 z-10 pointer-events-auto w-44">
 
         {/* Contenedor interior — sigue el tema del sistema */}
         <div className="animate-fade-in-down bg-card/80 backdrop-blur-xl border border-border rounded-2xl p-3 shadow-xl transition-colors duration-300 flex flex-col items-center">

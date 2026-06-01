@@ -1,5 +1,5 @@
 // src/features/apps/ComputerApp.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFetch } from '../../core/api/useFetch';
 import { Loader, Info, Search, HardDrive, FileText, Folder, Link2, Code2, File, ChevronRight, Sparkles } from 'lucide-react';
 
@@ -39,6 +39,7 @@ const ComputerApp = ({ onOpenItem }) => {
 
     const [isSearchingAI, setIsSearchingAI] = useState(false);
     const [aiResults, setAiResults] = useState(null);
+    const itemsRef = useRef([]);
 
     const fetchDataBackend = useFetch();
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -55,6 +56,7 @@ const ComputerApp = ({ onOpenItem }) => {
 
                 if (data && data.items) {
                     setItems(data.items);
+                    itemsRef.current = data.items;
                 } else if (Array.isArray(data)) {
                     setItems(data);
                 }
@@ -71,27 +73,35 @@ const ComputerApp = ({ onOpenItem }) => {
     const handleAISearch = async () => {
         if (!searchTerm.trim()) return;
         setIsSearchingAI(true);
+        setAiResults(null);
         try {
             const data = await fetchDataBackend(
-                `${backendUrl}/ai/semantic-search`,
+                `${backendUrl}/ai/semantic-search?t=${Date.now()}`,
                 { consulta: searchTerm },
                 "POST",
                 { Authorization: `Bearer ${token}` }
             );
 
             if (data && data.ok) {
-                const resultadosIA = data.data;
+                console.log('Full response:', JSON.stringify(data)); // 👈
+                const resultadosIA = data?.resultados || data?.data || [];
 
-                // Umbral mínimo de relevancia del 30%
-                const resultadosFiltrados = resultadosIA.filter(r => r.relevancia >= 20);
+                if (!resultadosIA.length) {
+                    setAiResults([]);
+                    return;
+                }
+
+                const resultadosFiltrados = resultadosIA
+                    .filter(r => r.relevancia >= 21)
+                    .sort((a, b) => b.relevancia - a.relevancia);
 
                 const itemsCompletos = resultadosFiltrados
-                    .map(resIA => items.find(item =>
+                    .map(resIA => itemsRef.current.find(item =>
                         (item._id?.toString() || item.id?.toString()) === resIA.id?.toString()
                     ))
                     .filter(Boolean);
 
-                setAiResults(itemsCompletos.length > 0 ? itemsCompletos : []);
+                setAiResults(itemsCompletos.length > 0 ? [...itemsCompletos] : []);
             }
         } catch (error) {
             console.error("Error en búsqueda semántica:", error);

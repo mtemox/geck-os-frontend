@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wifi, Accessibility, Power, User, ArrowRight, Monitor, Briefcase, Plus, UserPlus, Users, ChevronRight } from 'lucide-react';
 import dragonBg from '../../../assets/wallpapers/deg3.jpg';
-import logoMidesk from '../../../assets/logos/midesk.jpg';
+import geckoBg from '../../../assets/logos/gecko.png';
 import { useFetch } from '../../../core/api/useFetch';
 import { useSocket } from '../../../core/context/SocketContext';
 import { sileo } from 'sileo';
@@ -166,10 +166,15 @@ function Dashboard() {
                     {/* Avatar Grande */}
                     <div className="relative mb-6">
                         <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl scale-110"></div>
-                        <img
-                            src={logoMidesk}
-                            alt="Profile"
-                            className="relative w-40 h-40 rounded-full shadow-2xl object-cover border-4 border-white/20"
+                        <div
+                            className="relative w-40 h-40 rounded-full shadow-2xl border-4 border-white/20"
+                            style={{
+                                backgroundImage: `url(${user.avatarUrl || geckoBg})`,
+                                backgroundSize: '90%',
+                                backgroundRepeat: 'no-repeat',
+                                backgroundPosition: 'center',
+                                backgroundColor: '#160C0B' // ← el color que quieras
+                            }}
                         />
                     </div>
 
@@ -207,7 +212,16 @@ function Dashboard() {
                         {/* Usuario actual */}
                         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 flex items-center gap-3 shadow-xl cursor-default transition-all hover:bg-white/15">
                             <div className="relative">
-                                <img src={logoMidesk} alt="User" className="w-12 h-12 rounded-full object-cover border-2 border-white/30" />
+                                <div
+                                    className="w-12 h-12 rounded-full border-2 border-white/30"
+                                    style={{
+                                        backgroundImage: `url(${user.avatarUrl || geckoBg})`,
+                                        backgroundSize: '90%',
+                                        backgroundRepeat: 'no-repeat',
+                                        backgroundPosition: 'center',
+                                        backgroundColor: '#160C0B'
+                                    }}
+                                />
                                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
                             <div className="flex-1 min-w-0">

@@ -6,7 +6,7 @@ import AuthLayout from '../components/Auth'; // Reutilizamos el layout
 import { useFetch } from '../../../core/api/useFetch';
 import { useForm } from "react-hook-form";
 import dragonBg from '../../../assets/auth/fondo4.jpg';
-import logoMidesk from '../../../assets/logos/midesk.jpg';
+import geckoBg from '../../../assets/logos/gecko.png';
 import { useSocket } from '../../../core/context/SocketContext';
 
 // Iconos para darle el toque de SO (Sistema Operativo)
@@ -120,9 +120,16 @@ function Login() {
       <div className="flex flex-col items-center w-full max-w-sm p-6 animate-fade-in-up">
 
         {/* Avatar Circular */}
-        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl mb-6">
-          <img src={logoMidesk} alt="User Avatar" className="w-full h-full object-cover" />
-        </div>
+        <div
+          className="w-32 h-32 rounded-full border-4 border-white/20 shadow-2xl mb-6"
+          style={{
+            backgroundImage: `url(${geckoBg})`,
+            backgroundSize: '90%',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center',
+            backgroundColor: '#160C0B'
+          }}
+        />
 
         {/* Nombre de "Usuario" (Visual) */}
         <h2 className="text-2xl text-white font-semibold mb-6 drop-shadow-md">
