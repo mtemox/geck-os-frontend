@@ -83,7 +83,7 @@ const SettingsApp = () => {
             const response = await fetchDataBackend(
                 `${backendUrl}/users/preferences`,
                 updates,
-                "PATCH",
+                "PUT",
                 { Authorization: `Bearer ${token}` }
             );
 
