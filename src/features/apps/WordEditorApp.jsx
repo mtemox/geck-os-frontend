@@ -37,12 +37,28 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
 
   useEffect(() => {
     if (!socket || !fileId) return;
-    socket.on('file-change', ({ fileId: changedId, content }) => {
+    
+    const handleFileChange = ({ fileId: changedId, content }) => {
       if (changedId === fileId && editorRef.current && editorRef.current.innerHTML !== content) {
         editorRef.current.innerHTML = content;
       }
-    });
-    return () => { socket.off('file-change'); };
+    };
+    socket.on('file-change', handleFileChange);
+
+    // TRUCO: Escuchar window-move para detectar cambios de archivos en Workspaces
+    const handleWindowMove = ({ windowId, position }) => {
+      if (position && position.isFileChange && position.fileId === fileId) {
+        if (editorRef.current && editorRef.current.innerHTML !== position.content) {
+          editorRef.current.innerHTML = position.content;
+        }
+      }
+    };
+    socket.on('window-move', handleWindowMove);
+
+    return () => { 
+      socket.off('file-change', handleFileChange); 
+      socket.off('window-move', handleWindowMove);
+    };
   }, [socket, fileId]);
 
   useEffect(() => {
@@ -166,6 +182,16 @@ function WordEditorApp({ fileId, fileName, initialContent = "" }) {
       const remoteUserId = searchParams.get('remote');
       const targetUserId = remoteUserId || user.id;
       socket.emit('file-change', { userId: targetUserId, fileId, content });
+      
+      // TRUCO: Si estamos en un workspace, enviamos el cambio disfrazado de window-move
+      const workspaceId = searchParams.get('workspace');
+      if (workspaceId) {
+        socket.emit('workspace-window-move', {
+          workspaceId,
+          windowId: `fake-file-change-${fileId}`,
+          position: { fileId, content, isFileChange: true }
+        });
+      }
     }
   };
 

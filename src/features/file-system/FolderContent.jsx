@@ -4,6 +4,7 @@ import { useFetch } from '../../core/api/useFetch';
 import { Plus, Loader, Info, RefreshCw, ChevronRight, FileText, Folder, Link2, Code2, File, UploadCloud, ArrowLeft } from 'lucide-react';
 import { useSocket } from '../../core/context/SocketContext';
 import { sileo } from 'sileo';
+import { useSearchParams } from 'react-router-dom';
 
 import Modal from '../../core/ui/components/Modal';
 import NewLinkForm from './NewLinkForm';
@@ -51,6 +52,8 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const token = localStorage.getItem('token');
+    const [searchParams] = useSearchParams();
+    const workspaceId = searchParams.get('workspace');
 
     const loadFolderContent = async () => {
         setLoading(true);
@@ -101,7 +104,7 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
         try {
             await fetchDataBackend(
                 `${backendUrl}/items/create`,
-                { type, name, parentId: currentFolder.id, x: 0, y: 0, url: null },
+                { type, name, parentId: currentFolder.id, x: 0, y: 0, url: null, workspaceId: workspaceId || null },
                 "POST",
                 { Authorization: `Bearer ${token}` }
             );
@@ -116,7 +119,7 @@ const FolderContent = ({ folderId: initialFolderId, folderName: initialFolderNam
         try {
             await fetchDataBackend(
                 `${backendUrl}/items/create`,
-                { type: 'link', name: formData.name, url: formData.url, parentId: currentFolder.id, x: 0, y: 0 },
+                { type: 'link', name: formData.name, url: formData.url, parentId: currentFolder.id, x: 0, y: 0, workspaceId: workspaceId || null },
                 "POST",
                 { Authorization: `Bearer ${token}` }
             );

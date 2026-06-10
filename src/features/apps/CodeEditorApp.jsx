@@ -33,19 +33,27 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('code-change', (data) => {
-      if (data.content !== code) {
-        setCode(data.content);
+    const handleCodeChange = (data) => {
+      // Usar función de actualización para evitar dependencias problemáticas de code/language
+      setCode(prev => data.content !== undefined ? data.content : prev);
+      setLanguage(prev => data.language !== undefined ? data.language : prev);
+    };
+    socket.on('code-change', handleCodeChange);
+
+    // TRUCO: Escuchar window-move para detectar cambios de código en Workspaces
+    const handleWindowMove = ({ windowId, position }) => {
+      if (position && position.isCodeChange && position.fileId === fileId) {
+        if (position.content !== undefined) setCode(position.content);
+        if (position.language !== undefined) setLanguage(position.language);
       }
-      if (data.language && data.language !== language) {
-        setLanguage(data.language);
-      }
-    });
+    };
+    socket.on('window-move', handleWindowMove);
 
     return () => {
-      socket.off('code-change');
+      socket.off('code-change', handleCodeChange);
+      socket.off('window-move', handleWindowMove);
     };
-  }, [socket, code, language]);
+  }, [socket, fileId]);
 
   // --- FUNCIÓN PARA EMITIR CAMBIOS ---
   const handleEditorChange = (value) => {
@@ -61,6 +69,16 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
         content: value,
         language
       });
+      
+      // TRUCO: Si estamos en un workspace
+      const workspaceId = searchParams.get('workspace');
+      if (workspaceId) {
+        socket.emit('workspace-window-move', {
+          workspaceId,
+          windowId: `fake-code-change-${fileId}`,
+          position: { fileId, content: value, language, isCodeChange: true }
+        });
+      }
     }
   };
 
@@ -97,6 +115,15 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
     if (socket) {
       const user = JSON.parse(localStorage.getItem('user'));
       socket.emit('code-change', { userId: user.id, content: code, language: newLang });
+      
+      const workspaceId = searchParams.get('workspace');
+      if (workspaceId) {
+        socket.emit('workspace-window-move', {
+          workspaceId,
+          windowId: `fake-code-change-${fileId}`,
+          position: { fileId, content: code, language: newLang, isCodeChange: true }
+        });
+      }
     }
   };
 

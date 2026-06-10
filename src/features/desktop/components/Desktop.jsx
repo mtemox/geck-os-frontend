@@ -829,7 +829,8 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
       name: formData.name,
       url: formData.url || null,
       x: posX,
-      y: posY
+      y: posY,
+      workspaceId: workspaceId || null
     };
 
     try {
@@ -916,7 +917,8 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
       name: 'Nueva Nota',  // Nombre por defecto
       url: null,
       x: posX,
-      y: posY
+      y: posY,
+      workspaceId: workspaceId || null
     };
 
     try {
@@ -967,7 +969,8 @@ function Desktop({ openWindows, onOpenWindow, onCloseWindow, onFocusWindow, onMi
       name: 'script.js',      // Nombre por defecto
       url: null,
       x: posX,
-      y: posY
+      y: posY,
+      workspaceId: workspaceId || null
     };
 
     try {
