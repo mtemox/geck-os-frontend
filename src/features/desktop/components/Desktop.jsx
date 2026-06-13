@@ -84,11 +84,11 @@ const systemAppsBase = [
     appId: 'store', // <--- ESTE ID ES IMPORTANTE
     windowOptions: { defaultWidth: 900, defaultHeight: 600 }
   },
-  { _id: 'sys-7', nombre: 'Bloc de Notas', imgSrc: noteIcon, type: 'app', appId: 'notepad' },
+  { _id: 'sys-7', nombre: 'Bloc de Notas', imgSrc: wordIcon, type: 'app', appId: 'notepad' },
 
   { _id: 'sys-6', nombre: 'Mi Equipo', imgSrc: computerIcon, type: 'computer', appId: 'computer', windowOptions: { defaultWidth: 850, defaultHeight: 550 } },
   { _id: 'sys-5', nombre: 'VS Code (Sim)', imgSrc: codeIcon, type: 'app', appId: 'codeEditor' },
-  { _id: 'sys-4', nombre: 'Word Pro', imgSrc: wordIcon, type: 'app', appId: 'wordprocessor' },
+
   { _id: 'sys-3', nombre: 'Fondos', imgSrc: wallpaperIcon, type: 'app', appId: 'wallpaper' },
   { _id: 'sys-2', nombre: 'Noticias', imgSrc: newsIcon, type: 'app', appId: 'news' },
 ];
@@ -176,12 +176,7 @@ const AppRenderer = React.memo(({ appId, data, windowId, onOpenWindow, onContext
     // case 'wordprocessor':
     //     return <RichTextEditor />;
 
-    case 'wordprocessor':
-      return (
-        <WordEditorApp
-          key={`wordprocessor-${windowId}`}
-        />
-      );
+
 
     case 'profile':
       return <ProfileApp />; // 👈 NUEVO
