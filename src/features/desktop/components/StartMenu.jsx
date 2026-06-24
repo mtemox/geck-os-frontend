@@ -1,7 +1,7 @@
 // src/features/desktop/components/StartMenu.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, Search, Share2, Monitor } from 'lucide-react';
+import { LogOut, User, Settings, Search, Share2, Monitor, LayoutDashboard } from 'lucide-react';
 import { useSocket } from '../../../core/context/SocketContext';
 import { useFetch } from '../../../core/api/useFetch';
 import { sileo } from 'sileo';
@@ -54,6 +54,10 @@ const StartMenu = ({ isVisible, onClose, onOpenApp, position = 'bottom' }) => {
     navigate('/login');
   };
 
+  const handleGoToDashboard = () => {
+    navigate('/dashboard');
+  };
+
   const handleOpenShare = () => {
     window.dispatchEvent(new Event('open-share-desktop-modal'));
     onClose();
@@ -86,13 +90,22 @@ const StartMenu = ({ isVisible, onClose, onOpenApp, position = 'bottom' }) => {
             {currentUser.email}
           </p>
         </div>
-        <button
-          onClick={handleLogout}
-          className="p-2 rounded-lg text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-colors"
-          title="Cerrar Sesión"
-        >
-          <LogOut size={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleGoToDashboard}
+            className="p-2 rounded-lg text-muted-foreground hover:bg-brand-500/20 hover:text-brand-500 transition-colors"
+            title="Ir al Dashboard"
+          >
+            <LayoutDashboard size={18} />
+          </button>
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-lg text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-colors"
+            title="Cerrar Sesión"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
       </div>
 
       {/* ── BUSCADOR ─────────────────────────────────────────────────────── */}

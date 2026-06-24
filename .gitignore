@@ -26,3 +26,6 @@ dist-ssr
 exportar_contexto.js
 contexto_frontend.txt
 
+
+# Local Netlify folder
+.netlify

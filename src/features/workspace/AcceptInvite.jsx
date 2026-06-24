@@ -1,5 +1,5 @@
 // src/features/workspace/AcceptInvite.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFetch } from '../../core/api/useFetch';
 import { Loader, CheckCircle, XCircle } from 'lucide-react';
@@ -10,9 +10,12 @@ const AcceptInvite = () => {
     const fetchDataBackend = useFetch();
     const [status, setStatus] = useState('loading');
     const [message, setMessage] = useState('');
+    const hasFetched = useRef(false);
 
     useEffect(() => {
         const accept = async () => {
+            if (hasFetched.current) return;
+            hasFetched.current = true;
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
             try {

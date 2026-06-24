@@ -231,41 +231,43 @@ const CodeEditorApp = ({ fileId, fileName, initialContent = "" }) => {
 
       {/* --- ÁREA DEL EDITOR --- */}
       <div className="flex-1 overflow-hidden relative flex flex-col">
-        <Suspense fallback={
-          <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
-            <Loader className="animate-spin mb-3" size={32} />
-            <p className="text-sm font-medium">Cargando el motor de código...</p>
-          </div>
-        }>
-          {showDiff ? (
-            <MonacoDiffEditor
-              height="100%"
-              language={language}
-              theme="vs-dark"
-              original={originalCode}
-              modified={code}
-              options={{
-                renderSideBySide: true,
-                readOnly: true,
-                minimap: { enabled: false }
-              }}
-            />
-          ) : (
-            <Editor
-              height="100%"
-              language={language}
-              theme="vs-dark"
-              value={code}
-              onChange={handleEditorChange}
-              options={{
-                minimap: { enabled: true },
-                fontSize: 14,
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-              }}
-            />
-          )}
-        </Suspense>
+        <div className="flex-1 min-h-0 relative">
+          <Suspense fallback={
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
+              <Loader className="animate-spin mb-3" size={32} />
+              <p className="text-sm font-medium">Cargando el motor de código...</p>
+            </div>
+          }>
+            {showDiff ? (
+              <MonacoDiffEditor
+                height="100%"
+                language={language}
+                theme="vs-dark"
+                original={originalCode}
+                modified={code}
+                options={{
+                  renderSideBySide: true,
+                  readOnly: true,
+                  minimap: { enabled: false }
+                }}
+              />
+            ) : (
+              <Editor
+                height="100%"
+                language={language}
+                theme="vs-dark"
+                value={code}
+                onChange={handleEditorChange}
+                options={{
+                  minimap: { enabled: true },
+                  fontSize: 14,
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                }}
+              />
+            )}
+          </Suspense>
+        </div>
 
         {/* --- CONSOLA / TERMINAL --- */}
         {showTerminal && (

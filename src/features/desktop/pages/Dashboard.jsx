@@ -1,7 +1,7 @@
 // src/features/desktop/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wifi, Accessibility, Power, User, ArrowRight, Monitor, Briefcase, Plus, UserPlus, Users, ChevronRight } from 'lucide-react';
+import { Wifi, Accessibility, Power, User, ArrowRight, Monitor, Briefcase, Plus, UserPlus, Users, ChevronRight, Trash2 } from 'lucide-react';
 import dragonBg from '../../../assets/wallpapers/deg3.jpg';
 import geckoBg from '../../../assets/logos/gecko.png';
 import { useFetch } from '../../../core/api/useFetch';
@@ -24,6 +24,7 @@ function Dashboard() {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [modalMode, setModalMode] = useState(null); // 'create-workspace' o 'invite-workspace'
     const [selectedWorkspace, setSelectedWorkspace] = useState(null);
+    const [deleteWorkspaceInput, setDeleteWorkspaceInput] = useState("");
 
     const { disconnectSocket } = useSocket();
 
@@ -46,6 +47,7 @@ function Dashboard() {
         setIsModalVisible(false);
         setModalMode(null);
         setSelectedWorkspace(null);
+        setDeleteWorkspaceInput("");
     };
 
     // --- FUNCIONES DE CONFIRMACIÓN (PETICIONES AL BACKEND) ---
@@ -63,7 +65,14 @@ function Dashboard() {
             const data = await response.json();
 
             if (response.ok) {
-                setWorkspaces(prev => [...prev, data.workspace]);
+                const newWs = {
+                    _id: data.workspace._id,
+                    nombre: data.workspace.name,
+                    dueño: data.workspace.owner,
+                    miembros: data.workspace.members,
+                    createdAt: data.workspace.createdAt
+                };
+                setWorkspaces(prev => [...prev, newWs]);
                 sileo.success({ title: "Espacio de trabajo creado" });
                 closeModal();
             } else {
@@ -143,6 +152,39 @@ function Dashboard() {
         navigate(`/desktop?workspace=${wsId}`);
     };
 
+    const handleLeaveWorkspaceClick = (e, wsId, wsName) => {
+        e.stopPropagation();
+        setSelectedWorkspace({ _id: wsId, nombre: wsName });
+        setDeleteWorkspaceInput("");
+        setModalMode('delete-workspace');
+        setIsModalVisible(true);
+    };
+
+    const confirmLeaveWorkspace = async () => {
+        if (!selectedWorkspace) return;
+
+        try {
+            const response = await fetch(`${backendUrl}/workspaces/${selectedWorkspace._id}/leave`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                setWorkspaces(prev => prev.filter(ws => ws._id !== selectedWorkspace._id));
+                sileo.success({ title: "Workspace eliminado/abandonado" });
+                closeModal();
+            } else {
+                sileo.error({ title: data.msg || "Error al salir del workspace" });
+            }
+        } catch (error) {
+            console.error(error);
+            sileo.error({ title: "Error de conexión" });
+        }
+    };
+
     return (
         <div className="h-screen w-full overflow-hidden relative font-sans text-white select-none">
 
@@ -207,7 +249,7 @@ function Dashboard() {
                 <div className="flex justify-between items-end w-full gap-8">
 
                     {/* Lista de escritorios - IZQUIERDA */}
-                    <div className="flex flex-col gap-3 max-w-xs animate-fade-in-left">
+                    <div className="flex flex-col gap-3 max-w-xs animate-fade-in-left overflow-y-auto max-h-[65vh] scrollbar-thin pr-2 pb-2">
 
                         {/* Usuario actual */}
                         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3 flex items-center gap-3 shadow-xl cursor-default transition-all hover:bg-white/15">
@@ -294,13 +336,22 @@ function Dashboard() {
                                             <p className="font-medium text-sm truncate">{ws.nombre}</p>
                                             <p className="text-xs text-white/60 truncate">Sala colaborativa</p>
                                         </div>
-                                        <button
-                                            onClick={(e) => handleInviteToWorkspace(e, ws._id, ws.nombre)}
-                                            className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                                            title="Invitar miembro"
-                                        >
-                                            <UserPlus size={16} className="text-white/70" />
-                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={(e) => handleInviteToWorkspace(e, ws._id, ws.nombre)}
+                                                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                                                title="Invitar miembro"
+                                            >
+                                                <UserPlus size={16} className="text-white/70" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleLeaveWorkspaceClick(e, ws._id, ws.nombre)}
+                                                className="p-2 hover:bg-red-500/30 hover:text-red-300 rounded-full transition-colors"
+                                                title="Eliminar/Salir"
+                                            >
+                                                <Trash2 size={16} className="text-white/70" />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </>
@@ -384,7 +435,9 @@ function Dashboard() {
                     title={
                         modalMode === 'create-workspace'
                             ? "Nuevo Espacio de Trabajo"
-                            : `Invitar a ${selectedWorkspace?.nombre}`
+                            : modalMode === 'invite-workspace'
+                            ? `Invitar a ${selectedWorkspace?.nombre}`
+                            : `Eliminar ${selectedWorkspace?.nombre}`
                     }
                 >
                     {modalMode === 'create-workspace' && (
@@ -403,6 +456,41 @@ function Dashboard() {
                             isDesktop={false}
                             isWorkspace={true}
                         />
+                    )}
+
+                    {modalMode === 'delete-workspace' && (
+                        <div className="flex flex-col gap-4 p-1">
+                            <p className="text-sm text-muted-foreground">
+                                Esta acción no se puede deshacer. Por favor, escribe <strong className="font-semibold text-foreground">{selectedWorkspace?.nombre}</strong> para confirmar.
+                            </p>
+                            <input
+                                type="text"
+                                value={deleteWorkspaceInput}
+                                onChange={(e) => setDeleteWorkspaceInput(e.target.value)}
+                                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
+                                placeholder={selectedWorkspace?.nombre}
+                                autoFocus
+                            />
+                            <div className="flex justify-end gap-2 mt-2">
+                                <button
+                                    onClick={closeModal}
+                                    className="px-4 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium text-sm"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={confirmLeaveWorkspace}
+                                    disabled={deleteWorkspaceInput !== selectedWorkspace?.nombre}
+                                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                                        deleteWorkspaceInput === selectedWorkspace?.nombre
+                                            ? 'bg-red-500 hover:bg-red-600 text-white shadow-sm'
+                                            : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
+                                    }`}
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
                     )}
                 </Modal>
 
@@ -453,6 +541,25 @@ function Dashboard() {
         
         .animate-fade-in-right {
           animation: fade-in-right 0.6s ease-out;
+        }
+
+        /* Scrollbar delgada */
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+        .scrollbar-thin {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
         }
       `}</style>
 
