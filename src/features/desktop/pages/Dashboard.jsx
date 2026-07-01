@@ -344,6 +344,7 @@ function Dashboard() {
                                             >
                                                 <UserPlus size={16} className="text-white/70" />
                                             </button>
+                                            {/*
                                             <button
                                                 onClick={(e) => handleLeaveWorkspaceClick(e, ws._id, ws.nombre)}
                                                 className="p-2 hover:bg-red-500/30 hover:text-red-300 rounded-full transition-colors"
@@ -351,6 +352,7 @@ function Dashboard() {
                                             >
                                                 <Trash2 size={16} className="text-white/70" />
                                             </button>
+                                            */}
                                         </div>
                                     </div>
                                 ))}
